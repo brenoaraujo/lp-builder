@@ -1,0 +1,405 @@
+import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { HeroA, HeroB, HeroC } from "./sections/Hero.jsx";
+import { PricingA, PricingB } from "./sections/Pricing.jsx";
+import { TestimonialsA, TestimonialsB } from "./sections/Testimonials.jsx";
+
+// DnD Kit imports
+import { DndContext, closestCenter,  PointerSensor,  useSensor,  useSensors,} from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove,} from "@dnd-kit/sortable";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { CSS } from "@dnd-kit/utilities";
+
+// UI components
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+
+
+
+// --- URL state encoding helpers (safe base64, no deps) ---
+function encodeState(obj) {
+  const json = JSON.stringify(obj);
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+  // URL-safe base64 (no + / or trailing =)
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function decodeState(s) {
+  try {
+    // restore padding & chars
+    s = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    const json = decodeURIComponent(escape(atob(s)));
+    return JSON.parse(json);
+  } catch (e) {
+    console.warn("Failed to decode state from URL:", e);
+    return null;
+  }
+}
+
+/* ---------- Registry (we’ll add more types later) ---------- */
+const SECTIONS = {
+  hero: {
+    label: "Hero",
+    variants: [HeroA, HeroB, HeroC],
+    labels: ["Hero A", "Hero B", "Hero C"],
+  },
+  pricing: {
+    label: "Pricing",
+    variants: [PricingA, PricingB],
+    labels: ["Pricing A", "Pricing B"],
+  },
+  testimonials: {
+    label: "Testimonials",
+    variants: [TestimonialsA, TestimonialsB],
+    labels: ["Testimonials A", "Testimonials B"],
+  },
+};
+
+// id helper
+const uid = () =>
+  (crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)) + Date.now();
+
+/* ---------- Variant Dock (Tailwind-only) ---------- */
+function VariantDock({ open, type, currentVariant, onPick, onClose }) {
+  const entry = SECTIONS[type]
+  if (!entry) return null
+
+  const { variants, labels } = entry
+  const safeIndex = Math.min(Math.max(0, currentVariant ?? 0), variants.length - 1)
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+      <DialogContent
+        className="fixed right-4 top-24 z-[2147483647] w-80 max-h-[75vh] p-0 overflow-hidden rounded-2xl border bg-white shadow-xl"
+        showClose={false}
+      >
+        <DialogHeader className="px-3 py-2">
+          <DialogTitle className="text-sm font-semibold">
+            Choose {entry.label} Variant
+          </DialogTitle>
+        </DialogHeader>
+        <Separator />
+        <ScrollArea className="h-[calc(75vh-5rem)] p-3">
+          <div className="space-y-3">
+            {variants.map((Comp, i) => (
+              <div
+                key={i}
+                role="button"
+                tabIndex={0}
+                onClick={() => { onPick(i); onClose() }}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (onPick(i), onClose())}
+                className={[
+                  "w-full overflow-hidden rounded-xl border bg-white text-left outline-none transition",
+                  i === safeIndex ? "ring-2 ring-blue-500" : "hover:bg-gray-50",
+                ].join(" ")}
+              >
+                <div className="px-3 pt-2 text-xs font-medium text-gray-700">
+                  {labels?.[i] ?? `Variant ${i + 1}`}
+                </div>
+                <div className="pointer-events-none origin-top-left scale-75 p-2">
+                  <Comp />
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+        <div className="border-t p-2 flex justify-end">
+          <DialogClose asChild>
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Close
+            </Button>
+          </DialogClose>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function SortableBlock({ id, type, variant, onRemove, onVariantPick }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = { transform: CSS.Transform.toString(transform), transition }
+
+  const entry = SECTIONS[type]
+  if (!entry) {
+    // Unknown section type: show a safe placeholder so the app doesn't crash
+    return (
+      <div ref={setNodeRef} style={style} className="rounded-2xl bg-white shadow-sm ring-1 ring-red-300">
+        <div className="flex items-center justify-between border-b px-3 py-2">
+          <div className="text-sm font-medium text-red-600">Unknown section type: “{type}”</div>
+          <Button variant="ghost" size="sm" className="text-red-600" onClick={() => onRemove(id)}>
+            Delete
+          </Button>
+        </div>
+        <div className="p-4 text-sm text-gray-600">
+          This block came from an older preset. Delete it and re-add.
+        </div>
+      </div>
+    )
+  }
+
+  const variants = Array.isArray(entry.variants) ? entry.variants : []
+  const labels = entry.labels || entry.variantLabels || [] // support both keys
+
+  // Clamp the variant index to a safe value
+  const safeIndex = Math.min(
+    Math.max(0, Number.isInteger(variant) ? variant : 0),
+    Math.max(0, variants.length - 1)
+  )
+
+  const Comp = variants[safeIndex] || (() => (
+    <div className="rounded border p-4 text-sm text-gray-600">Missing variant #{safeIndex + 1}</div>
+  ))
+
+  const headerLabel = `${entry.label} — ${labels[safeIndex] ?? `Variant ${safeIndex + 1}`}`
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={[
+        "rounded-2xl bg-white shadow-sm ring-1 ring-gray-200",
+        isDragging ? "opacity-75" : "",
+      ].join(" ")}
+    >
+      <div className="flex items-center justify-between border-b px-3 py-2">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <span
+            {...attributes}
+            {...listeners}
+            className="cursor-grab rounded-md px-2 py-1 hover:bg-gray-100 active:cursor-grabbing"
+            title="Drag to reorder"
+            aria-label="Drag to reorder"
+          >
+            ⠿
+          </span>
+          <span className="font-medium text-gray-700">{headerLabel}</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Popover anchored to the button (best UX) */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-blue-600">
+                Change variant
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" side="bottom" sideOffset={8} className="w-80 p-0 rounded-2xl shadow-lg">
+              <div className="px-3 py-2">
+                <div className="text-sm font-semibold">Choose {entry.label} Variant</div>
+              </div>
+              <Separator />
+              <ScrollArea className="max-h-[60vh] p-3">
+                <div className="space-y-3">
+                  {variants.map((Preview, i) => (
+                    <div
+                      key={i}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => onVariantPick(id, i)}
+                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onVariantPick(id, i)}
+                      className={[
+                        "w-full overflow-hidden rounded-xl border bg-white text-left transition",
+                        i === safeIndex ? "ring-2 ring-blue-500" : "hover:bg-gray-50",
+                      ].join(" ")}
+                    >
+                      <div className="px-3 pt-2 text-xs font-medium text-gray-700">
+                        {labels[i] ?? `Variant ${i + 1}`}
+                      </div>
+                      <div className="pointer-events-none origin-top-left scale-75 p-2">
+                        <Preview />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
+
+          <Button variant="ghost" size="sm" className="text-red-600" onClick={() => onRemove(id)}>
+            Delete
+          </Button>
+        </div>
+      </div>
+
+      <div className="p-4">
+        <Comp />
+      </div>
+    </div>
+  )
+}
+
+/* ---------- App (multiple blocks, no DnD yet) ---------- */
+export default function App() {
+  // Store a list of blocks: { id, type, variant }
+  const [blocks, setBlocks] = useState([
+    { id: uid(), type: "hero", variant: 0 }, // start with one hero
+  ]);
+
+    // Which block (by id) has its VariantDock open
+  const [dockBlockId, setDockBlockId] = useState(null);
+
+  const addBlock = (type, variant = 0) =>
+    setBlocks((arr) => [...arr, { id: uid(), type, variant }]);
+
+  const removeBlock = (id) =>
+    setBlocks((arr) => arr.filter((b) => b.id !== id));
+
+  const setVariant = (id, variantIndex) =>
+    setBlocks((arr) =>
+      arr.map((b) => (b.id === id ? { ...b, variant: variantIndex } : b))
+    );
+
+  const active = blocks.find((b) => b.id === dockBlockId) || null;
+  const [toast, setToast] = useState(null);
+// Drag sensors (small movement threshold prevents accidental drags)
+const sensors = useSensors(
+  useSensor(PointerSensor, {
+    activationConstraint: { distance: 6 },
+  })
+);
+
+// Reorder on drop
+const onDragEnd = (event) => {
+  const { active, over } = event;
+  if (!over || active.id === over.id) return;
+
+  const oldIndex = blocks.findIndex((b) => b.id === active.id);
+  const newIndex = blocks.findIndex((b) => b.id === over.id);
+
+  setBlocks((arr) => arrayMove(arr, oldIndex, newIndex));
+};
+  useEffect(() => {
+  const hash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+  if (!hash) return;
+  const loaded = decodeState(hash);
+  if (Array.isArray(loaded)) setBlocks(loaded);
+}, []);
+
+const share = async () => {
+  const payload = encodeState(blocks);              // blocks = your page state
+  const url = `${location.origin}${location.pathname}#${payload}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    setToast("Share link copied to clipboard");
+  } catch {
+    setToast("Copy failed — URL placed in address bar");
+  }
+  history.replaceState(null, "", `#${payload}`);
+  setTimeout(() => setToast(null), 2000);
+};
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <h1 className="text-base font-semibold tracking-tight text-gray-900">
+            LP Builder — Multiple Blocks
+          </h1>
+
+          <div className="flex items-center gap-2">
+            {/* Add buttons (we only have Hero variants for now) */}
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={share}>
+  Share
+</Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main layout with sidebar */}
+      <div className="mx-auto grid max-w-6xl grid-cols-12 gap-6 px-4 py-6">
+        {/* Sidebar (reserved for future: categories, search, etc.) */}
+        <aside className="col-span-12 lg:col-span-3">
+          <div className="rounded-2xl border bg-white p-4">
+            <div className="mb-3 text-sm font-semibold text-gray-700">Sections</div>
+            <div className="space-y-2">
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => addBlock("hero", 0)}
+                >
+                  ➕ Hero
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => addBlock("pricing", 0)}
+                  
+                >
+                  ➕ Pricing
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => addBlock("testimonials", 0)}
+                  
+                >
+                  ➕ Testimonials
+                </Button>
+              </div>
+              {/* When you add Pricing/Testimonials, add their buttons here */}
+            </div>
+          </div>
+        </aside>
+
+        {/* Canvas */}
+        <main className="col-span-12 lg:col-span-9">
+          <div className="space-y-4">
+            {blocks.length === 0 ? (
+  <div className="rounded-2xl border border-dashed p-10 text-center text-gray-500">
+    No sections yet. Use the buttons on the left to add some 👈
+  </div>
+) : (
+  <DndContext
+    collisionDetection={closestCenter}
+    sensors={sensors}
+    modifiers={[restrictToVerticalAxis]}
+    onDragEnd={onDragEnd}
+  >
+    <SortableContext
+      items={blocks.map((b) => b.id)}
+      strategy={verticalListSortingStrategy}
+    >
+      <div className="space-y-4">
+        {blocks.map(({ id, type, variant }) => (
+  <SortableBlock
+    key={id}
+    id={id}
+    type={type}
+    variant={variant ?? 0}
+    onRemove={removeBlock}
+    onVariantPick={setVariant}
+  />
+))}
+      </div>
+    </SortableContext>
+  </DndContext>
+)}
+          </div>
+          {toast && (
+        <div className="fixed bottom-4 right-4 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg">
+          {toast}
+  </div>
+)}
+        </main>
+      </div>
+
+      {/* Variant Dock (opens for the clicked block) */}
+      {active && (
+        <VariantDock
+          open={!!active}
+          type={active?.type}
+          currentVariant={active?.variant ?? 0}
+          onPick={(v) => setVariant(active.id, v)}
+          onClose={() => setDockBlockId(null)}
+        />
+      )}
+    </div>
+  );
+}
