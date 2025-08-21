@@ -1,0 +1,48 @@
+/* src/styles/tokens.css */
+/* Base (Theme.Colors) */
+:root {
+  --colors-background: #ffffff;
+  --colors-foreground: #18181b;
+  --colors-muted-foreground: #71717a;
+  --colors-alt-background: #f6f6f6;
+  --colors-alt-foreground: #18181b;
+  --colors-primary: #000000;
+  --colors-primary-foreground: #ffffff;
+  --colors-border: #e4e4e7;
+}
+
+/* Hero (inherits Theme.Colors via references in your JSON) */
+:root {
+  --hero-colors-background: var(--colors-background);
+  --hero-colors-foreground: var(--colors-foreground);
+  --hero-colors-border: var(--colors-border);
+  --hero-colors-primary: var(--colors-primary);
+  --hero-colors-primary-foreground: var(--colors-primary-foreground);
+  --hero-colors-alt-background: var(--colors-alt-background);
+  --hero-colors-alt-foreground: var(--colors-alt-foreground);
+  --hero-colors-secondary: var(--colors-secondary, #18181b); /* fallback if you add later */
+}
+
+/* PP */
+:root {
+  --pp-colors-background: var(--colors-background);
+  --pp-colors-foreground: var(--colors-foreground);
+  --pp-colors-border: var(--colors-border);
+  --pp-colors-primary: var(--colors-primary);
+  --pp-colors-primary-foreground: var(--colors-primary-foreground);
+  --pp-colors-alt-background: var(--colors-alt-background);
+  --pp-colors-alt-foreground: var(--colors-alt-foreground);
+  --pp-colors-secondary: var(--colors-secondary, #18181b);
+}
+
+/* EB */
+:root {
+  --eb-colors-background: var(--colors-background);
+  --eb-colors-foreground: var(--colors-foreground);
+  --eb-colors-border: var(--colors-border);
+  --eb-colors-primary: var(--colors-primary);
+  --eb-colors-primary-foreground: var(--colors-primary-foreground);
+  --eb-colors-alt-background: var(--colors-alt-background);
+  --eb-colors-alt-foreground: var(--colors-alt-foreground);
+  --eb-colors-secondary: var(--colors-secondary, #18181b);
+}
