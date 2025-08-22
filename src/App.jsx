@@ -40,6 +40,11 @@ const pruneControls = (controls = {}, partsList) => {
   );
 };
 
+const pruneCopy = (copyValues = {}, copyParts = []) => {
+  const allow = new Set(copyParts.map((p) => p.id));
+  return Object.fromEntries(Object.entries(copyValues).filter(([k]) => allow.has(k)));
+};
+
 
 
 // --- URL state encoding helpers (safe base64, no deps) ---
@@ -157,13 +162,17 @@ function SortableBlock({
   type,
   variant,
   controls,
-  parts,                 // <--- use parts from App
-  onPartsDiscovered,     // <--- handler from App
+  copyValues,
+  parts,                 
+  onPartsDiscovered,
+  onCopyDiscovered,     
   onTogglePart,
+  onCopyChange,
   onRemove,
   onVariantPick,
 }) {
-  // ⬅️ THIS LINE defines setNodeRef (and friends)
+const [copyParts, setCopyParts] = useState([]); // [{id,label,defaultText,maxChars}]
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id });
 
@@ -190,19 +199,12 @@ function SortableBlock({
   const targetWidth = Math.max(320, Math.min(1440, contentWidth || 0));
 
 
-
-
-
-  const onDiscover = useCallback(
-    (found) => {
-      setParts(found);
-      onPartsDiscovered?.(id, found);  // <-- tell parent; no setBlocks here
-    },
-    [id, onPartsDiscovered]
-  );
-
-
-
+  
+  const listParts = Array.isArray(parts)
+    ? parts
+    : parts && typeof parts === "object"
+      ? Object.values(parts)
+      : [];
   return (
     <div
       ref={setNodeRef}                // ⬅️ uses setNodeRef from useSortable
@@ -230,59 +232,62 @@ function SortableBlock({
         <div className="flex items-center gap-2">
           {/* Change variant */}
           <Popover>
-  <PopoverTrigger asChild>
-    <Button variant="ghost" size="sm" className="text-blue-600">
-      Change variant
-    </Button>
-  </PopoverTrigger>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-blue-600">
+                Change variant
+              </Button>
+            </PopoverTrigger>
 
-  {/* 1) Clamp the popover size + hide overflow */}
-  <PopoverContent
-  align="end"
-  side="bottom"
-  sideOffset={8}
-  className="w-full p-0 overflow-hidden rounded-2xl shadow-lg box-border"
->
-  <div className="px-3 py-2">
-    <div className="text-sm font-semibold">Choose {entry.label} Variant</div>
-  </div>
-  <Separator />
+            {/* 1) Clamp the popover size + hide overflow */}
+            <PopoverContent
+              align="end"
+              side="bottom"
+              sideOffset={8}
+              className="w-full p-0 overflow-hidden rounded-2xl shadow-lg box-border"
+            >
+              <div className="px-3 py-2">
+                <div className="text-sm font-semibold">Choose {entry.label} Variant</div>
+              </div>
+              <Separator />
 
-  {/* 👇 fixed height + overflow-y-auto makes it scroll */}
- <ScrollArea className="h-[60vh]  bg-white box-border ">
-    <div className="space-y-6 p-6 box-border" >
-      {variants.map((Preview, i) => (
-        <div
-          key={i}
-          role="button"
-          tabIndex={0}
-          onClick={() => onVariantPick(id, i)}
-          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onVariantPick(id, i)}
-          className={[
-            "w-full max-w-full overflow-hidden rounded-xl border bg-white text-left transition",
-            i === safeIndex ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-white" : "hover:bg-gray-50",
-          ].join(" ")}
-        >
-          <div className="px-3 pt-2 text-xs font-medium text-gray-700">
-            {labels[i] ?? `Variant ${i + 1}`}
-          </div>
+              {/* 👇 fixed height + overflow-y-auto makes it scroll */}
+              <ScrollArea className="h-[60vh]  bg-white box-border ">
+                <div className="space-y-6 p-6 box-border" >
+                  {variants.map((Preview, i) => (
+                    <div
+                      key={i}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => onVariantPick(id, i)}
+                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onVariantPick(id, i)}
+                      className={[
+                        "w-full max-w-full overflow-hidden rounded-xl border bg-white text-left transition",
+                        i === safeIndex ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-white" : "hover:bg-gray-50",
+                      ].join(" ")}
+                    >
+                      <div className="px-3 pt-2 text-xs font-medium text-gray-700">
+                        {labels[i] ?? `Variant ${i + 1}`}
+                      </div>
 
-          {/* Keep the preview comfortably inside the popover */}
-          <div className="p-2">
-            <div className="overflow-hidden rounded-lg">
-              <AutoScaler designWidth={1440} targetWidth={280} maxHeight={520}>
-                <EditableSection controls={controls}>
-                  <Preview />
-                </EditableSection>
-              </AutoScaler>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  </ScrollArea>
-</PopoverContent>
-</Popover>
+                      {/* Keep the preview comfortably inside the popover */}
+                      <div className="p-2">
+                        <div className="overflow-hidden rounded-lg">
+                          <AutoScaler designWidth={1440} targetWidth={280} maxHeight={520}>
+                            <EditableSection 
+                            discoverKey={`${type}:${i}`}
+  controls={controls}
+  copyValues={copyValues}>
+                              <Preview />
+                            </EditableSection>
+                          </AutoScaler>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
           {/* Edit variant */}
           <Popover>
             <PopoverTrigger asChild>
@@ -298,11 +303,13 @@ function SortableBlock({
               </div>
               <Separator />
               <ScrollArea className="max-h-[60vh] p-3">
+                <div className="px-1 pb-2">
+                <div className="text-xs font-semibold text-gray-500 mb-2">Optional Sections</div>
                 <div className="space-y-2">
-                  {parts.length === 0 ? (
+                  {listParts.length === 0 ? (
                     <div className="text-xs text-gray-500">No editable parts found in this section.</div>
                   ) : (
-                    parts.map((p) => {
+                    listParts.map((p) => {
                       const current = controls[p.id];                 // boolean | undefined
                       const checked = current !== undefined ? current : p.visible;
 
@@ -323,11 +330,40 @@ function SortableBlock({
                             onCheckedChange={(v) => onTogglePart(p.id, v)}
                             className="pointer-events-none h-4 w-7"
                           />
+                          
                         </div>
                       );
                     })
                   )}
                 </div>
+                </div>
+                <Separator className="my-3" />
+                {/* Copy edits */}
+                          <div className="mt-3 space-y-3">
+                            {copyParts.length === 0 ? (
+                              <div className="text-xs text-gray-500">No copy-editable parts in this section.</div>
+                            ) : (
+                              copyParts.map((p) => {
+                                const current = (copyValues && typeof copyValues[p.id] === "string") ? copyValues[p.id] : p.defaultText;
+                                const max = p.maxChars || 120; // default limit if not provided
+
+                                return (
+                                  <div key={p.id} className="space-y-1">
+                                    <label className="block text-xs font-medium text-gray-600">{p.label}</label>
+                                    <input
+                                      type="text"
+                                      value={current}
+                                      maxLength={max}
+                                      onChange={(e) => onCopyChange(p.id, e.target.value)}
+                                      className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                      placeholder={`Up to ${max} characters`}
+                                    />
+                                    <div className="text-right text-[11px] text-gray-400">{current.length}/{max}</div>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
               </ScrollArea>
             </PopoverContent>
           </Popover>
@@ -346,7 +382,13 @@ function SortableBlock({
       {/* Canvas content */}
       <div ref={contentRef}>
         <AutoScaler designWidth={1440} targetWidth={targetWidth} maxHeight={9999}>
-          <EditableSection id={id} controls={controls} onPartsDiscovered={(found) => onPartsDiscovered && onPartsDiscovered(found)}>
+          <EditableSection
+          discoverKey={`${type}:${safeIndex}`}         // re-scan when variant changes
+  controls={controls}
+  copyValues={copyValues}
+  onPartsDiscovered={(found) => onPartsDiscovered?.(id, found)}
+  onCopyDiscovered={(found) => setCopyParts(found)}  // keep copy parts locally
+          >
             <Comp />
           </EditableSection>
         </AutoScaler>
@@ -354,18 +396,19 @@ function SortableBlock({
     </div>
   );
 }
-/* ---------- App (multiple blocks, no DnD yet) ---------- */
+
+
 export default function App() {
   // Store a list of blocks: { id, type, variant }
   const [blocks, setBlocks] = useState([
-    { id: uid(), type: "hero", variant: 0, controls: {} },
+    { id: uid(), type: "hero", variant: 0, controls: {}, copy: {} },
   ]);
 
   // Which block (by id) has its VariantDock open
   const [dockBlockId, setDockBlockId] = useState(null);
 
   const addBlock = (type, variant = 0) =>
-    setBlocks((arr) => [...arr, { id: uid(), type, variant, controls: {} }]);
+    setBlocks((arr) => [...arr, { id: uid(), type, variant, controls: {}, copy: {} }]);
 
   const removeBlock = (id) =>
     setBlocks((arr) => arr.filter((b) => b.id !== id));
@@ -383,21 +426,31 @@ export default function App() {
       activationConstraint: { distance: 6 },
     })
   );
+/* ---------- App (multiple blocks, no DnD yet) ---------- */
+// Keep track of discovered editable parts per block
+const [partsByBlock, setPartsByBlock] = useState({});
 
-  // Prune controls whenever a block reports its editable parts
-  const [partsByBlock, setPartsByBlock] = useState({});
+// When a block reports its parts, store them and prune stale control keys
+const handlePartsDiscovered = useCallback((blockId, foundParts) => {
+  const arr = Array.isArray(foundParts)
+    ? foundParts
+    : foundParts && typeof foundParts === "object"
+      ? Object.values(foundParts)
+      : [];
 
-  const handlePartsDiscovered = useCallback((blockId, parts) => {
-    // store parts for this block (for the Edit dock UI)
-    setPartsById((prev) => ({ ...prev, [blockId]: parts }));
-    // prune controls so we only keep keys that still exist
-    setBlocks((arr) =>
-      arr.map((b) =>
-        b.id === blockId ? { ...b, controls: pruneControls(b.controls || {}, parts) } : b
-      )
-    );
-  }, []);
+  // 1) save parts for this block (so the Edit dock can render switches)
+  setPartsByBlock(prev => ({ ...prev, [blockId]: arr }));
 
+  // 2) prune controls in blocks so only valid keys remain
+  setBlocks(prev =>
+    prev.map(b =>
+      b.id === blockId
+        ? { ...b, controls: pruneControls(b.controls || {}, arr) }
+        : b
+    )
+  );
+}, []);
+ 
 
 
   // Reorder on drop
@@ -420,7 +473,8 @@ export default function App() {
           id: b.id,
           type: b.type,
           variant: Number.isInteger(b.variant) ? b.variant : 0,
-          controls: b.controls || {},            // <-- ensure present
+          controls: b.controls || {},
+          copy: b.copy || {},
         }))
       );
     }
@@ -529,29 +583,26 @@ export default function App() {
                         type={b.type}
                         variant={b.variant ?? 0}
                         controls={b.controls || {}}
-
-
+                        copyValues={b.copy || {}}
                         parts={partsByBlock[b.id] || []}
-
-
-                        onPartsDiscovered={(found) => {
-                          const safe = Array.isArray(found) ? found : [];
-
-                          setPartsByBlock((prev) => ({ ...prev, [b.id]: safe }));
-
-                          setBlocks((arr) =>
-                            arr.map((x) =>
-                              x.id === b.id ? { ...x, controls: pruneControls(x.controls, safe) } : x
-                            )
-                          );
-                        }}
-
+  onPartsDiscovered={handlePartsDiscovered}
+                        onCopyDiscovered={(found) => handleCopyDiscovered(b.id, found)}
 
                         onTogglePart={(partId, nextVisible) => {
                           setBlocks((arr) =>
                             arr.map((x) =>
                               x.id === b.id
                                 ? { ...x, controls: { ...(x.controls || {}), [partId]: !!nextVisible } }
+                                : x
+                            )
+                          );
+                        }}
+
+                        onCopyChange={(partId, text) => {
+                          setBlocks(arr =>
+                            arr.map(x =>
+                              x.id === b.id
+                                ? { ...x, copy: { ...(x.copy || {}), [partId]: text } }
                                 : x
                             )
                           );

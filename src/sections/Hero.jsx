@@ -11,7 +11,7 @@ export function HeroA() {
           <div className="w-full flex flex-col gap-8">
             {/* Headline + payout */}
             <div className="flex flex-col gap-6">
-              <h1 className="text-Hero-Colors-foreground text-4xl font-bold leading-[48px]">
+              <h1 data-copy="yes" data-label="Hero Headline" data-maxchars="60" className="text-Hero-Colors-foreground text-4xl font-bold leading-[48px]">
                 A simple but powerful headline that sells!
               </h1>
 
@@ -103,8 +103,9 @@ export function HeroA() {
         >
           <h2
             data-display="yes"
-            data-label="Price Point Title"
+           
             className="text-Colors-foreground text-2xl font-bold text-center"
+            data-copy="yes" data-label="Price Points Headline" data-maxchars="60"
           >
             Buy your tickets today!
           </h2>
@@ -200,7 +201,7 @@ export function HeroB() {
           <div className="w-full inline-flex flex-col justify-start items-center gap-11">
             <div className="self-stretch flex flex-col justify-start items-center gap-6">
               <div className="self-stretch flex flex-col justify-start items-center gap-2">
-                <div className="self-stretch text-center justify-center text-Hero-Colors-foreground text-4xl font-bold font-['Inter'] leading-[48px]">A simple but powerful headline that sells!</div>
+                <div data-copy="yes" data-label="Hero Headline" data-maxchars="60" className="self-stretch text-center justify-center text-Hero-Colors-foreground text-4xl font-bold font-['Inter'] leading-[48px]">A simple but powerful headline that sells!</div>
               </div>
             </div>
             <div className="flex flex-col justify-center items-center">
@@ -246,7 +247,7 @@ export function HeroB() {
 
         </div>
         <div data-display="yes" data-label="Price Points" data-item-1="true" data-item-2="true" data-item-3="true" data-item-4="true" data-item-5="false" data-mobile="no" data-show-image="No" data-show-title="true" data-type="horizontal" className="w-full max-w-[1280px] rounded-lg flex flex-col justify-start items-center gap-8">
-          <div data-display="yes" data-label="Price Point Title" className="self-stretch text-center justify-start text-Colors-foreground text-2xl font-bold font-['Inter']">Buy your tickets today!</div>
+          <div data-copy="yes" data-label="Price Points Headline" data-maxchars="60" data-display="yes" className="self-stretch text-center justify-start text-Colors-foreground text-2xl font-bold font-['Inter']">Buy your tickets today!</div>
           <div className="self-stretch inline-flex justify-start items-center gap-4">
             <div data-badge="true" data-has-image="No" data-highligthed="yes" data-mobile="no" data-selected="yes" data-ticket-label="true" className="flex-1 h-64 p-5 relative bg-PP-Colors-alt-background rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8">
               <div data-state="Default" data-variant="Default" className="px-2.5 py-0.5 left-[113.50px] top-[-10px] absolute bg-PP-Colors-alt-foreground rounded-lg inline-flex justify-center items-center gap-2.5">
