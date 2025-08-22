@@ -3,7 +3,7 @@ import { ArrowRight, Plus, Minus, ShoppingCart } from "lucide-react";
 /* Simple hero variants; include a <button> inside to prove dock handles nested buttons */
 export function HeroA() {
   return (
-    <section className="rounded-xl border p-6">
+    <section className="rounded-xl border p-6 bg-Hero-Colors-background" >
       <div className="w-[1440px] mx-auto py-24 bg-Hero-Colors-background flex flex-col items-center gap-12 overflow-hidden">
         {/* Top row */}
         <div className="w-full max-w-[1280px] grid grid-cols-2 items-center gap-16">
@@ -103,9 +103,9 @@ export function HeroA() {
         >
           <h2
             data-display="yes"
-           
+            
             className="text-Colors-foreground text-2xl font-bold text-center"
-            data-copy="yes" data-label="Price Points Headline" data-maxchars="60"
+            data-copy="yes" data-label="Price Points Headline" data-max-chars="130"
           >
             Buy your tickets today!
           </h2>
@@ -247,7 +247,7 @@ export function HeroB() {
 
         </div>
         <div data-display="yes" data-label="Price Points" data-item-1="true" data-item-2="true" data-item-3="true" data-item-4="true" data-item-5="false" data-mobile="no" data-show-image="No" data-show-title="true" data-type="horizontal" className="w-full max-w-[1280px] rounded-lg flex flex-col justify-start items-center gap-8">
-          <div data-copy="yes" data-label="Price Points Headline" data-maxchars="60" data-display="yes" className="self-stretch text-center justify-start text-Colors-foreground text-2xl font-bold font-['Inter']">Buy your tickets today!</div>
+          <div data-copy="yes" data-label="Price Points Headline" data-max-chars="130" data-display="yes" className="self-stretch text-center justify-start text-Colors-foreground text-2xl font-bold font-['Inter']">Buy your tickets today!</div>
           <div className="self-stretch inline-flex justify-start items-center gap-4">
             <div data-badge="true" data-has-image="No" data-highligthed="yes" data-mobile="no" data-selected="yes" data-ticket-label="true" className="flex-1 h-64 p-5 relative bg-PP-Colors-alt-background rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8">
               <div data-state="Default" data-variant="Default" className="px-2.5 py-0.5 left-[113.50px] top-[-10px] absolute bg-PP-Colors-alt-foreground rounded-lg inline-flex justify-center items-center gap-2.5">

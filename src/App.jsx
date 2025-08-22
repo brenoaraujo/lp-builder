@@ -46,7 +46,6 @@ const pruneCopy = (copyValues = {}, copyParts = []) => {
 };
 
 
-
 // --- URL state encoding helpers (safe base64, no deps) ---
 function encodeState(obj) {
   const json = JSON.stringify(obj);
@@ -163,15 +162,15 @@ function SortableBlock({
   variant,
   controls,
   copyValues,
-  parts,                 
+  parts,
   onPartsDiscovered,
-  onCopyDiscovered,     
+  onCopyDiscovered,
   onTogglePart,
   onCopyChange,
   onRemove,
   onVariantPick,
 }) {
-const [copyParts, setCopyParts] = useState([]); // [{id,label,defaultText,maxChars}]
+  const [copyParts, setCopyParts] = useState([]); // [{id,label,defaultText,maxChars}]
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id });
@@ -199,7 +198,7 @@ const [copyParts, setCopyParts] = useState([]); // [{id,label,defaultText,maxCha
   const targetWidth = Math.max(320, Math.min(1440, contentWidth || 0));
 
 
-  
+
   const listParts = Array.isArray(parts)
     ? parts
     : parts && typeof parts === "object"
@@ -273,10 +272,10 @@ const [copyParts, setCopyParts] = useState([]); // [{id,label,defaultText,maxCha
                       <div className="p-2">
                         <div className="overflow-hidden rounded-lg">
                           <AutoScaler designWidth={1440} targetWidth={280} maxHeight={520}>
-                            <EditableSection 
-                            discoverKey={`${type}:${i}`}
-  controls={controls}
-  copyValues={copyValues}>
+                            <EditableSection
+                              discoverKey={`${type}:${i}`}
+                              controls={controls}
+                              copyValues={copyValues}>
                               <Preview />
                             </EditableSection>
                           </AutoScaler>
@@ -303,67 +302,67 @@ const [copyParts, setCopyParts] = useState([]); // [{id,label,defaultText,maxCha
               </div>
               <Separator />
               <ScrollArea className="max-h-[60vh] p-3">
-                <div className="px-1 pb-2">
-                <div className="text-xs font-semibold text-gray-500 mb-2">Optional Sections</div>
-                <div className="space-y-2">
-                  {listParts.length === 0 ? (
-                    <div className="text-xs text-gray-500">No editable parts found in this section.</div>
+                <div className="p-2">
+                  <div className="text-xs font-semibold text-gray-500 mb-2">Optional Sections</div>
+                  <div className="space-y-2">
+                    {listParts.length === 0 ? (
+                      <div className="text-xs text-gray-500">No editable parts found in this section.</div>
+                    ) : (
+                      listParts.map((p) => {
+                        const current = controls[p.id];                 // boolean | undefined
+                        const checked = current !== undefined ? current : p.visible;
+
+                        return (
+                          <div
+                            key={p.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => onTogglePart(p.id, !checked)}
+                            onKeyDown={(e) =>
+                              (e.key === "Enter" || e.key === " ") && onTogglePart(p.id, !checked)
+                            }
+                            className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
+                          >
+                            <span className="truncate">{p.label}</span>
+                            <Switch
+                              checked={checked}
+                              onCheckedChange={(v) => onTogglePart(p.id, v)}
+                              className="pointer-events-none h-4 w-7"
+                            />
+
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+                <Separator className="my-3" />
+                {/* Copy edits */}
+                <div className="p-2">
+                  {copyParts.length === 0 ? (
+                    <div className="text-xs text-gray-500">No copy-editable parts in this section.</div>
                   ) : (
-                    listParts.map((p) => {
-                      const current = controls[p.id];                 // boolean | undefined
-                      const checked = current !== undefined ? current : p.visible;
+                    copyParts.map((p) => {
+                      const current = (copyValues && typeof copyValues[p.id] === "string") ? copyValues[p.id] : p.defaultText;
+                      const max = p.maxChars || 120; // default limit if not provided
 
                       return (
-                        <div
-                          key={p.id}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => onTogglePart(p.id, !checked)}
-                          onKeyDown={(e) =>
-                            (e.key === "Enter" || e.key === " ") && onTogglePart(p.id, !checked)
-                          }
-                          className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
-                        >
-                          <span className="truncate">{p.label}</span>
-                          <Switch
-                            checked={checked}
-                            onCheckedChange={(v) => onTogglePart(p.id, v)}
-                            className="pointer-events-none h-4 w-7"
+                        <div key={p.id} className="space-y-1">
+                          <label className="block text-xs font-medium text-gray-600">{p.label}</label>
+                          <input
+                            type="text"
+                            value={current}
+                            maxLength={max}
+                            onChange={(e) => onCopyChange(p.id, e.target.value)}
+                            className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder={`Up to ${max} characters`}
                           />
-                          
+                          <div className="text-right text-[11px] text-gray-400">{current.length}/{max}</div>
                         </div>
                       );
                     })
                   )}
                 </div>
-                </div>
-                <Separator className="my-3" />
-                {/* Copy edits */}
-                          <div className="mt-3 space-y-3">
-                            {copyParts.length === 0 ? (
-                              <div className="text-xs text-gray-500">No copy-editable parts in this section.</div>
-                            ) : (
-                              copyParts.map((p) => {
-                                const current = (copyValues && typeof copyValues[p.id] === "string") ? copyValues[p.id] : p.defaultText;
-                                const max = p.maxChars || 120; // default limit if not provided
-
-                                return (
-                                  <div key={p.id} className="space-y-1">
-                                    <label className="block text-xs font-medium text-gray-600">{p.label}</label>
-                                    <input
-                                      type="text"
-                                      value={current}
-                                      maxLength={max}
-                                      onChange={(e) => onCopyChange(p.id, e.target.value)}
-                                      className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                                      placeholder={`Up to ${max} characters`}
-                                    />
-                                    <div className="text-right text-[11px] text-gray-400">{current.length}/{max}</div>
-                                  </div>
-                                );
-                              })
-                            )}
-                          </div>
               </ScrollArea>
             </PopoverContent>
           </Popover>
@@ -383,11 +382,11 @@ const [copyParts, setCopyParts] = useState([]); // [{id,label,defaultText,maxCha
       <div ref={contentRef}>
         <AutoScaler designWidth={1440} targetWidth={targetWidth} maxHeight={9999}>
           <EditableSection
-          discoverKey={`${type}:${safeIndex}`}         // re-scan when variant changes
-  controls={controls}
-  copyValues={copyValues}
-  onPartsDiscovered={(found) => onPartsDiscovered?.(id, found)}
-  onCopyDiscovered={(found) => setCopyParts(found)}  // keep copy parts locally
+            discoverKey={`${type}:${safeIndex}`}         // re-scan when variant changes
+            controls={controls}
+            copyValues={copyValues}
+            onPartsDiscovered={(found) => onPartsDiscovered?.(id, found)}
+            onCopyDiscovered={(found) => setCopyParts(found)}  // keep copy parts locally
           >
             <Comp />
           </EditableSection>
@@ -397,6 +396,24 @@ const [copyParts, setCopyParts] = useState([]); // [{id,label,defaultText,maxCha
   );
 }
 
+//theme
+function useTheme() {
+  const [theme, setTheme] = useState(() => {
+    // prefer saved theme, else OS preference
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') root.classList.add('dark');
+    else root.classList.remove('dark');
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  return { theme, setTheme };
+}
 
 export default function App() {
   // Store a list of blocks: { id, type, variant }
@@ -426,31 +443,47 @@ export default function App() {
       activationConstraint: { distance: 6 },
     })
   );
-/* ---------- App (multiple blocks, no DnD yet) ---------- */
-// Keep track of discovered editable parts per block
-const [partsByBlock, setPartsByBlock] = useState({});
+  /* ---------- App (multiple blocks, no DnD yet) ---------- */
+  // Keep track of discovered editable parts per block
+  const [partsByBlock, setPartsByBlock] = useState({});
 
-// When a block reports its parts, store them and prune stale control keys
-const handlePartsDiscovered = useCallback((blockId, foundParts) => {
-  const arr = Array.isArray(foundParts)
-    ? foundParts
-    : foundParts && typeof foundParts === "object"
-      ? Object.values(foundParts)
+  // When a block reports its parts, store them and prune stale control keys
+  const handlePartsDiscovered = useCallback((blockId, foundParts) => {
+    const arr = Array.isArray(foundParts)
+      ? foundParts
+      : foundParts && typeof foundParts === "object"
+        ? Object.values(foundParts)
+        : [];
+
+    // 1) save parts for this block (so the Edit dock can render switches)
+    setPartsByBlock(prev => ({ ...prev, [blockId]: arr }));
+
+    // 2) prune controls in blocks so only valid keys remain
+    setBlocks(prev =>
+      prev.map(b =>
+        b.id === blockId
+          ? { ...b, controls: pruneControls(b.controls || {}, arr) }
+          : b
+      )
+    );
+  }, []);
+
+  const handleCopyDiscovered = useCallback((blockId, foundCopyParts) => {
+  const arr = Array.isArray(foundCopyParts)
+    ? foundCopyParts
+    : foundCopyParts && typeof foundCopyParts === "object"
+      ? Object.values(foundCopyParts)
       : [];
 
-  // 1) save parts for this block (so the Edit dock can render switches)
-  setPartsByBlock(prev => ({ ...prev, [blockId]: arr }));
-
-  // 2) prune controls in blocks so only valid keys remain
-  setBlocks(prev =>
-    prev.map(b =>
+  setBlocks((prev) =>
+    prev.map((b) =>
       b.id === blockId
-        ? { ...b, controls: pruneControls(b.controls || {}, arr) }
+        ? { ...b, copy: pruneCopy(b.copy || {}, arr) }
         : b
     )
   );
 }, []);
- 
+
 
 
   // Reorder on drop
@@ -479,6 +512,13 @@ const handlePartsDiscovered = useCallback((blockId, foundParts) => {
       );
     }
   }, []);
+
+  useEffect(() => {
+  const payload = encodeState(blocks);
+  history.replaceState(null, "", `#${payload}`);
+}, [blocks]);
+
+
   const share = async () => {
     const payload = encodeState(blocks);              // blocks = your page state
     const url = `${location.origin}${location.pathname}#${payload}`;
@@ -492,6 +532,18 @@ const handlePartsDiscovered = useCallback((blockId, foundParts) => {
     setTimeout(() => setToast(null), 2000);
   };
 
+  const [theme, setTheme] = useState("light");
+
+// whenever theme changes, update <html> class
+useEffect(() => {
+  const root = document.documentElement;
+  if (theme === "dark") {
+    root.classList.add("dark");
+  } else {
+    root.classList.remove("dark");
+  }
+}, [theme]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -504,7 +556,14 @@ const handlePartsDiscovered = useCallback((blockId, foundParts) => {
           <div className="flex items-center gap-2">
             {/* Add buttons (we only have Hero variants for now) */}
             <div className="flex items-center gap-2">
-              <Button variant="outline" onClick={share}>
+              <Button
+          variant="outline"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className=" text-gray-500"
+        >
+          {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+        </Button>
+              <Button variant="outline" onClick={share} className="text-gray-500">
                 Share
               </Button>
             </div>
@@ -522,14 +581,14 @@ const handlePartsDiscovered = useCallback((blockId, foundParts) => {
               <div className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-gray-500"
                   onClick={() => addBlock("hero", 0)}
                 >
                   ➕ Hero
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-gray-500"
                   onClick={() => addBlock("pricing", 0)}
 
                 >
@@ -537,7 +596,7 @@ const handlePartsDiscovered = useCallback((blockId, foundParts) => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-gray-500"
                   onClick={() => addBlock("testimonials", 0)}
 
                 >
@@ -545,7 +604,7 @@ const handlePartsDiscovered = useCallback((blockId, foundParts) => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-gray-500"
                   onClick={() => addBlock("extraPrizes", 0)}
 
                 >
@@ -585,7 +644,7 @@ const handlePartsDiscovered = useCallback((blockId, foundParts) => {
                         controls={b.controls || {}}
                         copyValues={b.copy || {}}
                         parts={partsByBlock[b.id] || []}
-  onPartsDiscovered={handlePartsDiscovered}
+                        onPartsDiscovered={handlePartsDiscovered}
                         onCopyDiscovered={(found) => handleCopyDiscovered(b.id, found)}
 
                         onTogglePart={(partId, nextVisible) => {

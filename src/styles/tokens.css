@@ -46,3 +46,31 @@
   --eb-colors-alt-foreground: var(--colors-alt-foreground);
   --eb-colors-secondary: var(--colors-secondary, #18181b);
 }
+
+.dark {
+  --colors-background: #0b0b0f;
+  --colors-foreground: #f4f4f5;
+  --colors-muted-foreground: #a1a1aa;
+  --colors-alt-background: #121218;
+  --colors-alt-foreground: #f4f4f5;
+  --colors-primary: #f4f4f5;
+  --colors-primary-foreground: #0b0b0f;
+  --colors-border: #27272a;
+
+  /* Scoped inherit again (optional but explicit) */
+  --hero-colors-background: var(--colors-background);
+  --hero-colors-foreground: var(--colors-foreground);
+  --hero-colors-border: var(--colors-border);
+  --hero-colors-primary: var(--colors-primary);
+  --hero-colors-primary-foreground: var(--colors-primary-foreground);
+  --hero-colors-alt-background: var(--colors-alt-background);
+  --hero-colors-alt-foreground: var(--colors-alt-foreground);
+
+  --pp-colors-background: var(--colors-background);
+  --pp-colors-foreground: var(--colors-foreground);
+  --pp-colors-border: var(--colors-border);
+  --pp-colors-primary: var(--colors-primary);
+  --pp-colors-primary-foreground: var(--colors-primary-foreground);
+  --pp-colors-alt-background: var(--colors-alt-background);
+  --pp-colors-alt-foreground: var(--colors-alt-foreground);
+}

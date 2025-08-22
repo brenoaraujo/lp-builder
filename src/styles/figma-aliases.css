@@ -1,6 +1,7 @@
 @layer utilities {
   .bg-Hero-Colors-primary { background-color: var(--hero-colors-primary); }
   .text-Hero-Colors-primary-foreground { color: var(--hero-colors-primary-foreground); }
+  .bg-Hero-Colors-background{ background-color: var(--hero-colors-background); }
 
   .bg-PP-Colors-background { background-color: var(--pp-colors-background); }
   .text-PP-Colors-foreground { color: var(--pp-colors-foreground); }
@@ -22,6 +23,7 @@
     .bg-EB-Colors-secondary{ background-color: var(--eb-colors-secondary); }
     .bg-EB-Colors-primary{ background-color: var(--eb-colors-primary); }
     .bg-EB-Colors-alt-background{ background-color: var(--eb-colors-alt-background); }
+    
     
 
   

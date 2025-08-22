@@ -87,7 +87,7 @@ export default function EditableSection({
       const shouldShow = controls[id] !== undefined ? !!controls[id] : isDefault;
       el.style.display = shouldShow ? "" : "none";
     });
-  }, [controls]);
+  }, [controls, discoverKey]);
 
   // Apply copy values (optional – if you chose to wire it now)
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function EditableSection({
         el.textContent = copyValues[id];
       }
     });
-  }, [copyValues]);
+  }, [copyValues, discoverKey]);
 
   return <div ref={rootRef}>{children}</div>;
 }
