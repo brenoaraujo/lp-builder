@@ -91,7 +91,7 @@ export function HeroA() {
           <div
             data-portrait="No"
             data-ratio="5:4"
-            className="w-[560px] h-96 rounded-lg overflow-hidden bg-PP-Colors-alt-background"
+            className="w-[560px] h-96 rounded-lg overflow-hidden bg-Hero-Colors-muted-background"
           />
         </div>
 
@@ -195,9 +195,9 @@ export function HeroA() {
 
 export function HeroB() {
   return (
-    <section className="rounded-xl border p-6">
+    <section className="rounded-xl border p-6 bg-Hero-Colors-background" >
       <div className="w-[1440px] py-24 bg-Hero-Colors-background inline-flex flex-col justify-start items-center gap-12 overflow-hidden">
-        <div className="w-full h-[584px] max-w-[1280px] inline-flex justify-start items-center gap-16">
+        <div className="w-full max-w-[1280px] inline-flex justify-start items-center gap-16">
           <div className="w-full inline-flex flex-col justify-start items-center gap-11">
             <div className="self-stretch flex flex-col justify-start items-center gap-6">
               <div className="self-stretch flex flex-col justify-start items-center gap-2">

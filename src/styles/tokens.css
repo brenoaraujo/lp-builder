@@ -19,6 +19,7 @@
   --hero-colors-primary: var(--colors-primary);
   --hero-colors-primary-foreground: var(--colors-primary-foreground);
   --hero-colors-alt-background: var(--colors-alt-background);
+  --hero-colors-muted-foreground: var(--colors-muted-foreground);
   --hero-colors-alt-foreground: var(--colors-alt-foreground);
   --hero-colors-secondary: var(--colors-secondary, #18181b); /* fallback if you add later */
 }

@@ -1,7 +1,13 @@
 @layer utilities {
   .bg-Hero-Colors-primary { background-color: var(--hero-colors-primary); }
   .text-Hero-Colors-primary-foreground { color: var(--hero-colors-primary-foreground); }
+  .text-Hero-Colors-foreground { color: var(--hero-colors-foreground); }
   .bg-Hero-Colors-background{ background-color: var(--hero-colors-background); }
+  .bg-Hero-Colors-muted-background{ background-color: var(--hero-colors-muted-foreground); }
+  .text-Hero-Colors-primary { color: var(--hero-colors-primary); }
+  .text-Colors-muted-foreground { color: var(--hero-colors-muted-foreground); }
+  
+ 
 
   .bg-PP-Colors-background { background-color: var(--pp-colors-background); }
   .text-PP-Colors-foreground { color: var(--pp-colors-foreground); }

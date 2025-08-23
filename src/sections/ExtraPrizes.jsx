@@ -128,8 +128,8 @@ export function ExtraPrizesA() {
 
 export function ExtraPrizesB() {
   return (
-    <section className="rounded-xl border p-6">
-     <div data-mobile="No" data-show-action-button="true" data-show-counter="true" data-show-section-label="true" data-show-subtext="true" data-type="3-image" className="w-[1440px] py-24 bg-Colors-background inline-flex flex-col justify-start items-center gap-16 overflow-hidden">
+    
+    <div data-mobile="No" data-show-action-button="true" data-show-counter="true" data-show-section-label="true" data-show-subtext="true" data-type="3" className="w-full py-32  bg-Colors-background inline-flex flex-col justify-start h-auto items-center gap-16 overflow-hidden">
   <div className="w-full max-w-[1280px] flex flex-col justify-start items-center gap-12">
     <div className="self-stretch inline-flex justify-start items-center gap-28">
       <div className="flex-1 max-w-[806px] inline-flex flex-col justify-start items-start gap-8">
@@ -257,6 +257,6 @@ export function ExtraPrizesB() {
     </div>
   </div>
 </div>
-    </section>
+    
   );
 }
