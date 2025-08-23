@@ -891,7 +891,7 @@ const share = async () => {
               <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => addBlock("hero", 0)}>
                 <Plus /> Hero
               </Button>
-              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => addBlock("pricing", 0)}>
+             {/* <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => addBlock("pricing", 0)}>
                 <Plus /> Pricing
               </Button>
               <Button
@@ -900,7 +900,7 @@ const share = async () => {
                 onClick={() => addBlock("testimonials", 0)}
               >
                 <Plus /> Testimonials
-              </Button>
+              </Button>*/}
               <Button
                 variant="outline"
                 className="w-full justify-start text-gray-500"
