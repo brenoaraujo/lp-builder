@@ -1,6 +1,16 @@
 // /api/handoff.js
 import { Resend } from "resend";
 
+// tiny HTML sanitizer for interpolated strings
+function escapeHtml(str = "") {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -8,22 +18,26 @@ export default async function handler(req, res) {
 
   try {
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const TO_PRODUCTION = process.env.PRODUCTION_EMAIL; // <-- set this in your env
+    const FROM_ADDRESS   = process.env.RESEND_FROM || "LP Builder <onboarding@resend.dev>";
+    const TO_PRODUCTION  = process.env.PRODUCTION_EMAIL; // your team inbox
 
     if (!RESEND_API_KEY) {
       return res.status(400).json({ error: "Missing RESEND_API_KEY env var" });
+    }
+    if (!FROM_ADDRESS) {
+      return res.status(400).json({ error: "Missing RESEND_FROM env var" });
     }
     if (!TO_PRODUCTION) {
       return res.status(400).json({ error: "Missing PRODUCTION_EMAIL env var" });
     }
 
     const { approvalLink, snapshot, approvalMeta } = req.body || {};
+
     const missing = [];
     if (!approvalLink) missing.push("approvalLink");
     if (!snapshot) missing.push("snapshot");
     if (!approvalMeta?.approverName) missing.push("approverName");
     if (!approvalMeta?.approverEmail) missing.push("approverEmail");
-
     if (missing.length) {
       return res.status(400).json({
         error: "Missing required fields",
@@ -71,24 +85,24 @@ export default async function handler(req, res) {
       </div>
     `;
 
-    // Attach JSON snapshot
+    // Attach the JSON snapshot (base64 content is safest with Resend)
+    const jsonString = JSON.stringify(snapshot, null, 2);
     const attachments = [
       {
         filename: `lp-approval-${Date.now()}.json`,
-        content: Buffer.from(JSON.stringify(snapshot, null, 2)),
+        content: Buffer.from(jsonString).toString("base64"),
+        type: "application/json",
       },
     ];
 
-    const fromAddress = process.env.RESEND_FROM || "no-reply@yourdomain.com"; // must be a verified sender/domain in Resend
-
     const result = await resend.emails.send({
-      from: fromAddress,
-      to: TO_PRODUCTION,
-      // You can CC the approver so they get a copy:
-      cc: approvalMeta.approverEmail,
+      from: FROM_ADDRESS,                 // e.g. 'LP Builder <onboarding@resend.dev>'
+      to: TO_PRODUCTION,                  // team inbox (env var)
+      cc: approvalMeta.approverEmail,     // optional: CC approver
       subject,
       html,
       attachments,
+      reply_to: approvalMeta.approverEmail, // makes "Reply" go to approver
     });
 
     return res.status(200).json({ ok: true, id: result?.id || null });
@@ -96,14 +110,4 @@ export default async function handler(req, res) {
     console.error("handoff error:", err);
     return res.status(500).json({ error: "Server error", message: `${err}` });
   }
-}
-
-// tiny sanitiser
-function escapeHtml(str = "") {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
