@@ -6,6 +6,20 @@ import { TestimonialsA, TestimonialsB } from "./sections/Testimonials.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "./sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "./sections/Winners.jsx";
 
+// Robust imports for AutoScaler + EditableSection
+import * as AutoScalerMod from "@/components/AutoScaler";
+import * as EditableSectionMod from "@/components/EditableSection";
+
+const AutoScaler =
+  AutoScalerMod.default ??
+  AutoScalerMod.AutoScaler ??
+  (({ children }) => <div className="w-full">{children}</div>);
+
+const EditableSection =
+  EditableSectionMod.default ??
+  EditableSectionMod.EditableSection ??
+  (({ children }) => <>{children}</>);
+
 // DnD Kit
 import {
   DndContext,
@@ -33,13 +47,6 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
-
-// Helpers
-import AutoScaler from "@/components/AutoScaler";
-import useElementWidth from "@/hooks/useElementWidth";
-import EditableSection from "@/components/EditableSection";
-
-
 
 /* ----------------------------- Helpers ----------------------------- */
 
@@ -85,31 +92,35 @@ function decodeState(s) {
     return null;
   }
 }
+// === PRODUCTION EMAIL (set this!)
+const PRODUCTION_EMAIL = "baraujo@ascendfs.com"; // <— change me to your team's email
 
-// Defaults used for Reset
-const DEFAULT_GLOBAL_THEME = {
-  colors: {
-    background: "#ffffff",
-    foreground: "#18181b",
-    "muted-foreground": "#71717a",
-    "alt-background": "#f6f6f6",
-    "alt-foreground": "#18181b",
-    primary: "#000000",
-    "primary-foreground": "#ffffff",
-    border: "#e4e4e7",
-  },
-};
-const makeDefaultBlocks = () => ([
-  {
-    id: uid(),
-    type: "hero",
-    variant: 0,
-    controls: {},
-    copy: {},
-    // hero supports both palettes in overrides
-    overrides: { enabled: false, values: {}, valuesPP: {} },
-  },
-]);
+function buildApprovalMailto(to, { company, project, approverName, approverEmail, notes, url }) {
+  const subject = `[APPROVED] ${company} — ${project}`;
+  const lines = [
+    `Company: ${company}`,
+    `Project: ${project}`,
+    `Approver: ${approverName} <${approverEmail}>`,
+    notes ? `Notes: ${notes}` : null,
+    "",
+    "Snapshot URL:",
+    url,
+  ].filter(Boolean);
+
+  const body = lines.join("\n");
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+// VERCEL RESEND HANDOFF
+// pack/unpack snapshot so URL carries BOTH blocks + globalTheme
+function packSnapshot(blocks, globalTheme) {
+  return { blocks, globalTheme };
+}
+function unpackSnapshot(payload) {
+  // backward compatible: older links might just be an array
+  if (Array.isArray(payload)) return { blocks: payload, globalTheme: null };
+  return payload || { blocks: [], globalTheme: null };
+}
 
 /* ----------------------------- Sections ---------------------------- */
 
@@ -168,7 +179,6 @@ function ThemePopover({ globalTheme, setGlobalTheme }) {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" className="text-gray-500">Theme Colors</Button>
-               
       </PopoverTrigger>
       <PopoverContent align="end" side="bottom" sideOffset={8} className="w-80 p-3">
         <div className="space-y-3 text-sm">
@@ -192,8 +202,9 @@ function SectionThemePopover({
   type,
   overrides = {},              // hero: { enabled, values: {...}, valuesPP: {...} } ; others: { enabled, values: {...} }
   onSetOverrides,              // (next) => void
-  availableKeys = [],          // e.g. Object.keys(globalTheme.colors)
+  availableKeys = [],
   title = "Section overrides",
+  readOnly = false,
 }) {
   const enabled = !!overrides.enabled;
 
@@ -202,29 +213,35 @@ function SectionThemePopover({
   // extra PP palette only for hero
   const valuesPP = overrides.valuesPP || {};
 
-  const setEnabled = (v) =>
+  const setEnabled = (v) => {
+    if (readOnly) return;
     onSetOverrides({ ...overrides, enabled: !!v });
+  };
 
-  const setValMain = (key, val) =>
+  const setValMain = (key, val) => {
+    if (readOnly) return;
     onSetOverrides({
       ...overrides,
       enabled: true,
       values: { ...(overrides.values || {}), [key]: val },
     });
+  };
 
-  const setValPP = (key, val) =>
+  const setValPP = (key, val) => {
+    if (readOnly) return;
     onSetOverrides({
       ...overrides,
       enabled: true,
       valuesPP: { ...(overrides.valuesPP || {}), [key]: val },
     });
+  };
 
   const Row = ({ label, keyName, value, onChange }) => (
     <div className="flex items-center justify-between gap-3">
       <label className="text-sm text-gray-700">{label}</label>
       <input
         type="color"
-        disabled={!enabled}
+        disabled={!enabled || readOnly}
         value={value ?? "#000000"}
         onChange={(e) => onChange(keyName, e.target.value)}
         className="h-8 w-10 cursor-pointer rounded border disabled:opacity-50"
@@ -236,7 +253,7 @@ function SectionThemePopover({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-purple-700">
+        <Button variant="ghost" size="sm" className="text-purple-700" disabled={readOnly}>
           Overrides
         </Button>
       </PopoverTrigger>
@@ -245,7 +262,7 @@ function SectionThemePopover({
 
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm text-gray-700">Enable overrides</span>
-          <Switch checked={enabled} onCheckedChange={setEnabled} />
+          <Switch checked={enabled} onCheckedChange={setEnabled} disabled={readOnly} />
         </div>
 
         {/* Main palette */}
@@ -346,6 +363,122 @@ function VariantDock({ open, type, currentVariant, onPick, onClose }) {
   );
 }
 
+// approval + handoff modal
+
+function ApproveHandoffModal({ open, onClose, onSubmit, defaults }) {
+  const [company, setCompany] = useState(defaults?.company || "");
+  const [project, setProject] = useState(defaults?.project || "");
+  const [approverName, setApproverName] = useState(defaults?.approverName || "");
+  const [approverEmail, setApproverEmail] = useState(defaults?.approverEmail || "");
+  const [notes, setNotes] = useState(defaults?.notes || "");
+
+  useEffect(() => {
+    if (!open) return;
+    // hydrate when opening
+    setCompany(defaults?.company || "");
+    setProject(defaults?.project || "");
+    setApproverName(defaults?.approverName || "");
+    setApproverEmail(defaults?.approverEmail || "");
+    setNotes(defaults?.notes || "");
+  }, [open]); // eslint-disable-line
+
+  const canSubmit =
+    company.trim() &&
+    project.trim() &&
+    approverName.trim() &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(approverEmail);
+
+  const submit = () => {
+    if (!canSubmit) return;
+    const payload = { company: company.trim(), project: project.trim(), approverName: approverName.trim(), approverEmail: approverEmail.trim(), notes: notes.trim() };
+    // remember approver locally for next time
+    try {
+      localStorage.setItem("lpb.approver.defaults", JSON.stringify({
+        company: payload.company,
+        project: payload.project,
+        approverName: payload.approverName,
+        approverEmail: payload.approverEmail,
+        notes: "", // don't persist notes by default
+      }));
+    } catch { }
+    onSubmit?.(payload);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
+      <DialogContent className="w-[520px] max-w-[95vw] rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>Approve & handoff</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3">
+            <label className="text-sm font-medium">Company name</label>
+            <input
+              type="text"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Acme Inc."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            <label className="text-sm font-medium">Project name</label>
+            <input
+              type="text"
+              value={project}
+              onChange={(e) => setProject(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="LP – Spring Campaign"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            <label className="text-sm font-medium">Approver name</label>
+            <input
+              type="text"
+              value={approverName}
+              onChange={(e) => setApproverName(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Jane Doe"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            <label className="text-sm font-medium">Approver email</label>
+            <input
+              type="email"
+              value={approverEmail}
+              onChange={(e) => setApproverEmail(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="jane@acme.com"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            <label className="text-sm font-medium">Notes (optional)</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={4}
+              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Anything your production team should know…"
+            />
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit} disabled={!canSubmit}>
+            Submit to production
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* --------------------------- Sortable Block ------------------------ */
 
 function SortableBlock({
@@ -364,9 +497,10 @@ function SortableBlock({
   overrides,
   onSetOverrides,
   availableThemeKeys = [],
+  readOnly = false,
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id, disabled: readOnly });
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   const entry = SECTIONS[type];
@@ -397,7 +531,6 @@ function SortableBlock({
       : [];
 
   // Build override styles
-  // We write BOTH PascalCase and lowercase var names to be safe with class usage.
   const emitVars = (entries, prefix, values) => {
     if (!values) return;
     const keys = [
@@ -427,20 +560,16 @@ function SortableBlock({
     const out = [];
 
     if (type === "hero") {
-      // Main hero palette
       emitVars(out, "Hero-Colors", overrides.values || {});
-      // PP palette used inside Hero
       emitVars(out, "PP-Colors", overrides.valuesPP || {});
     } else if (type === "pricing") {
       emitVars(out, "PP-Colors", overrides.values || {});
     } else if (type === "extraPrizes") {
       emitVars(out, "EB-Colors", overrides.values || {});
     } else if (type === "testimonials") {
-      // If you add dedicated tokens later (e.g., TT-Colors), emit here:
-      // emitVars(out, "TT-Colors", overrides.values || {});
-    }else if (type === "winners") {
-      // If you add dedicated tokens later (e.g., TT-Colors), emit here:
-      // emitVars(out, "TT-Colors", overrides.values || {});
+      // add TT-Colors here if you adopt it later
+    } else if (type === "winners") {
+      // add Winners-Colors here if you adopt it later
     }
 
     return Object.fromEntries(out);
@@ -450,19 +579,18 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={overrideStyle}
-      className={[
-        "rounded-2xl bg-white shadow-sm ring-1 ring-gray-200",
-        isDragging ? "opacity-75" : "",
-      ].join(" ")}
+      className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200"
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-2">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <span
-            {...attributes}
-            {...listeners}
-            className="cursor-grab rounded-md px-2 py-1 hover:bg-gray-100 active:cursor-grabbing"
-            title="Drag to reorder"
+            {...(!readOnly ? { ...attributes, ...listeners } : {})}
+            className={[
+              "rounded-md px-2 py-1",
+              readOnly ? "cursor-default text-gray-300" : "cursor-grab hover:bg-gray-100 active:cursor-grabbing",
+            ].join(" ")}
+            title={readOnly ? undefined : "Drag to reorder"}
             aria-label="Drag to reorder"
           >
             ⠿
@@ -474,7 +602,7 @@ function SortableBlock({
           {/* Change variant (Preview list) */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-blue-600">
+              <Button variant="ghost" size="sm" className="text-blue-600" disabled={readOnly}>
                 Change variant
               </Button>
             </PopoverTrigger>
@@ -495,11 +623,14 @@ function SortableBlock({
                       key={i}
                       role="button"
                       tabIndex={0}
-                      onClick={() => onVariantPick(id, i)}
-                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onVariantPick(id, i)}
+                      onClick={() => !readOnly && onVariantPick(id, i)}
+                      onKeyDown={(e) =>
+                        !readOnly && (e.key === "Enter" || e.key === " ") && onVariantPick(id, i)
+                      }
                       className={[
                         "w-full max-w-full overflow-hidden rounded-xl border bg-white text-left transition",
                         i === safeIndex ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-white" : "hover:bg-gray-50",
+                        readOnly ? "pointer-events-none opacity-70" : "",
                       ].join(" ")}
                     >
                       <div className="px-3 pt-2 text-xs font-medium text-gray-700">
@@ -508,7 +639,6 @@ function SortableBlock({
                       <div className="p-2">
                         <div className="overflow-hidden rounded-lg">
                           <AutoScaler designWidth={1440} targetWidth={280} maxHeight={520}>
-                            {/* Preview uses current overrides too */}
                             <div data-scope={type} style={overrideStyle}>
                               <EditableSection
                                 discoverKey={`${type}:${i}`}
@@ -531,7 +661,7 @@ function SortableBlock({
           {/* Edit variant (Switches + Copy) */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-emerald-700">
+              <Button variant="ghost" size="sm" className="text-emerald-700" disabled={readOnly}>
                 Edit variant
               </Button>
             </PopoverTrigger>
@@ -557,17 +687,21 @@ function SortableBlock({
                             key={p.id}
                             role="button"
                             tabIndex={0}
-                            onClick={() => onTogglePart(p.id, !checked)}
+                            onClick={() => !readOnly && onTogglePart(p.id, !checked)}
                             onKeyDown={(e) =>
-                              (e.key === "Enter" || e.key === " ") && onTogglePart(p.id, !checked)
+                              !readOnly && (e.key === "Enter" || e.key === " ") && onTogglePart(p.id, !checked)
                             }
-                            className="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
+                            className={[
+                              "flex items-center justify-between rounded-lg px-3 py-2 text-sm",
+                              readOnly ? "opacity-60" : "hover:bg-gray-50 cursor-pointer",
+                            ].join(" ")}
                           >
                             <span className="truncate">{p.label}</span>
                             <Switch
                               checked={checked}
-                              onCheckedChange={(v) => onTogglePart(p.id, v)}
-                              className="pointer-events-none h-4 w-7"
+                              onCheckedChange={(v) => !readOnly && onTogglePart(p.id, v)}
+                              className="h-4 w-7"
+                              disabled={readOnly}
                             />
                           </div>
                         );
@@ -597,9 +731,10 @@ function SortableBlock({
                             type="text"
                             value={current}
                             maxLength={max}
-                            onChange={(e) => onCopyChange(p.id, e.target.value)}
+                            onChange={(e) => !readOnly && onCopyChange(p.id, e.target.value)}
                             className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder={`Up to ${max} characters`}
+                            readOnly={readOnly}
                           />
                           <div className="text-right text-[11px] text-gray-400">
                             {current?.length ?? 0}/{max}
@@ -616,15 +751,20 @@ function SortableBlock({
           {/* Section Overrides */}
           <SectionThemePopover
             type={type}
-            overrides={overrides || { enabled: false, values: {} }}
-            onSetOverrides={(next) =>
-              onSetOverrides(next)
-            }
+            overrides={overrides || { enabled: false, values: {}, valuesPP: {} }}
+            onSetOverrides={onSetOverrides}
             availableKeys={availableThemeKeys}
+            readOnly={readOnly}
           />
 
           {/* Delete */}
-          <Button variant="ghost" size="sm" className="text-red-600" onClick={() => onRemove(id)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-red-600"
+            onClick={() => onRemove(id)}
+            disabled={readOnly}
+          >
             Delete
           </Button>
         </div>
@@ -653,6 +793,9 @@ function SortableBlock({
 /* ------------------------------- App ------------------------------- */
 
 export default function App() {
+  // Hydration guard so effects don’t race while parsing incoming hash
+  const [hydrated, setHydrated] = useState(false);
+
   // Blocks: { id, type, variant, controls, copy, overrides }
   // hero.overrides supports: { enabled, values: {...Hero-Colors}, valuesPP: {...PP-Colors} }
   const [blocks, setBlocks] = useState([
@@ -675,19 +818,53 @@ export default function App() {
       border: "#e4e4e7",
     },
   });
+  //approval + handoff modal
+  const [handoffOpen, setHandoffOpen] = useState(false);
 
-    const [hydrated, setHydrated] = useState(false);
+  // Load saved defaults for approver/company/project (nice UX)
+  const [handoffDefaults, setHandoffDefaults] = useState(null);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("lpb.approver.defaults");
+      if (saved) setHandoffDefaults(JSON.parse(saved));
+    } catch { }
+  }, []);
+
+  const submitHandoff = (formData) => {
+    // Ensure the current URL hash matches the *latest* state (so snapshot is immutable)
+    try {
+      // If you already persist on every change, this is just a nudge:
+      const payload = encodeState(blocks); // if your share includes theme too, keep your existing routine here
+      location.hash = payload;
+      history.replaceState(null, "", `#${payload}`);
+    } catch { }
+
+    const url = location.href; // current immutable snapshot
+    const mailto = buildApprovalMailto(PRODUCTION_EMAIL, { ...formData, url });
+
+    try {
+      window.location.href = mailto; // open email client
+    } catch {
+      // ultra fallback: copy to clipboard
+      navigator.clipboard?.writeText(`${formData.company} / ${formData.project}\n${url}`);
+    }
+
+    setHandoffOpen(false);
+  };
 
   // Apply global variables to :root
   useEffect(() => {
     setCSSVars(document.documentElement, "colors", globalTheme.colors);
   }, [globalTheme]);
 
-
+  // --- Read-only / Approved snapshot detection ---
+  const [approvedMeta, setApprovedMeta] = useState(null); // {approved, approvedAt, projectId?, customerName?}
+  const approvedMode = !!approvedMeta?.approved;
 
   // DnD
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const onDragEnd = (event) => {
+    if (approvedMode) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIndex = blocks.findIndex((b) => b.id === active.id);
@@ -695,13 +872,21 @@ export default function App() {
     setBlocks((arr) => arrayMove(arr, oldIndex, newIndex));
   };
 
-  // Load from URL hash
- useEffect(() => {
-  const hash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
-  if (hash) {
+  // Load from URL hash (supports both legacy and new snapshot object)
+  useEffect(() => {
+    const hash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+    if (!hash) {
+      setHydrated(true);
+      return;
+    }
     const loaded = decodeState(hash);
+    if (!loaded) {
+      setHydrated(true);
+      return;
+    }
 
-    // Old links: the entire payload was just an array of blocks
+
+    // Legacy: just an array of blocks
     if (Array.isArray(loaded)) {
       setBlocks(
         loaded.map((b) => ({
@@ -713,9 +898,11 @@ export default function App() {
           overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
         }))
       );
+      setHydrated(true);
+      return;
     }
 
-    // New links: { blocks, theme }
+    // New snapshot format: { blocks, globalTheme?, meta? }
     if (loaded && typeof loaded === "object") {
       if (Array.isArray(loaded.blocks)) {
         setBlocks(
@@ -729,104 +916,194 @@ export default function App() {
           }))
         );
       }
-      if (loaded.theme && typeof loaded.theme === "object") {
-        setGlobalTheme((t) => ({
-          ...t,
-          colors: { ...(t.colors || {}), ...(loaded.theme || {}) },
-        }));
+      if (loaded.globalTheme?.colors) {
+        setGlobalTheme({ colors: { ...loaded.globalTheme.colors } });
+      }
+      if (loaded.meta?.approved) {
+        setApprovedMeta({ ...loaded.meta });
       }
     }
-  }
+    setHydrated(true);
+  }, []);
 
-  setHydrated(true);
-}, []);
-  // Persist to URL hash
-useEffect(() => {
-  if (!hydrated) return;
-  const payload = encodeState({
-    blocks,
-    theme: globalTheme.colors, // <— include theme
-  });
-  history.replaceState(null, "", `#${payload}`);
-}, [blocks, globalTheme, hydrated]);
+  // Persist (editor mode only; not for approved read-only)
+  useEffect(() => {
+    if (!hydrated || approvedMode) return;
+    const payload = encodeState(packSnapshot(blocks, globalTheme));
+    history.replaceState(null, "", `#${payload}`);
+  }, [blocks, globalTheme, hydrated, approvedMode]);
 
-  // Share
+  // Share (editor mode)
   const [toast, setToast] = useState(null);
-
-  const resetAll = () => {
-  // reset state
-  setBlocks(makeDefaultBlocks());
-  setPartsByBlock({});
-  setGlobalTheme(DEFAULT_GLOBAL_THEME);
-
-  // clear CSS vars on :root and re-apply globals
-  const root = document.documentElement;
-  // (Optional) You can clear known keys if you want, but re-applying is usually enough:
-  Object.entries(DEFAULT_GLOBAL_THEME.colors).forEach(([k, v]) => {
-    root.style.setProperty(`--colors-${k}`, v);
-  });
-
-  // clear URL hash so a fresh page load shows defaults
-  history.replaceState(null, "", location.pathname);
-  // feedback
-  setToast("Reset to defaults");
-  clearTimeout(window.__share_toast_timer);
-  window.__share_toast_timer = setTimeout(() => setToast(null), 1500);
-};
-
-// --- rock-solid share() with multiple fallbacks ---
-const share = async () => {
-  // build the exact same object we persist in the effect
-  const payload = encodeState({
-    blocks,
-    theme: globalTheme.colors,
-  });
-  const url = `${location.origin}${location.pathname}#${payload}`;
-
-  // keep your existing clipboard fallbacks
-  location.hash = payload;
-  history.replaceState(null, "", `#${payload}`);
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(url);
-      setToast("Share link copied to clipboard");
-    } else {
-      throw new Error("Secure clipboard not available");
+  const share = async () => {
+    if (approvedMode) {
+      setToast("This is an approved snapshot (read-only). Copy the URL as-is.");
+      clearTimeout(window.__share_toast_timer);
+      window.__share_toast_timer = setTimeout(() => setToast(null), 2200);
+      return;
     }
-  } catch {
-    const ta = document.createElement("textarea");
-    ta.value = url;
-    ta.setAttribute("readonly", "");
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand("copy");
-    document.body.removeChild(ta);
-    setToast(ok ? "Share link copied to clipboard" : "Copy failed — link is in the address bar");
-  }
-  clearTimeout(window.__share_toast_timer);
-  window.__share_toast_timer = setTimeout(() => setToast(null), 2000);
-};
+    let url = "";
+    try {
+      const payload = encodeState({ blocks, globalTheme });
+      url = `${location.origin}${location.pathname}#${payload}`;
+      location.hash = payload;
+      history.replaceState(null, "", `#${payload}`);
+    } catch (e) {
+      setToast("Could not create share link");
+      clearTimeout(window.__share_toast_timer);
+      window.__share_toast_timer = setTimeout(() => setToast(null), 2200);
+      return;
+    }
 
-  // CRUD
-  const addBlock = (type, variant = 0) =>
-    setBlocks((arr) => [
-      ...arr,
-      {
-        id: uid(),
-        type,
-        variant,
-        controls: {},
-        copy: {},
-        overrides: { enabled: false, values: {}, valuesPP: {} },
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+        setToast("Share link copied to clipboard");
+      } else {
+        throw new Error();
+      }
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        setToast(ok ? "Share link copied to clipboard" : "Copy failed — link in address bar");
+      } catch {
+        setToast("Copy failed — link in address bar");
+      }
+    }
+    clearTimeout(window.__share_toast_timer);
+    window.__share_toast_timer = setTimeout(() => setToast(null), 2000);
+  };
+
+  // Reset to defaults (editor mode only)
+  const resetAll = () => {
+    if (approvedMode) return;
+    setBlocks([{ id: uid(), type: "hero", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }]);
+    setGlobalTheme({
+      colors: {
+        background: "#ffffff",
+        foreground: "#18181b",
+        "muted-foreground": "#71717a",
+        "alt-background": "#f6f6f6",
+        "alt-foreground": "#18181b",
+        primary: "#000000",
+        "primary-foreground": "#ffffff",
+        border: "#e4e4e7",
       },
-    ]);
+    });
+    const payload = encodeState({ blocks: [], globalTheme: { colors: {} } }); // clear-ish hash
+    history.replaceState(null, "", `#${payload}`);
+    setToast("Reset to defaults");
+    clearTimeout(window.__share_toast_timer);
+    window.__share_toast_timer = setTimeout(() => setToast(null), 1600);
+  };
 
-  const removeBlock = (id) => setBlocks((arr) => arr.filter((b) => b.id !== id));
+  // ---- Approve flow (immutable snapshot) ----
+  // —— Approve / Handoff state ——
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [approvalLink, setApprovalLink] = useState("");
 
-  const setVariant = (id, variantIndex) =>
-    setBlocks((arr) => arr.map((b) => (b.id === id ? { ...b, variant: variantIndex } : b)));
+  const [approvalMeta, setApprovalMeta] = useState({
+    customerName: "",
+    projectId: "",
+    notes: "",
+    approverName: "",
+    approverEmail: "",
+  });
+
+
+  // Submit to production via serverless email (Resend)
+  const submitViaEmail = async () => {
+    try {
+      // Build an immutable snapshot (what prod will store)
+      const snapshot = {
+        blocks,
+        globalTheme,
+        meta: {
+          ...approvalMeta,
+          approved: true,
+          approvedAt: new Date().toISOString(),
+        },
+      };
+      const payload = encodeState(snapshot);
+      const url = `${location.origin}${location.pathname}#${payload}`;
+
+      // Keep handy in UI
+      setApprovalLink(url);
+
+      // Call your Vercel serverless API
+      const res = await fetch("/api/handoff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          approvalLink: url,    // immutable read-only link
+          snapshot,             // full JSON
+          approvalMeta,         // who/what/notes
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Handoff failed: ${res.status}`);
+      setApproveOpen(false);
+      // Optional: setToast("Submitted to production ✅");
+    } catch (err) {
+      console.error(err);
+      // Optional: setToast("Submit failed. Try again.");
+    }
+  };
+
+
+
+  const makeApprovalSnapshot = () => {
+    const meta = {
+      approved: true,
+      approvedAt: new Date().toISOString(),
+      customerName: approvalMeta.customerName?.trim() || undefined,
+      projectId: approvalMeta.projectId?.trim() || undefined,
+      notes: approvalMeta.notes?.trim() || undefined,
+    };
+    const snapshot = { blocks, globalTheme, meta };
+    const payload = encodeState(snapshot);
+    const url = `${location.origin}${location.pathname}#${payload}`;
+    return { snapshot, url };
+  };
+
+  const downloadJSON = (filename, dataObj) => {
+    const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleApprove = () => {
+    const { snapshot, url } = makeApprovalSnapshot();
+    setApprovalLink(url);
+    // we do NOT change the current page to read-only; the approval link itself is immutable
+    setApproveOpen(true);
+  };
+
+  const copyApprovalLink = async () => {
+    try {
+      await navigator.clipboard.writeText(approvalLink);
+      setToast("Approval link copied");
+    } catch {
+      setToast("Copy failed — use the field below");
+    }
+    clearTimeout(window.__share_toast_timer);
+    window.__share_toast_timer = setTimeout(() => setToast(null), 1600);
+  };
+
 
   // Discovery handlers
   const handlePartsDiscovered = useCallback((blockId, foundParts) => {
@@ -860,23 +1137,76 @@ const share = async () => {
   const [dockBlockId, setDockBlockId] = useState(null);
   const active = blocks.find((b) => b.id === dockBlockId) || null;
 
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen grid place-items-center text-gray-500">
+        Loading…
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <h1 className="text-base font-semibold tracking-tight text-gray-900">
-            LP Builder — Multiple Blocks
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-base font-semibold tracking-tight text-gray-900">
+              LP Builder — Multiple Blocks
+            </h1>
+            {approvedMode && (
+              <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-2 py-1 border border-emerald-200">
+                Approved on {new Date(approvedMeta.approvedAt).toLocaleString()}
+                {approvedMeta.projectId ? ` • ${approvedMeta.projectId}` : ""}
+              </span>
+            )}
+          </div>
+
           <div className="flex items-center gap-2">
-            <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
-            <Button variant="outline" onClick={resetAll} className="text-gray-500">
-  Reset
-</Button>
-            <Button variant="outline" onClick={share} className="text-gray-500">
-              Share
-            </Button>
-            
+            {!approvedMode && (
+              <>
+                <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
+                <Button variant="outline" onClick={resetAll} className="text-gray-500">
+                  Reset
+                </Button>
+                <Button variant="outline" onClick={share} className="text-gray-500">
+                  Share
+                </Button>
+
+                <Button onClick={() => setApproveOpen(true)}>
+                  Finish & handoff
+                </Button>
+              </>
+            )}
+            {approvedMode && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // export the approved snapshot you’re viewing
+                    const obj = decodeState(location.hash.slice(1));
+                    if (obj) {
+                      const filename = `Design Snapshot - ${approvedMeta.projectId || "approved"} - ${approvedMeta.approvedAt?.slice(0, 19)?.replace(/[:T]/g, "-")}.json`;
+                      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = filename;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    }
+                  }}
+                  className="text-gray-500"
+                >
+                  Export JSON
+                </Button>
+                <Button variant="outline" onClick={() => navigator.clipboard.writeText(location.href)}>
+                  Copy Link
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -888,31 +1218,19 @@ const share = async () => {
           <div className="rounded-2xl border bg-white p-4">
             <div className="mb-3 text-sm font-semibold text-gray-700">Sections</div>
             <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => addBlock("hero", 0)}>
+              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "hero", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
                 <Plus /> Hero
               </Button>
-             {/* <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => addBlock("pricing", 0)}>
+              {/*<Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "pricing", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
                 <Plus /> Pricing
               </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-gray-500"
-                onClick={() => addBlock("testimonials", 0)}
-              >
+              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "testimonials", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
                 <Plus /> Testimonials
               </Button>*/}
-              <Button
-                variant="outline"
-                className="w-full justify-start text-gray-500"
-                onClick={() => addBlock("extraPrizes", 0)}
-              >
+              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "extraPrizes", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
                 <Plus /> Extra Prizes
               </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-gray-500"
-                onClick={() => addBlock("winners", 0)}
-              >
+              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "winners", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
                 <Plus /> Winners
               </Button>
             </div>
@@ -947,6 +1265,7 @@ const share = async () => {
                         onPartsDiscovered={handlePartsDiscovered}
                         onCopyDiscovered={(found) => handleCopyDiscovered(b.id, found)}
                         onTogglePart={(partId, nextVisible) => {
+                          if (approvedMode) return;
                           setBlocks((arr) =>
                             arr.map((x) =>
                               x.id === b.id
@@ -956,6 +1275,7 @@ const share = async () => {
                           );
                         }}
                         onCopyChange={(partId, text) => {
+                          if (approvedMode) return;
                           setBlocks((arr) =>
                             arr.map((x) =>
                               x.id === b.id ? { ...x, copy: { ...(x.copy || {}), [partId]: text } } : x
@@ -963,14 +1283,19 @@ const share = async () => {
                           );
                         }}
                         overrides={b.overrides || { enabled: false, values: {}, valuesPP: {} }}
-                        onSetOverrides={(next) =>
+                        onSetOverrides={(next) => {
+                          if (approvedMode) return;
                           setBlocks((arr) =>
                             arr.map((x) => (x.id === b.id ? { ...x, overrides: next } : x))
-                          )
-                        }
+                          );
+                        }}
                         availableThemeKeys={Object.keys(globalTheme.colors)}
-                        onRemove={removeBlock}
-                        onVariantPick={setVariant}
+                        onRemove={(id) => !approvedMode && setBlocks((arr) => arr.filter((blk) => blk.id !== id))}
+                        onVariantPick={(id, variantIndex) =>
+                          !approvedMode &&
+                          setBlocks((arr) => arr.map((blk) => (blk.id === id ? { ...blk, variant: variantIndex } : blk)))
+                        }
+                        readOnly={approvedMode}
                       />
                     ))}
                   </div>
@@ -986,17 +1311,114 @@ const share = async () => {
           )}
         </main>
       </div>
-
+//removed for handoff modal
       {/* Optional VariantDock (not currently triggered) */}
       {active && (
         <VariantDock
           open={!!active}
           type={active?.type}
           currentVariant={active?.variant ?? 0}
-          onPick={(v) => setVariant(active.id, v)}
-          onClose={() => setDockBlockId(null)}
+          onPick={(v) => !approvedMode && setBlocks((arr) => arr.map((b) => (b.id === active.id ? { ...b, variant: v } : b)))}
+          onClose={() => { }}
         />
       )}
+
+      {/* Approve modal */}
+      <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>Approve & hand off to production</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Who’s approving */}
+            
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Approver name</label>
+                <input
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="Jane Doe"
+                  value={approvalMeta.approverName}
+                  onChange={(e) => setApprovalMeta((m) => ({ ...m, approverName: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Approver email</label>
+                <input
+                  type="email"
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="jane@example.com"
+                  value={approvalMeta.approverEmail}
+                  onChange={(e) => setApprovalMeta((m) => ({ ...m, approverEmail: e.target.value }))}
+                />
+              </div>
+            
+
+            {/* Company / project */}
+            
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Customer / Company</label>
+                <input
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="Acme Co."
+                  value={approvalMeta.customerName}
+                  onChange={(e) => setApprovalMeta((m) => ({ ...m, customerName: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-600">Project Name (optional)</label>
+                <input
+                  className="w-full rounded-md border px-2 py-1 text-sm"
+                  placeholder="Summer Campaign"
+                  value={approvalMeta.projectId}
+                  onChange={(e) => setApprovalMeta((m) => ({ ...m, projectId: e.target.value }))}
+                />
+              </div>
+            
+            {/* Notes */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Notes (optional)</label>
+              <textarea
+                rows={3}
+                className="w-full rounded-md border px-2 py-1 text-sm"
+                placeholder="Any special instructions…"
+                value={approvalMeta.notes}
+                onChange={(e) => setApprovalMeta((m) => ({ ...m, notes: e.target.value }))}
+              />
+            </div>
+
+            {/* Submit */}
+            <div className="pt-2">
+              <Button className="w-full" onClick={submitViaEmail}>
+                Submit to Production
+              </Button>
+            </div>
+
+            {/* FYI: show generated link (readonly) after submit or on demand */}
+            {approvalLink && (
+              <div className="text-[11px] text-gray-600">
+                Approval link generated: <span className="break-all">{approvalLink}</span>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
+/* --------------------------- Hooks & Utils ------------------------- */
+
+// Simple element width hook (kept for completeness if not already in your project)
+function useElementWidth(ref) {
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(() => setW(ref.current?.clientWidth || 0));
+    ro.observe(ref.current);
+    setW(ref.current?.clientWidth || 0);
+    return () => ro.disconnect();
+  }, [ref]);
+  return w;
+}
+
