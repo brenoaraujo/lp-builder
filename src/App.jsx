@@ -46,7 +46,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from "@/components/ui/dialog";
 
 /* ----------------------------- Helpers ----------------------------- */
 
@@ -408,8 +408,11 @@ function ApproveHandoffModal({ open, onClose, onSubmit, defaults }) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
       <DialogContent className="w-[520px] max-w-[95vw] rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Approve & handoff</DialogTitle>
-        </DialogHeader>
+      <DialogTitle>Approve & hand off to production</DialogTitle>
+      <DialogDescription className="sr-only">
+        Finalize this design and send details to production via email.
+      </DialogDescription>
+    </DialogHeader>
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3">
@@ -1020,43 +1023,47 @@ export default function App() {
 
 
   // Submit to production via serverless email (Resend)
-  const submitViaEmail = async () => {
-    try {
-      // Build an immutable snapshot (what prod will store)
-      const snapshot = {
-        blocks,
-        globalTheme,
-        meta: {
-          ...approvalMeta,
-          approved: true,
-          approvedAt: new Date().toISOString(),
-        },
-      };
-      const payload = encodeState(snapshot);
-      const url = `${location.origin}${location.pathname}#${payload}`;
+const submitViaEmail = async () => {
+  try {
+    const snapshot = {
+      blocks,
+      globalTheme,
+      meta: {
+        ...approvalMeta,
+        approved: true,
+        approvedAt: new Date().toISOString(),
+      },
+    };
+    const payload = encodeState(snapshot);
+    const url = `${location.origin}${location.pathname}#${payload}`;
+    setApprovalLink(url);
 
-      // Keep handy in UI
-      setApprovalLink(url);
+    const res = await fetch("/api/handoff", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        approvalLink: url,
+        snapshot,
+        approvalMeta,
+      }),
+    });
 
-      // Call your Vercel serverless API
-      const res = await fetch("/api/handoff", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          approvalLink: url,    // immutable read-only link
-          snapshot,             // full JSON
-          approvalMeta,         // who/what/notes
-        }),
-      });
-
-      if (!res.ok) throw new Error(`Handoff failed: ${res.status}`);
-      setApproveOpen(false);
-      // Optional: setToast("Submitted to production ✅");
-    } catch (err) {
-      console.error(err);
-      // Optional: setToast("Submit failed. Try again.");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      console.error("handoff 400:", data);
+      // show the reason if available
+      const reason = data?.error ? `${data.error} ${data?.missing ? `(${data.missing.join(", ")})` : ""}` : "Unknown error";
+      // setToast(`Submit failed: ${reason}`);
+      return;
     }
-  };
+
+    // setToast("Submitted to production ✅");
+    setApproveOpen(false);
+  } catch (err) {
+    console.error(err);
+    // setToast("Submit failed. Try again.");
+  }
+};
 
 
 
@@ -1311,7 +1318,7 @@ export default function App() {
           )}
         </main>
       </div>
-//removed for handoff modal
+
       {/* Optional VariantDock (not currently triggered) */}
       {active && (
         <VariantDock
@@ -1327,8 +1334,11 @@ export default function App() {
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent className="sm:max-w-[560px]">
           <DialogHeader>
-            <DialogTitle>Approve & hand off to production</DialogTitle>
-          </DialogHeader>
+      <DialogTitle>Approve & hand off to production</DialogTitle>
+      <DialogDescription className="sr-only">
+        Finalize this design and send details to production via email.
+      </DialogDescription>
+    </DialogHeader>
 
           <div className="space-y-4">
             {/* Who’s approving */}
