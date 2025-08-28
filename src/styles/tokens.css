@@ -3,12 +3,15 @@
 :root {
   --colors-background: #ffffff;
   --colors-foreground: #18181b;
+  --colors-muted-background: #d7d7dc;
   --colors-muted-foreground: #71717a;
-  --colors-alt-background: #f6f6f6;
-  --colors-alt-foreground: #18181b;
+  --colors-alt-background: #f0f0f9;
+  --colors-alt-foreground: #000000;
   --colors-primary: #000000;
   --colors-primary-foreground: #ffffff;
   --colors-border: #e4e4e7;
+  --colors-secondary: #e4e4e7;
+  --colors-secondary-foreground: #71717a;
 }
 
 /* Hero (inherits Theme.Colors via references in your JSON) */
@@ -19,6 +22,7 @@
   --hero-colors-primary: var(--colors-primary);
   --hero-colors-primary-foreground: var(--colors-primary-foreground);
   --hero-colors-alt-background: var(--colors-alt-background);
+  --hero-colors-muted-background: var(--colors-muted-background);
   --hero-colors-muted-foreground: var(--colors-muted-foreground);
   --hero-colors-alt-foreground: var(--colors-alt-foreground);
   --hero-colors-secondary: var(--colors-secondary, #18181b); /* fallback if you add later */
@@ -34,6 +38,8 @@
   --pp-colors-alt-background: var(--colors-alt-background);
   --pp-colors-alt-foreground: var(--colors-alt-foreground);
   --pp-colors-secondary: var(--colors-secondary, #18181b);
+  --pp-colors-muted-background: var(--colors-muted-background);
+  --pp-colors-muted-foreground: var(--colors-muted-foreground);
 }
 
 /* EB */
@@ -47,6 +53,21 @@
   --eb-colors-alt-foreground: var(--colors-alt-foreground);
   --eb-colors-secondary: var(--colors-secondary, #18181b);
 }
+  /* Winners Colors */
+:root {
+  --winners-colors-background: var(--colors-background);
+  --winners-colors-foreground: var(--colors-foreground);
+  --winners-colors-border: var(--colors-border);
+  --winners-colors-primary: var(--colors-primary);
+  --winners-colors-primary-foreground: var(--colors-primary-foreground);
+  --winners-colors-alt-background: var(--colors-alt-background);
+  --winners-colors-muted-foreground: var(--colors-muted-foreground);
+  --winners-colors-alt-foreground: var(--colors-alt-foreground);
+  --winners-colors-secondary: var(--colors-secondary, #18181b); 
+  --winners-colors-muted-background: var(--colors-muted-background);
+  --winners-colors-muted-foreground: var(--colors-muted-foreground);
+}
+
 
 .dark {
   --colors-background: #0b0b0f;

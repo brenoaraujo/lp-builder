@@ -258,18 +258,16 @@ function SectionThemePopover({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-4" side="bottom" align="end" sideOffset={8}>
-        <div className="mb-2 text-sm font-semibold">{title}</div>
+
 
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-sm text-gray-700">Enable overrides</span>
+          <span className="text-sm font-semibold">{title}</span>
           <Switch checked={enabled} onCheckedChange={setEnabled} disabled={readOnly} />
         </div>
 
         {/* Main palette */}
         <div className="space-y-3">
-          <div className="text-xs font-semibold text-gray-500">
-            {type === "hero" ? "Hero palette" : "Section palette"}
-          </div>
+
           {availableKeys.map((keyName) => (
             <Row
               key={`main-${keyName}`}
@@ -408,11 +406,11 @@ function ApproveHandoffModal({ open, onClose, onSubmit, defaults }) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
       <DialogContent className="w-[520px] max-w-[95vw] rounded-2xl">
         <DialogHeader>
-      <DialogTitle>Approve & hand off to production</DialogTitle>
-      <DialogDescription className="sr-only">
-        Finalize this design and send details to production via email.
-      </DialogDescription>
-    </DialogHeader>
+          <DialogTitle>Approve & hand off to production</DialogTitle>
+          <DialogDescription className="sr-only">
+            Finalize this design and send details to production via email.
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-3">
@@ -569,10 +567,8 @@ function SortableBlock({
       emitVars(out, "PP-Colors", overrides.values || {});
     } else if (type === "extraPrizes") {
       emitVars(out, "EB-Colors", overrides.values || {});
-    } else if (type === "testimonials") {
-      // add TT-Colors here if you adopt it later
     } else if (type === "winners") {
-      // add Winners-Colors here if you adopt it later
+      emitVars(out, "Winners-Colors", overrides.values || {});
     }
 
     return Object.fromEntries(out);
@@ -811,14 +807,18 @@ export default function App() {
   // Global theme (root CSS variables)
   const [globalTheme, setGlobalTheme] = useState({
     colors: {
+
       background: "#ffffff",
       foreground: "#18181b",
+      "muted-background": "#d7d7dc",
       "muted-foreground": "#71717a",
-      "alt-background": "#f6f6f6",
-      "alt-foreground": "#18181b",
+      "alt-background": "#f0f0f9",
+      "alt-foreground": "#000000",
       primary: "#000000",
       "primary-foreground": "#ffffff",
       border: "#e4e4e7",
+      secondary: "#e4e4e7",
+      "secondary-foreground": "#71717a"
     },
   });
   //approval + handoff modal
@@ -993,12 +993,15 @@ export default function App() {
       colors: {
         background: "#ffffff",
         foreground: "#18181b",
+        "muted-background": "#d7d7dc",
         "muted-foreground": "#71717a",
-        "alt-background": "#f6f6f6",
-        "alt-foreground": "#18181b",
+        "alt-background": "#f0f0f9",
+        "alt-foreground": "#000000",
         primary: "#000000",
         "primary-foreground": "#ffffff",
         border: "#e4e4e7",
+        secondary: "#e4e4e7",
+        "secondary-foreground": "#71717a"
       },
     });
     const payload = encodeState({ blocks: [], globalTheme: { colors: {} } }); // clear-ish hash
@@ -1023,47 +1026,47 @@ export default function App() {
 
 
   // Submit to production via serverless email (Resend)
-const submitViaEmail = async () => {
-  try {
-    const snapshot = {
-      blocks,
-      globalTheme,
-      meta: {
-        ...approvalMeta,
-        approved: true,
-        approvedAt: new Date().toISOString(),
-      },
-    };
-    const payload = encodeState(snapshot);
-    const url = `${location.origin}${location.pathname}#${payload}`;
-    setApprovalLink(url);
+  const submitViaEmail = async () => {
+    try {
+      const snapshot = {
+        blocks,
+        globalTheme,
+        meta: {
+          ...approvalMeta,
+          approved: true,
+          approvedAt: new Date().toISOString(),
+        },
+      };
+      const payload = encodeState(snapshot);
+      const url = `${location.origin}${location.pathname}#${payload}`;
+      setApprovalLink(url);
 
-    const res = await fetch("/api/handoff", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        approvalLink: url,
-        snapshot,
-        approvalMeta,
-      }),
-    });
+      const res = await fetch("/api/handoff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          approvalLink: url,
+          snapshot,
+          approvalMeta,
+        }),
+      });
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      console.error("handoff 400:", data);
-      // show the reason if available
-      const reason = data?.error ? `${data.error} ${data?.missing ? `(${data.missing.join(", ")})` : ""}` : "Unknown error";
-      // setToast(`Submit failed: ${reason}`);
-      return;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.error("handoff 400:", data);
+        // show the reason if available
+        const reason = data?.error ? `${data.error} ${data?.missing ? `(${data.missing.join(", ")})` : ""}` : "Unknown error";
+        // setToast(`Submit failed: ${reason}`);
+        return;
+      }
+
+      // setToast("Submitted to production ✅");
+      setApproveOpen(false);
+    } catch (err) {
+      console.error(err);
+      // setToast("Submit failed. Try again.");
     }
-
-    // setToast("Submitted to production ✅");
-    setApproveOpen(false);
-  } catch (err) {
-    console.error(err);
-    // setToast("Submit failed. Try again.");
-  }
-};
+  };
 
 
 
@@ -1334,57 +1337,57 @@ const submitViaEmail = async () => {
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent className="sm:max-w-[560px]">
           <DialogHeader>
-      <DialogTitle>Approve & hand off to production</DialogTitle>
-      <DialogDescription className="sr-only">
-        Finalize this design and send details to production via email.
-      </DialogDescription>
-    </DialogHeader>
+            <DialogTitle>Approve & hand off to production</DialogTitle>
+            <DialogDescription className="sr-only">
+              Finalize this design and send details to production via email.
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="space-y-4">
             {/* Who’s approving */}
-            
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Approver name</label>
-                <input
-                  className="w-full rounded-md border px-2 py-1 text-sm"
-                  placeholder="Jane Doe"
-                  value={approvalMeta.approverName}
-                  onChange={(e) => setApprovalMeta((m) => ({ ...m, approverName: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Approver email</label>
-                <input
-                  type="email"
-                  className="w-full rounded-md border px-2 py-1 text-sm"
-                  placeholder="jane@example.com"
-                  value={approvalMeta.approverEmail}
-                  onChange={(e) => setApprovalMeta((m) => ({ ...m, approverEmail: e.target.value }))}
-                />
-              </div>
-            
+
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Approver name</label>
+              <input
+                className="w-full rounded-md border px-2 py-1 text-sm"
+                placeholder="Jane Doe"
+                value={approvalMeta.approverName}
+                onChange={(e) => setApprovalMeta((m) => ({ ...m, approverName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Approver email</label>
+              <input
+                type="email"
+                className="w-full rounded-md border px-2 py-1 text-sm"
+                placeholder="jane@example.com"
+                value={approvalMeta.approverEmail}
+                onChange={(e) => setApprovalMeta((m) => ({ ...m, approverEmail: e.target.value }))}
+              />
+            </div>
+
 
             {/* Company / project */}
-            
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Customer / Company</label>
-                <input
-                  className="w-full rounded-md border px-2 py-1 text-sm"
-                  placeholder="Acme Co."
-                  value={approvalMeta.customerName}
-                  onChange={(e) => setApprovalMeta((m) => ({ ...m, customerName: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs text-gray-600">Project Name (optional)</label>
-                <input
-                  className="w-full rounded-md border px-2 py-1 text-sm"
-                  placeholder="Summer Campaign"
-                  value={approvalMeta.projectId}
-                  onChange={(e) => setApprovalMeta((m) => ({ ...m, projectId: e.target.value }))}
-                />
-              </div>
-            
+
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Customer / Company</label>
+              <input
+                className="w-full rounded-md border px-2 py-1 text-sm"
+                placeholder="Acme Co."
+                value={approvalMeta.customerName}
+                onChange={(e) => setApprovalMeta((m) => ({ ...m, customerName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-gray-600">Project Name (optional)</label>
+              <input
+                className="w-full rounded-md border px-2 py-1 text-sm"
+                placeholder="Summer Campaign"
+                value={approvalMeta.projectId}
+                onChange={(e) => setApprovalMeta((m) => ({ ...m, projectId: e.target.value }))}
+              />
+            </div>
+
             {/* Notes */}
             <div className="space-y-1">
               <label className="text-xs text-gray-600">Notes (optional)</label>
