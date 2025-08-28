@@ -38,7 +38,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
 
 // Icons
-import { Plus } from "lucide-react";
+import { Plus, ChevronDown } from "lucide-react";
 
 // UI
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -203,8 +203,8 @@ function SectionThemePopover({
   overrides = {},              // hero: { enabled, values: {...}, valuesPP: {...} } ; others: { enabled, values: {...} }
   onSetOverrides,              // (next) => void
   availableKeys = [],
-  title = "Section overrides",
-  readOnly = false,
+  title = "Enable Color Overrides",
+  readOnly = true,
 }) {
   const enabled = !!overrides.enabled;
 
@@ -253,8 +253,8 @@ function SectionThemePopover({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-purple-700" disabled={readOnly}>
-          Overrides
+        <Button variant="ghost" size="sm" className="text-grey-700" disabled={readOnly}>
+          Custom Colors <ChevronDown/>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-4" side="bottom" align="end" sideOffset={8}>
@@ -601,8 +601,8 @@ function SortableBlock({
           {/* Change variant (Preview list) */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-blue-600" disabled={readOnly}>
-                Change variant
+              <Button variant="ghost" size="sm" className="text-gray-700" disabled={readOnly}>
+                Change Layout <ChevronDown/>
               </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -660,8 +660,8 @@ function SortableBlock({
           {/* Edit variant (Switches + Copy) */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-emerald-700" disabled={readOnly}>
-                Edit variant
+              <Button variant="ghost" size="sm" className="text-gray-700" disabled={readOnly}>
+                Edit Content <ChevronDown/>
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" side="bottom" sideOffset={8} className="w-80 p-0 rounded-2xl shadow-lg">
@@ -760,7 +760,7 @@ function SortableBlock({
           <Button
             variant="ghost"
             size="sm"
-            className="text-red-600"
+            className="text-gray-700"
             onClick={() => onRemove(id)}
             disabled={readOnly}
           >
