@@ -18,7 +18,9 @@
   .bg-Hero-Colors-alt-background { background-color: var(--hero-colors-alt-background); }
   .text-Hero-Colors-alt-foreground { color: var(--hero-colors-alt-foreground); }
   .bg-Hero-Colors-primary { background-color: var(--hero-colors-primary); }
+  .text-Hero-Colors-primary {color: var(--hero-colors-primary); }
   .text-Hero-Colors-primary-foreground { color: var(--hero-colors-primary-foreground); }
+  
   .border-Hero-Colors-border { border-color: var(--hero-colors-border); }
   .bg-Hero-Colors-secondary { background-color: var(--hero-colors-secondary); }
   .text-Hero-Colors-secondary-foreground { color: var(--hero-colors-secondary-foreground); }
