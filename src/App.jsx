@@ -20,6 +20,8 @@ const EditableSection =
   EditableSectionMod.EditableSection ??
   (({ children }) => <>{children}</>);
 
+
+
 // DnD Kit
 import {
   DndContext,
@@ -46,7 +48,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, } from "@/components/ui/dropdown-menu";
+import SectionActionsMenu from "./components/SectionActionsMenu";
 
 /* ----------------------------- Helpers ----------------------------- */
 
@@ -254,7 +258,7 @@ function SectionThemePopover({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className="text-grey-700" disabled={readOnly}>
-          Custom Colors <ChevronDown/>
+          Custom Colors <ChevronDown />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-4" side="bottom" align="end" sideOffset={8}>
@@ -499,6 +503,12 @@ function SortableBlock({
   onSetOverrides,
   availableThemeKeys = [],
   readOnly = false,
+  onSelect,
+  selected,
+  variantOpen,
+  onVariantOpenChange,
+  contentOpen,
+  onContentOpenChange,
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id, disabled: readOnly });
@@ -578,199 +588,31 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={overrideStyle}
-      className="rounded-2xl bg-white shadow-sm ring-1 ring-gray-200"
+      className={["relative",
+        "bg-white shadow-sm transition",
+        selected ? "ring-2 ring-blue-500" : "ring-1 ring-gray-200 hover:ring-blue-400/50",
+      ].join(" ")}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between border-b px-3 py-2">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span
-            {...(!readOnly ? { ...attributes, ...listeners } : {})}
-            className={[
-              "rounded-md px-2 py-1",
-              readOnly ? "cursor-default text-gray-300" : "cursor-grab hover:bg-gray-100 active:cursor-grabbing",
-            ].join(" ")}
-            title={readOnly ? undefined : "Drag to reorder"}
-            aria-label="Drag to reorder"
-          >
-            ⠿
-          </span>
-          <span className="font-medium text-gray-700">{headerLabel}</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Change variant (Preview list) */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-gray-700" disabled={readOnly}>
-                Change Layout <ChevronDown/>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              side="bottom"
-              sideOffset={8}
-              className="w-full p-0 overflow-hidden rounded-2xl shadow-lg box-border"
-            >
-              <div className="px-3 py-2">
-                <div className="text-sm font-semibold">Choose {entry.label} Variant</div>
-              </div>
-              <Separator />
-              <ScrollArea className="h-[60vh] bg-white box-border">
-                <div className="space-y-6 p-6 box-border">
-                  {variants.map((Preview, i) => (
-                    <div
-                      key={i}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => !readOnly && onVariantPick(id, i)}
-                      onKeyDown={(e) =>
-                        !readOnly && (e.key === "Enter" || e.key === " ") && onVariantPick(id, i)
-                      }
-                      className={[
-                        "w-full max-w-full overflow-hidden rounded-xl border bg-white text-left transition",
-                        i === safeIndex ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-white" : "hover:bg-gray-50",
-                        readOnly ? "pointer-events-none opacity-70" : "",
-                      ].join(" ")}
-                    >
-                      <div className="px-3 pt-2 text-xs font-medium text-gray-700">
-                        {labels[i] ?? `Variant ${i + 1}`}
-                      </div>
-                      <div className="p-2">
-                        <div className="overflow-hidden rounded-lg">
-                          <AutoScaler designWidth={1440} targetWidth={280} maxHeight={520}>
-                            <div data-scope={type} style={overrideStyle}>
-                              <EditableSection
-                                discoverKey={`${type}:${i}`}
-                                controls={controls}
-                                copyValues={copyValues}
-                              >
-                                <Preview />
-                              </EditableSection>
-                            </div>
-                          </AutoScaler>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </PopoverContent>
-          </Popover>
-
-          {/* Edit variant (Switches + Copy) */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-gray-700" disabled={readOnly}>
-                Edit Content <ChevronDown/>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" side="bottom" sideOffset={8} className="w-80 p-0 rounded-2xl shadow-lg">
-              <div className="px-3 py-2">
-                <div className="text-sm font-semibold">Customize Section</div>
-                <div className="text-xs text-gray-500">Show / hide optional elements in this section</div>
-              </div>
-              <Separator />
-              <ScrollArea className="max-h-[60vh] p-3">
-                {/* Optional Sections */}
-                <div className="p-2">
-                  <div className="text-xs font-semibold text-gray-500 mb-2">Optional Sections</div>
-                  <div className="space-y-2">
-                    {listParts.length === 0 ? (
-                      <div className="text-xs text-gray-500">No editable parts found in this section.</div>
-                    ) : (
-                      listParts.map((p) => {
-                        const current = controls[p.id];
-                        const checked = current !== undefined ? current : p.visible;
-                        return (
-                          <div
-                            key={p.id}
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => !readOnly && onTogglePart(p.id, !checked)}
-                            onKeyDown={(e) =>
-                              !readOnly && (e.key === "Enter" || e.key === " ") && onTogglePart(p.id, !checked)
-                            }
-                            className={[
-                              "flex items-center justify-between rounded-lg px-3 py-2 text-sm",
-                              readOnly ? "opacity-60" : "hover:bg-gray-50 cursor-pointer",
-                            ].join(" ")}
-                          >
-                            <span className="truncate">{p.label}</span>
-                            <Switch
-                              checked={checked}
-                              onCheckedChange={(v) => !readOnly && onTogglePart(p.id, v)}
-                              className="h-4 w-7"
-                              disabled={readOnly}
-                            />
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-
-                <Separator className="my-3" />
-
-                {/* Copy edits */}
-                <div className="p-2">
-                  <div className="text-xs font-semibold text-gray-500 mb-2">Copy</div>
-                  {copyParts.length === 0 ? (
-                    <div className="text-xs text-gray-500">No copy-editable parts in this section.</div>
-                  ) : (
-                    copyParts.map((p) => {
-                      const current =
-                        copyValues && typeof copyValues[p.id] === "string"
-                          ? copyValues[p.id]
-                          : p.defaultText;
-                      const max = p.maxChars || 120;
-                      return (
-                        <div key={p.id} className="space-y-1">
-                          <label className="block text-xs font-medium text-gray-600">{p.label}</label>
-                          <input
-                            type="text"
-                            value={current}
-                            maxLength={max}
-                            onChange={(e) => !readOnly && onCopyChange(p.id, e.target.value)}
-                            className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder={`Up to ${max} characters`}
-                            readOnly={readOnly}
-                          />
-                          <div className="text-right text-[11px] text-gray-400">
-                            {current?.length ?? 0}/{max}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </ScrollArea>
-            </PopoverContent>
-          </Popover>
-
-          {/* Section Overrides */}
-          <SectionThemePopover
-            type={type}
-            overrides={overrides || { enabled: false, values: {}, valuesPP: {} }}
-            onSetOverrides={onSetOverrides}
-            availableKeys={availableThemeKeys}
-            readOnly={readOnly}
-          />
-
-          {/* Delete */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-700"
-            onClick={() => onRemove(id)}
-            disabled={readOnly}
-          >
-            Delete
-          </Button>
-        </div>
-      </div>
 
       {/* Canvas content */}
-      <div ref={contentRef} style={overrideStyle}>
+      <div
+        ref={contentRef}
+        style={overrideStyle}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect?.(id);
+        }}>
+        {/* DEBUG: shows which popover is open */}
+        {variantOpen && (
+          <div className="absolute right-3 top-3 z-[9999] rounded bg-blue-600 px-2 py-1 text-xs text-white">
+            Layout open
+          </div>
+        )}
+        {contentOpen && (
+          <div className="absolute right-3 top-8 z-[9999] rounded bg-emerald-600 px-2 py-1 text-xs text-white">
+            Content open
+          </div>
+        )}
         <AutoScaler designWidth={1440} targetWidth={targetWidth} maxHeight={9999}>
           <div data-scope={type} style={overrideStyle}>
             <EditableSection
@@ -785,8 +627,184 @@ function SortableBlock({
           </div>
         </AutoScaler>
       </div>
+      {/* =========================
+    CHANGE LAYOUT POPOVER (controlled, no visible trigger)
+    ========================= */}
+      <Popover open={!!variantOpen} onOpenChange={onVariantOpenChange}>
+        <PopoverTrigger asChild>
+          {/* must be exactly one element */}
+          <button
+            type="button"
+            aria-hidden="true"
+            tabIndex={-1}
+            className="absolute right-3 top-3 h-1 w-1 opacity-0"
+          />
+        </PopoverTrigger>
+
+        <PopoverContent
+          // ⬇️ Position: try right/bottom first so it's clearly visible
+          side="right"
+          align="end"
+          sideOffset={12}
+          // ⬇️ Visibility defenses
+          className="z-[9999] w-[360px] p-0 overflow-hidden rounded-2xl shadow-lg bg-white"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          onInteractOutside={(e) => {
+            // ⬅️ TEMP: prevent immediate outside-close while we verify
+            e.preventDefault();
+          }}
+        >
+          <div className="px-3 py-2">
+            <div className="text-sm font-semibold">Choose {entry.label} Variant</div>
+          </div>
+          <Separator />
+          <ScrollArea className="h-[60vh] bg-white box-border">
+            <div className="space-y-6 p-6 box-border">
+              {variants.map((Preview, i) => (
+                <div
+                  key={i}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => !readOnly && (onVariantPick(id, i), onVariantOpenChange?.(false))}
+                  onKeyDown={(e) =>
+                    !readOnly &&
+                    (e.key === "Enter" || e.key === " ") &&
+                    (onVariantPick(id, i), onVariantOpenChange?.(false))
+                  }
+                  className={[
+                    "w-full max-w-full overflow-hidden rounded-xl border bg-white text-left transition",
+                    i === safeIndex ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-white" : "hover:bg-gray-50",
+                    readOnly ? "pointer-events-none opacity-70" : "",
+                  ].join(" ")}
+                >
+                  <div className="px-3 pt-2 text-xs font-medium text-gray-700">
+                    {labels[i] ?? `Variant ${i + 1}`}
+                  </div>
+                  <div className="p-2">
+                    <div className="overflow-hidden rounded-lg">
+                      <AutoScaler designWidth={1440} targetWidth={280} maxHeight={520}>
+                        <div data-scope={type} style={overrideStyle}>
+                          <EditableSection discoverKey={`${type}:${i}`} controls={controls} copyValues={copyValues}>
+                            <Preview />
+                          </EditableSection>
+                        </div>
+                      </AutoScaler>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </PopoverContent>
+      </Popover>
+
+      {/* =========================
+    EDIT CONTENT POPOVER (controlled, no visible trigger)
+    ========================= */}
+      <Popover open={!!contentOpen} onOpenChange={onContentOpenChange}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-hidden="true"
+            tabIndex={-1}
+            className="absolute right-3 top-3 h-1 w-1 opacity-0"
+          />
+        </PopoverTrigger>
+
+        <PopoverContent
+          side="right"
+          align="end"
+          sideOffset={12}
+          className="z-[9999] w-80 p-0 rounded-2xl shadow-lg bg-white"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          onInteractOutside={(e) => {
+            // ⬅️ TEMP: prevent immediate outside-close while we verify
+            e.preventDefault();
+          }}
+        >
+          <div className="px-3 py-2">
+            <div className="text-sm font-semibold">Customize Section</div>
+            <div className="text-xs text-gray-500">Show / hide optional elements in this section</div>
+          </div>
+          <Separator />
+          <ScrollArea className="max-h-[60vh] p-3">
+            {/* Optional Sections */}
+            <div className="p-2">
+              <div className="text-xs font-semibold text-gray-500 mb-2">Optional Sections</div>
+              <div className="space-y-2">
+                {listParts.length === 0 ? (
+                  <div className="text-xs text-gray-500">No editable parts found in this section.</div>
+                ) : (
+                  listParts.map((p) => {
+                    const current = controls[p.id];
+                    const checked = current !== undefined ? current : p.visible;
+                    return (
+                      <div
+                        key={p.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => !readOnly && onTogglePart(p.id, !checked)}
+                        onKeyDown={(e) =>
+                          !readOnly && (e.key === "Enter" || e.key === " ") && onTogglePart(p.id, !checked)
+                        }
+                        className={[
+                          "flex items-center justify-between rounded-lg px-3 py-2 text-sm",
+                          readOnly ? "opacity-60" : "hover:bg-gray-50 cursor-pointer",
+                        ].join(" ")}
+                      >
+                        <span className="truncate">{p.label}</span>
+                        <Switch
+                          checked={checked}
+                          onCheckedChange={(v) => !readOnly && onTogglePart(p.id, v)}
+                          className="h-4 w-7"
+                          disabled={readOnly}
+                        />
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <Separator className="my-3" />
+
+            {/* Copy edits */}
+            <div className="p-2">
+              <div className="text-xs font-semibold text-gray-500 mb-2">Copy</div>
+              {copyParts.length === 0 ? (
+                <div className="text-xs text-gray-500">No copy-editable parts in this section.</div>
+              ) : (
+                copyParts.map((p) => {
+                  const current =
+                    copyValues && typeof copyValues[p.id] === "string" ? copyValues[p.id] : p.defaultText;
+                  const max = p.maxChars || 120;
+                  return (
+                    <div key={p.id} className="space-y-1">
+                      <label className="block text-xs font-medium text-gray-600">{p.label}</label>
+                      <input
+                        type="text"
+                        value={current}
+                        maxLength={max}
+                        onChange={(e) => !readOnly && onCopyChange(p.id, e.target.value)}
+                        className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={`Up to ${max} characters`}
+                        readOnly={readOnly}
+                      />
+                      <div className="text-right text-[11px] text-gray-400">{current?.length ?? 0}/{max}</div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
+        </PopoverContent>
+      </Popover>
     </div>
   );
+
+
 }
 
 /* ------------------------------- App ------------------------------- */
@@ -800,6 +818,18 @@ export default function App() {
   const [blocks, setBlocks] = useState([
     { id: uid(), type: "hero", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } },
   ]);
+
+  const [activeBlockId, setActiveBlockId] = useState(null);
+  const [variantForId, setVariantForId] = useState(null); // which block has "Change Layout" open
+  const [contentForId, setContentForId] = useState(null);
+  const [picker, setPicker] = useState({ open: false, index: null });
+
+  useEffect(() => {
+    if (activeBlockId == null) {
+      setVariantForId(null);
+      setContentForId(null);
+    }
+  }, [activeBlockId]);
 
   // parts discovered per block (for switches UI)
   const [partsByBlock, setPartsByBlock] = useState({});
@@ -1155,6 +1185,100 @@ export default function App() {
     );
   }
 
+
+
+  // Delete the selected block
+  function handleDelete(id) {
+    if (!id || approvedMode) return;
+    setBlocks((arr) => arr.filter((b) => b.id !== id));
+    // Optional: clear selection if you just deleted it
+    if (activeBlockId === id) setActiveBlockId(null);
+  }
+
+  // Duplicate the selected block (insert copy right after original)
+  function handleDuplicate(id) {
+    if (!id || approvedMode) return;
+    setBlocks((arr) => {
+      const i = arr.findIndex((b) => b.id === id);
+      if (i === -1) return arr;
+      const original = arr[i];
+
+      // ⚠️ Keep a NEW id (required to keep DnD keys unique)
+      const newId =
+        (typeof crypto !== "undefined" && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : `${original.id}-${Date.now()}`;
+
+      const copy = {
+        ...original,
+        id: newId,
+        // Optional: tweak label to make it obvious
+        label: original.label ? `${original.label} (copy)` : original.label,
+      };
+
+      return [...arr.slice(0, i + 1), copy, ...arr.slice(i + 1)];
+    });
+  }
+
+  // Move the selected block one position up
+  function handleMoveUp(id) {
+    if (!id || approvedMode) return;
+    setBlocks((arr) => {
+      const i = arr.findIndex((b) => b.id === id);
+      if (i <= 0) return arr;
+      const next = arr.slice();
+      const tmp = next[i - 1];
+      next[i - 1] = next[i];
+      next[i] = tmp;
+      return next;
+    });
+  }
+
+  // Move the selected block one position down
+  function handleMoveDown(id) {
+    if (!id || approvedMode) return;
+    setBlocks((arr) => {
+      const i = arr.findIndex((b) => b.id === id);
+      if (i === -1 || i >= arr.length - 1) return arr;
+      const next = arr.slice();
+      const tmp = next[i + 1];
+      next[i + 1] = next[i];
+      next[i] = tmp;
+      return next;
+    });
+  }
+  // which block has "Edit Content" open
+  // handling +section
+  // ⬅️ ADD THIS helper
+  // ⬇️ REPLACE your old handleAddSectionAt with this version
+  function handleAddSectionAt(index, type = "hero") {
+    if (approvedMode) return;
+
+    // Create a new block with the chosen type
+    const newBlock = {
+      id:
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `b_${Date.now()}`,
+      type,                 // <-- chosen section type
+      variant: 0,
+      controls: {},
+      copy: {},
+      overrides: { enabled: false, values: {}, valuesPP: {} },
+    };
+
+    setBlocks((arr) => {
+      const before = arr.slice(0, index);
+      const after = arr.slice(index);
+      return [...before, newBlock, ...after];
+    });
+
+    // Select the new block so the sidebar actions target it
+    setActiveBlockId(newBlock.id);
+
+    // Close the picker (if it was open)
+    setPicker({ open: false, index: null });
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -1222,10 +1346,10 @@ export default function App() {
       </header>
 
       {/* Main layout */}
-      <div className="mx-auto grid max-w-6xl grid-cols-12 gap-6 px-4 py-6">
+      <div className="flex">
         {/* Sidebar */}
-        <aside className="col-span-12 lg:col-span-3">
-          <div className="rounded-2xl border bg-white p-4">
+        <aside className="w-72 shrink-0 border-r bg-white p-4">
+          <div className="rounde2xld- border bg-white p-4">
             <div className="mb-3 text-sm font-semibold text-gray-700">Sections</div>
             <div className="space-y-2">
               <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "hero", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
@@ -1243,82 +1367,182 @@ export default function App() {
               <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "winners", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
                 <Plus /> Winners
               </Button>
+              <div className="mt-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" className="w-full justify-between">
+                      Section Actions
+                      {/* optional caret icon */}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-64">
+                    <SectionActionsMenu
+                      // ⬇️ Pass the EXACT same handlers/props you used before
+                      section={blocks.find(b => b.id === activeBlockId)}
+                      onDuplicate={() => handleDuplicate(activeBlockId)}
+                      onDelete={() => handleDelete(activeBlockId)}
+                      onMoveUp={() => handleMoveUp(activeBlockId)}
+                      onMoveDown={() => handleMoveDown(activeBlockId)}
+                      onToggleVisibility={() => handleToggleVisibility(activeBlockId)}
+                      onOpenVariantPicker={() => {
+                        if (!activeBlockId) return;
+                        setTimeout(() => setVariantForId(activeBlockId), 0);
+                      }}
+                      onOpenContentEditor={() => {
+                        if (!activeBlockId) return;
+                        setTimeout(() => setContentForId(activeBlockId), 0);
+                      }}
+                    />
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </aside>
 
         {/* Canvas */}
-        <main className="col-span-12 lg:col-span-9">
-          <div className="space-y-4">
-            {blocks.length === 0 ? (
-              <div className="rounded-2xl border border-dashed p-10 text-center text-gray-500">
-                No sections yet. Use the buttons on the left to add some 👈
+        <main className="flex-1 p-4 flex justify-center">
+          <div className="w-full max-w-[900px]">
+            <div className="space-y-4">
+              {blocks.length === 0 ? (
+                <div className="border border-dashed p-10 text-center text-gray-500">
+                  No sections yet. Use the buttons on the left to add some 👈
+                </div>
+              ) : (
+                <DndContext
+                  collisionDetection={closestCenter}
+                  sensors={sensors}
+                  modifiers={[restrictToVerticalAxis]}
+                  onDragEnd={onDragEnd}
+                >
+                  <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-4">
+                      {blocks.map((b, i) => (
+                        <div key={b.id} className="group relative">
+                          <SortableBlock
+                            id={b.id}
+                            type={b.type}
+                            variant={b.variant ?? 0}
+                            controls={b.controls || {}}
+                            copyValues={b.copy || {}}
+                            parts={partsByBlock[b.id] || []}
+                            onPartsDiscovered={handlePartsDiscovered}
+                            onCopyDiscovered={(found) => handleCopyDiscovered(b.id, found)}
+                            onTogglePart={(partId, nextVisible) => {
+                              if (approvedMode) return;
+                              setBlocks((arr) =>
+                                arr.map((x) =>
+                                  x.id === b.id
+                                    ? { ...x, controls: { ...(x.controls || {}), [partId]: !!nextVisible } }
+                                    : x
+                                )
+                              );
+                            }}
+                            onCopyChange={(partId, text) => {
+                              if (approvedMode) return;
+                              setBlocks((arr) =>
+                                arr.map((x) =>
+                                  x.id === b.id ? { ...x, copy: { ...(x.copy || {}), [partId]: text } } : x
+                                )
+                              );
+                            }}
+                            overrides={b.overrides || { enabled: false, values: {}, valuesPP: {} }}
+                            onSetOverrides={(next) => {
+                              if (approvedMode) return;
+                              setBlocks((arr) =>
+                                arr.map((x) => (x.id === b.id ? { ...x, overrides: next } : x))
+                              );
+                            }}
+                            availableThemeKeys={Object.keys(globalTheme.colors)}
+                            onRemove={(id) => !approvedMode && setBlocks((arr) => arr.filter((blk) => blk.id !== id))}
+                            onVariantPick={(id, variantIndex) =>
+                              !approvedMode &&
+                              setBlocks((arr) => arr.map((blk) => (blk.id === id ? { ...blk, variant: variantIndex } : blk)))
+
+                            }
+                            readOnly={approvedMode}
+                            onSelect={() => setActiveBlockId(b.id)}
+                            selected={activeBlockId === b.id}
+                            variantOpen={variantForId === b.id}
+                            onVariantOpenChange={(open) => setVariantForId(open ? b.id : (variantForId === b.id ? null : variantForId))}
+                            contentOpen={contentForId === b.id}
+                            onContentOpenChange={(open) => setContentForId(open ? b.id : (contentForId === b.id ? null : contentForId))}
+                          />
+                          <div className="z-[9999] absolute inset-x-0 -bottom-5 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              onClick={() => setPicker({ open: true, index: i + 1 })}
+                              variant="outline"
+                              className="rounded-full"
+                            >
+                              + Section
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </SortableContext>
+
+                </DndContext>
+              )}
+            </div>
+
+            {toast && (
+              <div className="fixed bottom-4 right-4 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg">
+                {toast}
               </div>
-            ) : (
-              <DndContext
-                collisionDetection={closestCenter}
-                sensors={sensors}
-                modifiers={[restrictToVerticalAxis]}
-                onDragEnd={onDragEnd}
-              >
-                <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-4">
-                    {blocks.map((b) => (
-                      <SortableBlock
-                        key={b.id}
-                        id={b.id}
-                        type={b.type}
-                        variant={b.variant ?? 0}
-                        controls={b.controls || {}}
-                        copyValues={b.copy || {}}
-                        parts={partsByBlock[b.id] || []}
-                        onPartsDiscovered={handlePartsDiscovered}
-                        onCopyDiscovered={(found) => handleCopyDiscovered(b.id, found)}
-                        onTogglePart={(partId, nextVisible) => {
-                          if (approvedMode) return;
-                          setBlocks((arr) =>
-                            arr.map((x) =>
-                              x.id === b.id
-                                ? { ...x, controls: { ...(x.controls || {}), [partId]: !!nextVisible } }
-                                : x
-                            )
-                          );
-                        }}
-                        onCopyChange={(partId, text) => {
-                          if (approvedMode) return;
-                          setBlocks((arr) =>
-                            arr.map((x) =>
-                              x.id === b.id ? { ...x, copy: { ...(x.copy || {}), [partId]: text } } : x
-                            )
-                          );
-                        }}
-                        overrides={b.overrides || { enabled: false, values: {}, valuesPP: {} }}
-                        onSetOverrides={(next) => {
-                          if (approvedMode) return;
-                          setBlocks((arr) =>
-                            arr.map((x) => (x.id === b.id ? { ...x, overrides: next } : x))
-                          );
-                        }}
-                        availableThemeKeys={Object.keys(globalTheme.colors)}
-                        onRemove={(id) => !approvedMode && setBlocks((arr) => arr.filter((blk) => blk.id !== id))}
-                        onVariantPick={(id, variantIndex) =>
-                          !approvedMode &&
-                          setBlocks((arr) => arr.map((blk) => (blk.id === id ? { ...blk, variant: variantIndex } : blk)))
-                        }
-                        readOnly={approvedMode}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
             )}
+
+            {/* =========================
+    Section Picker Dialog
+    ========================= */}
+            <Dialog open={picker.open} onOpenChange={(open) => setPicker((p) => ({ ...p, open }))}>
+              <DialogContent className="sm:max-w-[520px]">
+                <DialogHeader>
+                  <DialogTitle>Add a section</DialogTitle>
+                  <DialogDescription>Choose what you want to insert below.</DialogDescription>
+                </DialogHeader>
+
+                {/* Grid of section types */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* ⬇️ Use the types that exist in your SECTIONS map */}
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "hero")}
+                  >
+                    Hero
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "extraPrizes")}
+                  >
+                    Extra Prizes
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "winners")}
+                  >
+                    Winners
+                  </Button>
+
+                  {/* ⬇️ Add more as you wire them up in SECTIONS */}
+                  {/* <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "pricing")}>Pricing</Button> */}
+                </div>
+
+                <DialogFooter className="mt-2">
+                  <Button variant="ghost" onClick={() => setPicker({ open: false, index: null })}>
+                    Cancel
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
           </div>
 
-          {toast && (
-            <div className="fixed bottom-4 right-4 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg">
-              {toast}
-            </div>
-          )}
         </main>
       </div>
 
