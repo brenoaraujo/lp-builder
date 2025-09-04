@@ -20,8 +20,6 @@ const EditableSection =
   EditableSectionMod.EditableSection ??
   (({ children }) => <>{children}</>);
 
-
-
 // DnD Kit
 import {
   DndContext,
@@ -36,14 +34,25 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
+
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetClose,
+} from "@/components/ui/sheet";
+import { X } from "lucide-react";
+
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
 
 // Icons
-import { Plus, ChevronDown } from "lucide-react";
+import { Plus, ChevronDown, ArrowRight, Pencil } from "lucide-react";
 
 // UI
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -67,8 +76,36 @@ const pruneControls = (controls = {}, partsList) => {
   return Object.fromEntries(Object.entries(controls || {}).filter(([k]) => allow.has(k)));
 };
 
+// NEW: make a stable id from a label when id is missing
+const slugify = (s = "") =>
+  String(s)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const normalizeCopyParts = (list) => {
+  const arr = Array.isArray(list)
+    ? list
+    : list && typeof list === "object"
+      ? Object.values(list)
+      : [];
+  return arr
+    .map((p) => {
+      const id =
+        p.id ??
+        p.copyId ??       // if EditableSection emits this
+        p.key ??          // safety
+        slugify(p.label); // final fallback from data-label
+      return id ? { ...p, id } : null;
+    })
+    .filter(Boolean);
+};
+
 const pruneCopy = (copyValues = {}, copyParts = []) => {
-  const allow = new Set(copyParts.map((p) => p.id));
+  // NEW: ensure ids exist before we build the allow set
+  const normalized = normalizeCopyParts(copyParts);
+  const allow = new Set(normalized.map((p) => p.id));
   return Object.fromEntries(Object.entries(copyValues).filter(([k]) => allow.has(k)));
 };
 
@@ -97,7 +134,7 @@ function decodeState(s) {
   }
 }
 // === PRODUCTION EMAIL (set this!)
-const PRODUCTION_EMAIL = "baraujo@ascendfs.com"; // <— change me to your team's email
+const PRODUCTION_EMAIL = "baraujo@ascendfs.com";
 
 function buildApprovalMailto(to, { company, project, approverName, approverEmail, notes, url }) {
   const subject = `[APPROVED] ${company} — ${project}`;
@@ -115,13 +152,10 @@ function buildApprovalMailto(to, { company, project, approverName, approverEmail
   return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-// VERCEL RESEND HANDOFF
-// pack/unpack snapshot so URL carries BOTH blocks + globalTheme
 function packSnapshot(blocks, globalTheme) {
   return { blocks, globalTheme };
 }
 function unpackSnapshot(payload) {
-  // backward compatible: older links might just be an array
   if (Array.isArray(payload)) return { blocks: payload, globalTheme: null };
   return payload || { blocks: [], globalTheme: null };
 }
@@ -197,24 +231,17 @@ function ThemePopover({ globalTheme, setGlobalTheme }) {
 }
 
 /* ---------------------- Section Overrides Popover ------------------ */
-/** For non-hero sections → single palette.
- *  For hero → two palettes:
- *    1) Hero palette (writes --Hero-Colors-*)
- *    2) Price Points inside Hero (writes --PP-Colors-*)
- */
+
 function SectionThemePopover({
   type,
-  overrides = {},              // hero: { enabled, values: {...}, valuesPP: {...} } ; others: { enabled, values: {...} }
-  onSetOverrides,              // (next) => void
+  overrides = {},
+  onSetOverrides,
   availableKeys = [],
   title = "Enable Color Overrides",
   readOnly = true,
 }) {
   const enabled = !!overrides.enabled;
-
-  // single-palette (non-hero)
   const values = overrides.values || {};
-  // extra PP palette only for hero
   const valuesPP = overrides.valuesPP || {};
 
   const setEnabled = (v) => {
@@ -262,16 +289,12 @@ function SectionThemePopover({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-4" side="bottom" align="end" sideOffset={8}>
-
-
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm font-semibold">{title}</span>
           <Switch checked={enabled} onCheckedChange={setEnabled} disabled={readOnly} />
         </div>
 
-        {/* Main palette */}
         <div className="space-y-3">
-
           {availableKeys.map((keyName) => (
             <Row
               key={`main-${keyName}`}
@@ -283,7 +306,6 @@ function SectionThemePopover({
           ))}
         </div>
 
-        {/* PP palette only for hero */}
         {type === "hero" && (
           <>
             <Separator className="my-3" />
@@ -365,125 +387,6 @@ function VariantDock({ open, type, currentVariant, onPick, onClose }) {
   );
 }
 
-// approval + handoff modal
-
-function ApproveHandoffModal({ open, onClose, onSubmit, defaults }) {
-  const [company, setCompany] = useState(defaults?.company || "");
-  const [project, setProject] = useState(defaults?.project || "");
-  const [approverName, setApproverName] = useState(defaults?.approverName || "");
-  const [approverEmail, setApproverEmail] = useState(defaults?.approverEmail || "");
-  const [notes, setNotes] = useState(defaults?.notes || "");
-
-  useEffect(() => {
-    if (!open) return;
-    // hydrate when opening
-    setCompany(defaults?.company || "");
-    setProject(defaults?.project || "");
-    setApproverName(defaults?.approverName || "");
-    setApproverEmail(defaults?.approverEmail || "");
-    setNotes(defaults?.notes || "");
-  }, [open]); // eslint-disable-line
-
-  const canSubmit =
-    company.trim() &&
-    project.trim() &&
-    approverName.trim() &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(approverEmail);
-
-  const submit = () => {
-    if (!canSubmit) return;
-    const payload = { company: company.trim(), project: project.trim(), approverName: approverName.trim(), approverEmail: approverEmail.trim(), notes: notes.trim() };
-    // remember approver locally for next time
-    try {
-      localStorage.setItem("lpb.approver.defaults", JSON.stringify({
-        company: payload.company,
-        project: payload.project,
-        approverName: payload.approverName,
-        approverEmail: payload.approverEmail,
-        notes: "", // don't persist notes by default
-      }));
-    } catch { }
-    onSubmit?.(payload);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose?.()}>
-      <DialogContent className="w-[520px] max-w-[95vw] rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>Approve & hand off to production</DialogTitle>
-          <DialogDescription className="sr-only">
-            Finalize this design and send details to production via email.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-3">
-            <label className="text-sm font-medium">Company name</label>
-            <input
-              type="text"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Acme Inc."
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            <label className="text-sm font-medium">Project name</label>
-            <input
-              type="text"
-              value={project}
-              onChange={(e) => setProject(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="LP – Spring Campaign"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            <label className="text-sm font-medium">Approver name</label>
-            <input
-              type="text"
-              value={approverName}
-              onChange={(e) => setApproverName(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Jane Doe"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            <label className="text-sm font-medium">Approver email</label>
-            <input
-              type="email"
-              value={approverEmail}
-              onChange={(e) => setApproverEmail(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="jane@acme.com"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            <label className="text-sm font-medium">Notes (optional)</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Anything your production team should know…"
-            />
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-center justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} disabled={!canSubmit}>
-            Submit to production
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 /* --------------------------- Sortable Block ------------------------ */
 
 function SortableBlock({
@@ -531,17 +434,14 @@ function SortableBlock({
   const contentWidth = useElementWidth(contentRef);
   const targetWidth = Math.max(320, Math.min(1440, contentWidth || 0));
 
-  // Local list of copy-editable parts for the Edit popover
   const [copyParts, setCopyParts] = useState([]);
 
-  // Ensure `parts` is an array
   const listParts = Array.isArray(parts)
     ? parts
     : parts && typeof parts === "object"
       ? Object.values(parts)
       : [];
 
-  // Build override styles
   const emitVars = (entries, prefix, values) => {
     if (!values) return;
     const keys = [
@@ -588,12 +488,14 @@ function SortableBlock({
     <div
       ref={setNodeRef}
       style={overrideStyle}
-      className={["relative",
-        "bg-white shadow-sm transition",
-        selected ? "ring-2 ring-blue-500" : "ring-1 ring-gray-200 hover:ring-blue-400/50",
+      className={[
+        "relative bg-white shadow-sm transition overflow-visible",
+        selected
+          ? "z-10 outline outline-2 outline-blue-500  ring-0"
+          : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500 ",
       ].join(" ")}
-    >
 
+    >
       {/* Canvas content */}
       <div
         ref={contentRef}
@@ -602,114 +504,40 @@ function SortableBlock({
           e.stopPropagation();
           onSelect?.(id);
         }}>
-        {/* DEBUG: shows which popover is open */}
-        {variantOpen && (
-          <div className="absolute right-3 top-3 z-[9999] rounded bg-blue-600 px-2 py-1 text-xs text-white">
-            Layout open
-          </div>
-        )}
-        {contentOpen && (
-          <div className="absolute right-3 top-8 z-[9999] rounded bg-emerald-600 px-2 py-1 text-xs text-white">
-            Content open
-          </div>
-        )}
+
         <AutoScaler designWidth={1440} targetWidth={targetWidth} maxHeight={9999}>
           <div data-scope={type} style={overrideStyle}>
             <EditableSection
-              discoverKey={`${type}:${safeIndex}`}
+              discoverKey={`${id}:${type}:${safeIndex}`}
               controls={controls}
               copyValues={copyValues}
               onPartsDiscovered={(found) => onPartsDiscovered?.(id, found)}
-              onCopyDiscovered={(found) => setCopyParts(found)}
+              onCopyDiscovered={(found) => {
+                // keep the popover list inside the block
+                const arr = Array.isArray(found)
+                  ? found
+                  : found && typeof found === "object"
+                    ? Object.values(found)
+                    : [];
+                setCopyParts(arr);
+
+                // bubble UP with a SINGLE argument (the array)
+                onCopyDiscovered?.(arr);
+              }}
             >
               <Comp />
             </EditableSection>
           </div>
         </AutoScaler>
       </div>
-      {/* =========================
-    CHANGE LAYOUT POPOVER (controlled, no visible trigger)
-    ========================= */}
-      <Popover open={!!variantOpen} onOpenChange={onVariantOpenChange}>
-        <PopoverTrigger asChild>
-          {/* must be exactly one element */}
-          <button
-            type="button"
-            aria-hidden="true"
-            tabIndex={-1}
-            className="absolute right-3 top-3 h-1 w-1 opacity-0"
-          />
-        </PopoverTrigger>
 
-        <PopoverContent
-          // ⬇️ Position: try right/bottom first so it's clearly visible
-          side="right"
-          align="end"
-          sideOffset={12}
-          // ⬇️ Visibility defenses
-          className="z-[9999] w-[360px] p-0 overflow-hidden rounded-2xl shadow-lg bg-white"
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onCloseAutoFocus={(e) => e.preventDefault()}
-          onInteractOutside={(e) => {
-            // ⬅️ TEMP: prevent immediate outside-close while we verify
-            e.preventDefault();
-          }}
-        >
-          <div className="px-3 py-2">
-            <div className="text-sm font-semibold">Choose {entry.label} Variant</div>
-          </div>
-          <Separator />
-          <ScrollArea className="h-[60vh] bg-white box-border">
-            <div className="space-y-6 p-6 box-border">
-              {variants.map((Preview, i) => (
-                <div
-                  key={i}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => !readOnly && (onVariantPick(id, i), onVariantOpenChange?.(false))}
-                  onKeyDown={(e) =>
-                    !readOnly &&
-                    (e.key === "Enter" || e.key === " ") &&
-                    (onVariantPick(id, i), onVariantOpenChange?.(false))
-                  }
-                  className={[
-                    "w-full max-w-full overflow-hidden rounded-xl border bg-white text-left transition",
-                    i === safeIndex ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-white" : "hover:bg-gray-50",
-                    readOnly ? "pointer-events-none opacity-70" : "",
-                  ].join(" ")}
-                >
-                  <div className="px-3 pt-2 text-xs font-medium text-gray-700">
-                    {labels[i] ?? `Variant ${i + 1}`}
-                  </div>
-                  <div className="p-2">
-                    <div className="overflow-hidden rounded-lg">
-                      <AutoScaler designWidth={1440} targetWidth={280} maxHeight={520}>
-                        <div data-scope={type} style={overrideStyle}>
-                          <EditableSection discoverKey={`${type}:${i}`} controls={controls} copyValues={copyValues}>
-                            <Preview />
-                          </EditableSection>
-                        </div>
-                      </AutoScaler>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
-        </PopoverContent>
-      </Popover>
 
-      {/* =========================
-    EDIT CONTENT POPOVER (controlled, no visible trigger)
-    ========================= */}
+
+
+      {/* EDIT CONTENT POPOVER */}
       <Popover open={!!contentOpen} onOpenChange={onContentOpenChange}>
         <PopoverTrigger asChild>
-          <button
-            type="button"
-            aria-hidden="true"
-            tabIndex={-1}
-            className="absolute right-3 top-3 h-1 w-1 opacity-0"
-          />
+          <button type="button" aria-hidden="true" tabIndex={-1} className="absolute right-3 top-3 h-1 w-1 opacity-0" />
         </PopoverTrigger>
 
         <PopoverContent
@@ -719,10 +547,7 @@ function SortableBlock({
           className="z-[9999] w-80 p-0 rounded-2xl shadow-lg bg-white"
           onOpenAutoFocus={(e) => e.preventDefault()}
           onCloseAutoFocus={(e) => e.preventDefault()}
-          onInteractOutside={(e) => {
-            // ⬅️ TEMP: prevent immediate outside-close while we verify
-            e.preventDefault();
-          }}
+          onInteractOutside={(e) => e.preventDefault()}
         >
           <div className="px-3 py-2">
             <div className="text-sm font-semibold">Customize Section</div>
@@ -782,17 +607,20 @@ function SortableBlock({
                   const max = p.maxChars || 120;
                   return (
                     <div key={p.id} className="space-y-1">
-                      <label className="block text-xs font-medium text-gray-600">{p.label}</label>
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-medium text-gray-600">{p.label}</label>
+                        <div className="text-right text-[11px] text-gray-400">{current?.length ?? 0}/{max}</div>
+                      </div>
                       <input
                         type="text"
                         value={current}
                         maxLength={max}
                         onChange={(e) => !readOnly && onCopyChange(p.id, e.target.value)}
-                        className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-md border p-2  text-sm outline focus:outline-2 focus:outline-blue-500"
                         placeholder={`Up to ${max} characters`}
                         readOnly={readOnly}
                       />
-                      <div className="text-right text-[11px] text-gray-400">{current?.length ?? 0}/{max}</div>
+
                     </div>
                   );
                 })
@@ -803,26 +631,30 @@ function SortableBlock({
       </Popover>
     </div>
   );
-
-
 }
+
+
 
 /* ------------------------------- App ------------------------------- */
 
 export default function App() {
-  // Hydration guard so effects don’t race while parsing incoming hash
   const [hydrated, setHydrated] = useState(false);
+  const didAutoSelectOnce = useRef(false);
 
-  // Blocks: { id, type, variant, controls, copy, overrides }
-  // hero.overrides supports: { enabled, values: {...Hero-Colors}, valuesPP: {...PP-Colors} }
   const [blocks, setBlocks] = useState([
     { id: uid(), type: "hero", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } },
   ]);
 
   const [activeBlockId, setActiveBlockId] = useState(null);
-  const [variantForId, setVariantForId] = useState(null); // which block has "Change Layout" open
+  const [variantForId, setVariantForId] = useState(null);
   const [contentForId, setContentForId] = useState(null);
   const [picker, setPicker] = useState({ open: false, index: null });
+
+  function closePanel() {
+    setActiveBlockId(null);
+    setVariantForId(null);
+    setContentForId(null);
+  }
 
   useEffect(() => {
     if (activeBlockId == null) {
@@ -831,13 +663,17 @@ export default function App() {
     }
   }, [activeBlockId]);
 
-  // parts discovered per block (for switches UI)
+  useEffect(() => {
+    if (!didAutoSelectOnce.current && !activeBlockId && blocks.length) {
+      setActiveBlockId(blocks[0].id);
+      didAutoSelectOnce.current = true; // never auto-select again
+    }
+  }, [activeBlockId, blocks]);
+
   const [partsByBlock, setPartsByBlock] = useState({});
 
-  // Global theme (root CSS variables)
   const [globalTheme, setGlobalTheme] = useState({
     colors: {
-
       background: "#ffffff",
       foreground: "#18181b",
       "muted-background": "#d7d7dc",
@@ -851,10 +687,8 @@ export default function App() {
       "secondary-foreground": "#71717a"
     },
   });
-  //approval + handoff modal
-  const [handoffOpen, setHandoffOpen] = useState(false);
 
-  // Load saved defaults for approver/company/project (nice UX)
+  const [handoffOpen, setHandoffOpen] = useState(false);
   const [handoffDefaults, setHandoffDefaults] = useState(null);
   useEffect(() => {
     try {
@@ -864,37 +698,31 @@ export default function App() {
   }, []);
 
   const submitHandoff = (formData) => {
-    // Ensure the current URL hash matches the *latest* state (so snapshot is immutable)
     try {
-      // If you already persist on every change, this is just a nudge:
-      const payload = encodeState(blocks); // if your share includes theme too, keep your existing routine here
+      const payload = encodeState(blocks);
       location.hash = payload;
       history.replaceState(null, "", `#${payload}`);
     } catch { }
 
-    const url = location.href; // current immutable snapshot
+    const url = location.href;
     const mailto = buildApprovalMailto(PRODUCTION_EMAIL, { ...formData, url });
 
     try {
-      window.location.href = mailto; // open email client
+      window.location.href = mailto;
     } catch {
-      // ultra fallback: copy to clipboard
       navigator.clipboard?.writeText(`${formData.company} / ${formData.project}\n${url}`);
     }
 
     setHandoffOpen(false);
   };
 
-  // Apply global variables to :root
   useEffect(() => {
     setCSSVars(document.documentElement, "colors", globalTheme.colors);
   }, [globalTheme]);
 
-  // --- Read-only / Approved snapshot detection ---
-  const [approvedMeta, setApprovedMeta] = useState(null); // {approved, approvedAt, projectId?, customerName?}
+  const [approvedMeta, setApprovedMeta] = useState(null);
   const approvedMode = !!approvedMeta?.approved;
 
-  // DnD
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const onDragEnd = (event) => {
     if (approvedMode) return;
@@ -905,7 +733,6 @@ export default function App() {
     setBlocks((arr) => arrayMove(arr, oldIndex, newIndex));
   };
 
-  // Load from URL hash (supports both legacy and new snapshot object)
   useEffect(() => {
     const hash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
     if (!hash) {
@@ -918,8 +745,6 @@ export default function App() {
       return;
     }
 
-
-    // Legacy: just an array of blocks
     if (Array.isArray(loaded)) {
       setBlocks(
         loaded.map((b) => ({
@@ -935,7 +760,6 @@ export default function App() {
       return;
     }
 
-    // New snapshot format: { blocks, globalTheme?, meta? }
     if (loaded && typeof loaded === "object") {
       if (Array.isArray(loaded.blocks)) {
         setBlocks(
@@ -959,14 +783,12 @@ export default function App() {
     setHydrated(true);
   }, []);
 
-  // Persist (editor mode only; not for approved read-only)
   useEffect(() => {
     if (!hydrated || approvedMode) return;
     const payload = encodeState(packSnapshot(blocks, globalTheme));
     history.replaceState(null, "", `#${payload}`);
   }, [blocks, globalTheme, hydrated, approvedMode]);
 
-  // Share (editor mode)
   const [toast, setToast] = useState(null);
   const share = async () => {
     if (approvedMode) {
@@ -1015,7 +837,6 @@ export default function App() {
     window.__share_toast_timer = setTimeout(() => setToast(null), 2000);
   };
 
-  // Reset to defaults (editor mode only)
   const resetAll = () => {
     if (approvedMode) return;
     setBlocks([{ id: uid(), type: "hero", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }]);
@@ -1034,15 +855,13 @@ export default function App() {
         "secondary-foreground": "#71717a"
       },
     });
-    const payload = encodeState({ blocks: [], globalTheme: { colors: {} } }); // clear-ish hash
+    const payload = encodeState({ blocks: [], globalTheme: { colors: {} } });
     history.replaceState(null, "", `#${payload}`);
     setToast("Reset to defaults");
     clearTimeout(window.__share_toast_timer);
     window.__share_toast_timer = setTimeout(() => setToast(null), 1600);
   };
 
-  // ---- Approve flow (immutable snapshot) ----
-  // —— Approve / Handoff state ——
   const [approveOpen, setApproveOpen] = useState(false);
   const [approvalLink, setApprovalLink] = useState("");
 
@@ -1054,8 +873,6 @@ export default function App() {
     approverEmail: "",
   });
 
-
-  // Submit to production via serverless email (Resend)
   const submitViaEmail = async () => {
     try {
       const snapshot = {
@@ -1084,21 +901,14 @@ export default function App() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         console.error("handoff 400:", data);
-        // show the reason if available
-        const reason = data?.error ? `${data.error} ${data?.missing ? `(${data.missing.join(", ")})` : ""}` : "Unknown error";
-        // setToast(`Submit failed: ${reason}`);
         return;
       }
 
-      // setToast("Submitted to production ✅");
       setApproveOpen(false);
     } catch (err) {
       console.error(err);
-      // setToast("Submit failed. Try again.");
     }
   };
-
-
 
   const makeApprovalSnapshot = () => {
     const meta = {
@@ -1129,7 +939,6 @@ export default function App() {
   const handleApprove = () => {
     const { snapshot, url } = makeApprovalSnapshot();
     setApprovalLink(url);
-    // we do NOT change the current page to read-only; the approval link itself is immutable
     setApproveOpen(true);
   };
 
@@ -1144,8 +953,8 @@ export default function App() {
     window.__share_toast_timer = setTimeout(() => setToast(null), 1600);
   };
 
+  function handleToggleVisibility(id) { }
 
-  // Discovery handlers
   const handlePartsDiscovered = useCallback((blockId, foundParts) => {
     const arr = Array.isArray(foundParts)
       ? foundParts
@@ -1162,18 +971,20 @@ export default function App() {
     );
   }, []);
 
+  const [copyPartsByBlock, setCopyPartsByBlock] = useState({});
+
   const handleCopyDiscovered = useCallback((blockId, foundCopyParts) => {
-    const arr = Array.isArray(foundCopyParts)
-      ? foundCopyParts
-      : foundCopyParts && typeof foundCopyParts === "object"
-        ? Object.values(foundCopyParts)
-        : [];
-    setBlocks((prev) =>
-      prev.map((b) => (b.id === blockId ? { ...b, copy: pruneCopy(b.copy || {}, arr) } : b))
+    // NEW: normalize here as well (so sidebar always gets ids)
+
+    const normalized = normalizeCopyParts(foundCopyParts);
+
+    setCopyPartsByBlock((prev) => ({ ...prev, [blockId]: normalized }));
+
+    setBlocks(prev =>
+      prev.map(b => (b.id === blockId ? { ...b, copy: pruneCopy(b.copy || {}, normalized) } : b))
     );
   }, []);
 
-  // Optional VariantDock (not currently triggered)
   const [dockBlockId, setDockBlockId] = useState(null);
   const active = blocks.find((b) => b.id === dockBlockId) || null;
 
@@ -1185,42 +996,27 @@ export default function App() {
     );
   }
 
-
-
-  // Delete the selected block
   function handleDelete(id) {
     if (!id || approvedMode) return;
     setBlocks((arr) => arr.filter((b) => b.id !== id));
-    // Optional: clear selection if you just deleted it
     if (activeBlockId === id) setActiveBlockId(null);
   }
 
-  // Duplicate the selected block (insert copy right after original)
   function handleDuplicate(id) {
     if (!id || approvedMode) return;
     setBlocks((arr) => {
       const i = arr.findIndex((b) => b.id === id);
       if (i === -1) return arr;
       const original = arr[i];
-
-      // ⚠️ Keep a NEW id (required to keep DnD keys unique)
       const newId =
         (typeof crypto !== "undefined" && crypto.randomUUID)
           ? crypto.randomUUID()
           : `${original.id}-${Date.now()}`;
-
-      const copy = {
-        ...original,
-        id: newId,
-        // Optional: tweak label to make it obvious
-        label: original.label ? `${original.label} (copy)` : original.label,
-      };
-
+      const copy = { ...original, id: newId, label: original.label ? `${original.label} (copy)` : original.label };
       return [...arr.slice(0, i + 1), copy, ...arr.slice(i + 1)];
     });
   }
 
-  // Move the selected block one position up
   function handleMoveUp(id) {
     if (!id || approvedMode) return;
     setBlocks((arr) => {
@@ -1234,7 +1030,6 @@ export default function App() {
     });
   }
 
-  // Move the selected block one position down
   function handleMoveDown(id) {
     if (!id || approvedMode) return;
     setBlocks((arr) => {
@@ -1247,20 +1042,16 @@ export default function App() {
       return next;
     });
   }
-  // which block has "Edit Content" open
-  // handling +section
-  // ⬅️ ADD THIS helper
-  // ⬇️ REPLACE your old handleAddSectionAt with this version
+
   function handleAddSectionAt(index, type = "hero") {
     if (approvedMode) return;
 
-    // Create a new block with the chosen type
     const newBlock = {
       id:
         typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID()
           : `b_${Date.now()}`,
-      type,                 // <-- chosen section type
+      type,
       variant: 0,
       controls: {},
       copy: {},
@@ -1273,17 +1064,53 @@ export default function App() {
       return [...before, newBlock, ...after];
     });
 
-    // Select the new block so the sidebar actions target it
     setActiveBlockId(newBlock.id);
-
-    // Close the picker (if it was open)
     setPicker({ open: false, index: null });
   }
+
+  function onTogglePartFromSidebar(partId, nextVisible) {
+    if (approvedMode || !activeBlockId) return;
+    setBlocks((arr) =>
+      arr.map((x) =>
+        x.id === activeBlockId
+          ? { ...x, controls: { ...(x.controls || {}), [partId]: !!nextVisible } }
+          : x
+      )
+    );
+  }
+
+  function onCopyChangeFromSidebar(partId, text) {
+    if (approvedMode || !activeBlockId) return;
+    setBlocks((arr) =>
+      arr.map((x) =>
+        x.id === activeBlockId
+          ? { ...x, copy: { ...(x.copy || {}), [partId]: text } }
+          : x
+      )
+    );
+  }
+  //close aside
+  const activeBlock = blocks.find((b) => b.id === activeBlockId) || null;
+
+  const firstBlockId = blocks[0]?.id ?? null;
+
+  const openEditorOnFirst = () => {
+    if (firstBlockId) setActiveBlockId(firstBlockId);
+    // optional: if there are no blocks, you could open your "add section" flow here
+  };
+
+
+
+  const partList = partsByBlock[activeBlockId] || [];
+  const copyList = copyPartsByBlock[activeBlockId] || [];
+  const activeEntry = activeBlock ? SECTIONS[activeBlock.type] : null;
+  const variantIndex = activeBlock?.variant ?? 0;
+  //app return
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      <header className="sticky top-0 z-40 bg-gray-50  backdrop-blur" style={{ ['--header-h']: '56px' }}>
+        <div className="mx-auto w-full flex  items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <h1 className="text-base font-semibold tracking-tight text-gray-900">
               LP Builder — Multiple Blocks
@@ -1317,7 +1144,6 @@ export default function App() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    // export the approved snapshot you’re viewing
                     const obj = decodeState(location.hash.slice(1));
                     if (obj) {
                       const filename = `Design Snapshot - ${approvedMeta.projectId || "approved"} - ${approvedMeta.approvedAt?.slice(0, 19)?.replace(/[:T]/g, "-")}.json`;
@@ -1348,61 +1174,253 @@ export default function App() {
       {/* Main layout */}
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-72 shrink-0 border-r bg-white p-4">
-          <div className="rounde2xld- border bg-white p-4">
-            <div className="mb-3 text-sm font-semibold text-gray-700">Sections</div>
-            <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "hero", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
-                <Plus /> Hero
-              </Button>
-              {/*<Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "pricing", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
-                <Plus /> Pricing
-              </Button>
-              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "testimonials", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
-                <Plus /> Testimonials
-              </Button>*/}
-              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "extraPrizes", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
-                <Plus /> Extra Prizes
-              </Button>
-              <Button variant="outline" className="w-full justify-start text-gray-500" onClick={() => !approvedMode && setBlocks((arr) => [...arr, { id: uid(), type: "winners", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } }])} disabled={approvedMode}>
-                <Plus /> Winners
-              </Button>
-              <div className="mt-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="secondary" className="w-full justify-between">
-                      Section Actions
-                      {/* optional caret icon */}
+        {!activeBlockId && blocks.length > 0 && (
+          <button
+            type="button"
+            onClick={openEditorOnFirst}
+            aria-label="Edit first section"
+            className="
+            fixed left-3 top-20 z-40
+            grid h-10 w-10 place-items-center
+            rounded-full border bg-white shadow
+            hover:ring-2 hover:ring-blue-500
+            focus:outline-none focus:ring-2 focus:ring-blue-500
+          "
+          >
+            <Pencil className="h-5 w-5 text-gray-700" />
+          </button>
+        )}
+        {activeBlockId && (
+
+
+          <aside className=" fixed left-4 top-20 z-40 w-[290px] sm:w-[290px] max-h-[calc(100vh-6rem)] overflow-y-auto rounded-md border bg-white shadow-lg p-4"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="flex items-center justify-between ">
+              <div className="text-md font-semibold  text-gray-700 mb-4">
+                Section
+              </div>
+              <button
+                type="button"
+                onClick={closePanel}
+                className="rounded p-1 hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="">
+              <div className="space-y-2">
+
+                {/* --- Change Layout button anchored popover --- */}
+                {/* Sidebar: Change Layout */}
+                <div className="text-xs font-semibold text-gray-500 mb-2">Layout</div>
+                <Popover
+                  open={variantForId === activeBlockId}
+                  onOpenChange={(open) => setVariantForId(open ? activeBlockId : null)}
+                >
+                  <PopoverTrigger asChild>
+
+                    <Button
+
+                      variant="outline"
+                      className="w-full justify-start text-gray-500 justify-between mb-4"
+                      disabled={approvedMode || !activeBlockId}
+                    >
+
+                      {activeEntry?.labels?.[variantIndex] ??
+                        `${activeEntry?.label ?? "Variant"} ${variantIndex + 1}`}
+                      <ArrowRight />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-64">
-                    <SectionActionsMenu
-                      // ⬇️ Pass the EXACT same handlers/props you used before
-                      section={blocks.find(b => b.id === activeBlockId)}
-                      onDuplicate={() => handleDuplicate(activeBlockId)}
-                      onDelete={() => handleDelete(activeBlockId)}
-                      onMoveUp={() => handleMoveUp(activeBlockId)}
-                      onMoveDown={() => handleMoveDown(activeBlockId)}
-                      onToggleVisibility={() => handleToggleVisibility(activeBlockId)}
-                      onOpenVariantPicker={() => {
-                        if (!activeBlockId) return;
-                        setTimeout(() => setVariantForId(activeBlockId), 0);
-                      }}
-                      onOpenContentEditor={() => {
-                        if (!activeBlockId) return;
-                        setTimeout(() => setContentForId(activeBlockId), 0);
-                      }}
-                    />
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </PopoverTrigger>
+
+                  <PopoverContent
+                    side="right"
+                    align="start"
+                    sideOffset={8}
+                    className="z-[9999] w-[300px] box-border p-0 rounded-xl bg-white shadow-lg p-2 overflow-visible"
+                  >
+                    <div className="px-3 py-2 text-sm font-semibold">
+                      Replace Component
+                    </div>
+
+                    <ScrollArea className="h-[60vh]  p-3 box-border [&_[data-radix-scroll-area-viewport]]:overflow-visible">
+                      {(SECTIONS[activeBlock?.type]?.variants || []).map((Preview, i) => {
+                        const labels = SECTIONS[activeBlock?.type]?.labels || [];
+                        const selected = (activeBlock?.variant ?? 0) === i;
+                        return (
+                          <div
+                            key={i}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                              if (approvedMode || !activeBlockId) return;
+                              setBlocks(arr => arr.map(b =>
+                                b.id === activeBlockId ? { ...b, variant: i } : b
+                              ));
+                              setVariantForId(null); // close popover
+                            }}
+                            onKeyDown={(e) => {
+                              if (approvedMode || !activeBlockId) return;
+                              if (e.key === "Enter" || e.key === " ") {
+                                setBlocks(arr => arr.map(b =>
+                                  b.id === activeBlockId ? { ...b, variant: i } : b
+                                ));
+                                setVariantForId(null);
+                              }
+                            }}
+                            className={[
+                              "w-full overflow-hidden rounded-md border bg-white text-left transition mb-4 box-border ",
+                              selected ? "outline outline-2 -outline-offset-2 outline-blue-500 hover:outline-blue-700" : "hover:outline hover:outline-2 hover:-outline-offset-2 hover:outline-blue-200"
+                            ].join(" ")}
+                          >
+                            <div className="px-3 pt-2 pb-2 text-xs font-medium text-gray-700">
+                              {labels[i] ?? `Variant ${i + 1}`}
+                            </div>
+                            <Separator />
+                            <div className="p-2">
+                              <div className="overflow-hidden rounded-md  ">
+                                <AutoScaler designWidth={1440} targetWidth={240} maxHeight={520} >
+                                  <div data-scope={activeBlock?.type} >
+                                    <EditableSection
+                                      discoverKey={`${activeBlock?.type}:${i}`}
+                                      controls={activeBlock?.controls || {}}
+                                      copyValues={activeBlock?.copy || {}}
+                                    >
+                                      <Preview preview />
+                                    </EditableSection>
+                                  </div>
+                                </AutoScaler>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
+
+                {activeBlockId && (
+
+                  <div className="my-3">
+                    <Separator className="my-3" />
+                    <ScrollArea className="max-h-[60vh] pr-2">
+                      <div className="mb-4">
+                        <div className="text-xs font-semibold text-gray-500 mb-2">Display Sections</div>
+                        <div className="space-y-2">
+                          {partList.length > 0 ? (
+                            partList.map((p) => {
+                              const controls = activeBlock?.controls || {};
+                              const checked = controls[p.id] !== undefined ? controls[p.id] : p.visible;
+                              const hideThisSwitch = !checked && p.hideSwitchWhenHidden;
+
+                              if (hideThisSwitch) return null;
+
+                              return (
+                                <div
+                                  key={p.id}
+                                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-gray-50"
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() => !approvedMode && onTogglePartFromSidebar(p.id, !checked)}
+                                  onKeyDown={(e) =>
+                                    !approvedMode &&
+                                    (e.key === "Enter" || e.key === " ") &&
+                                    onTogglePartFromSidebar(p.id, !checked)
+                                  }
+                                >
+                                  <span className="truncate">{p.label}</span>
+                                  <Switch
+                                    checked={checked}
+                                    onCheckedChange={(v) => !approvedMode && onTogglePartFromSidebar(p.id, v)}
+                                    className="h-4 w-7"
+                                    disabled={approvedMode}
+                                  />
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="text-xs text-gray-500">No editable parts found in this section.</div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator className="my-3" />
+
+                      <div>
+                        <div className="text-xs font-semibold text-gray-500 my-4 ">Copy</div>
+                        {copyList.length > 0 ? (
+                          copyList.map((p) => {
+                            const current =
+                              activeBlock?.copy && typeof activeBlock.copy[p.id] === "string"
+                                ? activeBlock.copy[p.id]
+                                : p.defaultText;
+                            const max = p.maxChars || 120;
+
+                            return (
+                              <div key={p.id} className="space-y-1 mb-6 px-1">
+
+                                <div className="flex items-center justify-between">
+                                  <label className="block text-xs font-medium text-gray-600">{p.label}</label>
+                                  <div className="text-right text-[11px] text-gray-400">{current?.length ?? 0}/{max}</div>
+                                </div>
+                                <input
+                                  type="text"
+                                  value={current ?? ""}
+                                  maxLength={max}
+                                  onChange={(e) => !approvedMode && onCopyChangeFromSidebar(p.id, e.target.value)}
+                                  className="w-full rounded-md border p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 "
+                                  placeholder={`Up to ${max} characters`}
+                                  readOnly={approvedMode}
+                                />
+
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="text-xs text-gray-500">No copy-editable parts in this section.</div>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
+
+
+                <div className="mt-4">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="secondary" className="w-full justify-between">
+                        More Actions
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-64">
+                      <SectionActionsMenu
+                        section={blocks.find(b => b.id === activeBlockId)}
+
+                        onDelete={() => handleDelete(activeBlockId)}
+                        onMoveUp={() => handleMoveUp(activeBlockId)}
+                        onMoveDown={() => handleMoveDown(activeBlockId)}
+
+
+                      />
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
-          </div>
-        </aside>
+
+          </aside>
+
+
+        )}
+
+
 
         {/* Canvas */}
-        <main className="flex-1 p-4 flex justify-center">
-          <div className="w-full max-w-[900px]">
+        <main className="flex-1 p-4 flex justify-center box-border">
+          <div className="w-full max-w-[800px] box-border">
             <div className="space-y-4">
               {blocks.length === 0 ? (
                 <div className="border border-dashed p-10 text-center text-gray-500">
@@ -1416,7 +1434,7 @@ export default function App() {
                   onDragEnd={onDragEnd}
                 >
                   <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-4">
+                    <div className="">
                       {blocks.map((b, i) => (
                         <div key={b.id} className="group relative">
                           <SortableBlock
@@ -1458,7 +1476,6 @@ export default function App() {
                             onVariantPick={(id, variantIndex) =>
                               !approvedMode &&
                               setBlocks((arr) => arr.map((blk) => (blk.id === id ? { ...blk, variant: variantIndex } : blk)))
-
                             }
                             readOnly={approvedMode}
                             onSelect={() => setActiveBlockId(b.id)}
@@ -1471,8 +1488,8 @@ export default function App() {
                           <div className="z-[9999] absolute inset-x-0 -bottom-5 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                               onClick={() => setPicker({ open: true, index: i + 1 })}
-                              variant="outline"
-                              className="rounded-full"
+                              variant="primary"
+                              className="rounded-full bg-blue-500 text-white hover:bg-blue-600"
                             >
                               + Section
                             </Button>
@@ -1481,7 +1498,6 @@ export default function App() {
                       ))}
                     </div>
                   </SortableContext>
-
                 </DndContext>
               )}
             </div>
@@ -1492,9 +1508,7 @@ export default function App() {
               </div>
             )}
 
-            {/* =========================
-    Section Picker Dialog
-    ========================= */}
+            {/* Section Picker Dialog */}
             <Dialog open={picker.open} onOpenChange={(open) => setPicker((p) => ({ ...p, open }))}>
               <DialogContent className="sm:max-w-[520px]">
                 <DialogHeader>
@@ -1502,9 +1516,7 @@ export default function App() {
                   <DialogDescription>Choose what you want to insert below.</DialogDescription>
                 </DialogHeader>
 
-                {/* Grid of section types */}
                 <div className="grid grid-cols-2 gap-3">
-                  {/* ⬇️ Use the types that exist in your SECTIONS map */}
                   <Button
                     variant="outline"
                     className="justify-start"
@@ -1528,9 +1540,6 @@ export default function App() {
                   >
                     Winners
                   </Button>
-
-                  {/* ⬇️ Add more as you wire them up in SECTIONS */}
-                  {/* <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "pricing")}>Pricing</Button> */}
                 </div>
 
                 <DialogFooter className="mt-2">
@@ -1542,11 +1551,9 @@ export default function App() {
             </Dialog>
 
           </div>
-
         </main>
       </div>
 
-      {/* Optional VariantDock (not currently triggered) */}
       {active && (
         <VariantDock
           open={!!active}
@@ -1557,7 +1564,6 @@ export default function App() {
         />
       )}
 
-      {/* Approve modal */}
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent className="sm:max-w-[560px]">
           <DialogHeader>
@@ -1568,8 +1574,6 @@ export default function App() {
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Who’s approving */}
-
             <div className="space-y-1">
               <label className="text-xs text-gray-600">Approver name</label>
               <input
@@ -1590,9 +1594,6 @@ export default function App() {
               />
             </div>
 
-
-            {/* Company / project */}
-
             <div className="space-y-1">
               <label className="text-xs text-gray-600">Customer / Company</label>
               <input
@@ -1612,7 +1613,6 @@ export default function App() {
               />
             </div>
 
-            {/* Notes */}
             <div className="space-y-1">
               <label className="text-xs text-gray-600">Notes (optional)</label>
               <textarea
@@ -1624,14 +1624,12 @@ export default function App() {
               />
             </div>
 
-            {/* Submit */}
             <div className="pt-2">
               <Button className="w-full" onClick={submitViaEmail}>
                 Submit to Production
               </Button>
             </div>
 
-            {/* FYI: show generated link (readonly) after submit or on demand */}
             {approvalLink && (
               <div className="text-[11px] text-gray-600">
                 Approval link generated: <span className="break-all">{approvalLink}</span>
@@ -1646,7 +1644,6 @@ export default function App() {
 
 /* --------------------------- Hooks & Utils ------------------------- */
 
-// Simple element width hook (kept for completeness if not already in your project)
 function useElementWidth(ref) {
   const [w, setW] = useState(0);
   useEffect(() => {
@@ -1658,4 +1655,3 @@ function useElementWidth(ref) {
   }, [ref]);
   return w;
 }
-

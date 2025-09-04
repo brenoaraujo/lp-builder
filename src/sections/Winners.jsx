@@ -10,7 +10,7 @@ export function WinnersA() {
         <div data-copy="yes" data-label="Headline" className="self-stretch text-center justify-start text-Winners-Colors-foreground text-4xl font-bold font-['Inter'] leading-10">Congratulations to our recent winners</div>
         <div data-display="yes" data-copy="yes" data-label="Description" className="self-stretch text-center justify-start text-Winners-Colors-muted-foreground text-base font-normal font-['Inter'] leading-normal">Winning a prize is thrilling, but the real win is knowing your contribution makes a difference. It’s a win-win—an exciting reward for you and vital support for a great cause!</div>
       </div>
-      <div className="relative inline-flex justify-center items-center">
+      <div data-display="yes" data-label="Winners Photos" className="relative inline-flex justify-center items-center">
         <div className="flex justify-center items-center gap-4">
           <div className="w-full p-1 flex justify-start items-center gap-2">
             <div

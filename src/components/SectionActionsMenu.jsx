@@ -19,28 +19,13 @@ export default function SectionActionsMenu({
 
     return (
         <>
-            <DropdownMenuLabel className="text-xs">
-                {hasSection ? `Section: ${section?.type ?? section?.id ?? "Selected"}` : "No section selected"}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+           
+           
 
             <DropdownMenuGroup>
                 {/* If later you want the *exact same* popovers to open inside the selected block,
            wire these to trigger the same state you use in SortableBlock and pass them in as props. */}
-                <DropdownMenuItem
-                    disabled={!section}
-                    onClick={() => onOpenVariantPicker?.()}
-                >
-                    Change Layout
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                    disabled={!section}
-                    onClick={() => onOpenContentEditor?.()}
-                >
-                    Edit Content
-                </DropdownMenuItem>
-
+                
 
 
                 <DropdownMenuItem disabled={!hasSection} onClick={() => onMoveUp?.()}>
@@ -51,9 +36,7 @@ export default function SectionActionsMenu({
                     Move Down
                 </DropdownMenuItem>
 
-                <DropdownMenuItem disabled={!hasSection} onClick={() => onDuplicate?.()}>
-                    Duplicate
-                </DropdownMenuItem>
+                
 
                 <DropdownMenuSeparator />
 

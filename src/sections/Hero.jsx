@@ -3,7 +3,7 @@ import { ArrowRight, Plus, Minus, ShoppingCart } from "lucide-react";
 /* Simple hero variants; include a <button> inside to prove dock handles nested buttons */
 export function HeroA() {
   return (
-    <section className="rounded-xl border p-6 bg-Hero-Colors-background" >
+    <section className="p-6 bg-Hero-Colors-background" >
       <div className="w-[1440px] mx-auto py-24 bg-Hero-Colors-background flex flex-col items-center gap-12 overflow-hidden">
         {/* Top row */}
         <div className="w-full max-w-[1280px] grid grid-cols-2 items-center gap-16">
@@ -11,7 +11,7 @@ export function HeroA() {
           <div className="w-full flex flex-col gap-8">
             {/* Headline + payout */}
             <div className="flex flex-col gap-6">
-              <h1 data-copy="yes" data-label="Hero Headline" data-maxchars="60" className="text-Hero-Colors-foreground text-4xl font-bold leading-[48px]">
+              <h1 data-copy="true" data-copy-id="hero-price-points-headline" data-label="Headline" data-maxchars="60" className="text-Hero-Colors-foreground text-4xl font-bold leading-[48px]">
                 A simple but powerful headline that sells!
               </h1>
 
@@ -28,7 +28,7 @@ export function HeroA() {
             <div
               data-position="left"
               data-style="no-box"
-              data-display="yes"
+              data-display="true"
               data-label="Countdown"
               className="py-3 bg-Hero-Colors-background rounded-md flex flex-col gap-2"
             >
@@ -57,8 +57,9 @@ export function HeroA() {
             {/* CTA (toggleable) */}
             <button
               type="button"
-              data-display="yes"
+              data-display="true"
               data-label="Buy Now Button"
+              
               className="w-48 h-10 px-4 bg-Hero-Colors-primary rounded-lg inline-flex justify-center items-center gap-2"
             >
               <span className="text-Hero-Colors-primary-foreground text-sm font-medium leading-tight">
@@ -66,10 +67,10 @@ export function HeroA() {
               </span>
             </button>
 
-            {/* Social proof (toggleable) */}
+            {/* Social proof (toggleable) 
             <div
               className="flex items-center gap-3"
-              data-display="yes"
+              data-display="true"
               data-label="Social Proof"
             >
               <div className="flex -space-x-3">
@@ -84,7 +85,7 @@ export function HeroA() {
               <p className="text-Colors-muted-foreground text-sm">
                 Loved by 3200+ participants
               </p>
-            </div>
+            </div>*/}
           </div>
 
           {/* Right column (image/placeholder) */}
@@ -97,15 +98,16 @@ export function HeroA() {
 
         {/* Price points (toggleable group) */}
         <div
-          data-display="yes"
+          data-display="true"
           data-label="Price Points"
+          data-id="price-points"
           className="w-full max-w-[1280px] rounded-lg flex flex-col items-center gap-8"
         >
           <h2
-            data-display="yes"
+            data-display="true"
             
             className="text-Colors-foreground text-2xl font-bold text-center"
-            data-copy="yes" data-label="Price Points Headline" data-max-chars="130"
+            data-copy="true" data-copy-id="pp-headline" data-label="Price Points Headline" data-max-chars="130"
           >
             Buy your tickets today!
           </h2>
@@ -201,14 +203,14 @@ export function HeroB() {
           <div className="w-full inline-flex flex-col justify-start items-center gap-11">
             <div className="self-stretch flex flex-col justify-start items-center gap-6">
               <div className="self-stretch flex flex-col justify-start items-center gap-2">
-                <div data-copy="yes" data-label="Hero Headline" data-maxchars="60" className="self-stretch text-center justify-center text-Hero-Colors-foreground text-4xl font-bold font-['Inter'] leading-[48px]">A simple but powerful headline that sells!</div>
+                <div data-copy="true" data-copy-id="hero-headline" data-label="Headline" data-maxchars="60" className="self-stretch text-center justify-center text-Hero-Colors-foreground text-4xl font-bold font-['Inter'] leading-[48px]">A simple but powerful headline that sells!</div>
               </div>
             </div>
             <div className="flex flex-col justify-center items-center">
               <div className="justify-start text-Colors-muted-foreground text-base font-normal font-['Inter'] leading-normal">Current estimated payout</div>
               <div className="justify-start text-Hero-Colors-primary text-7xl font-bold font-['Inter']">$1,346,000</div>
             </div>
-            <div data-position="left" data-style="no-box" data-display="yes" data-label="Countdown" className="py-3 bg-Hero-Colors-background rounded-md flex flex-col justify-start items-start gap-2">
+            <div data-position="left" data-style="no-box" data-display="true" data-label="Countdown" className="py-3 bg-Hero-Colors-background rounded-md flex flex-col justify-start items-start gap-2">
               <div className="justify-center text-Colors-muted-foreground text-sm font-normal font-['Inter'] leading-tight">Grand Prize Deadline: Mar 14, 6pm</div>
               <div className="inline-flex justify-start items-center gap-2">
                 <div className="w-14 inline-flex flex-col justify-center items-center">
@@ -229,10 +231,22 @@ export function HeroB() {
                 </div>
               </div>
             </div>
-            <div data-show-left-icon="false" data-display="yes" data-label="Buy Now Button" data-show-right-icon="false" data-size="default" data-state="Default" data-variant="Default" className="w-48 h-10 px-4 py-2 bg-Hero-Colors-primary rounded-lg inline-flex justify-center items-center gap-2">
+            <div 
+            data-show-left-icon="false" 
+            data-display="true" 
+            data-label="Buy Now Button" 
+            data-link="price-points"
+              data-link-when="visible"
+              data-link-op="hide"
+              data-hide-switch-when="hidden"
+            data-show-right-icon="false" 
+            data-size="default" 
+            data-state="Default" 
+            data-variant="Default" 
+            className="w-48 h-10 px-4 py-2 bg-Hero-Colors-primary rounded-lg inline-flex justify-center items-center gap-2">
               <div className="justify-center text-Hero-Colors-primary-foreground text-sm font-medium font-['Inter'] leading-tight">Buy Tickets</div>
             </div>
-            <div className="inline-flex justify-start items-center gap-2" data-display="yes" data-label="Social Proof">
+            {/*<div className="inline-flex justify-start items-center gap-2" data-display="true" data-label="Social Proof">
               <div className="flex justify-start items-center gap-3">
                 <div className="flex -space-x-3">
                   <img src="https://placehold.co/40x40" className="w-10 h-10 rounded-full border-2 border-white" />
@@ -242,12 +256,12 @@ export function HeroB() {
                 </div>
               </div>
               <div className="text-center justify-center text-Colors-muted-foreground text-sm font-normal font-['Inter'] leading-tight">Loved by 3200+ participants</div>
-            </div>
+            </div>*/}
           </div>
 
         </div>
-        <div data-display="yes" data-label="Price Points" data-item-1="true" data-item-2="true" data-item-3="true" data-item-4="true" data-item-5="false" data-mobile="no" data-show-image="No" data-show-title="true" data-type="horizontal" className="w-full max-w-[1280px] rounded-lg flex flex-col justify-start items-center gap-8">
-          <div data-copy="yes" data-label="Price Points Headline" data-max-chars="130" data-display="yes" className="self-stretch text-center justify-start text-Colors-foreground text-2xl font-bold font-['Inter']">Buy your tickets today!</div>
+        <div data-display="true" data-label="Price Points" data-id="price-points" data-item-1="true" data-item-2="true" data-item-3="true" data-item-4="true" data-item-5="false" data-mobile="no" data-show-image="No" data-show-title="true" data-type="horizontal" className="w-full max-w-[1280px] rounded-lg flex flex-col justify-start items-center gap-8">
+          <div data-copy="true" data-copy-id="pp-headline" data-label="Price Points Headline" data-max-chars="130" data-display="true" className="self-stretch text-center justify-start text-Colors-foreground text-2xl font-bold font-['Inter']">Buy your tickets today!</div>
           <div className="self-stretch inline-flex justify-start items-center gap-4">
             <div data-badge="true" data-has-image="No" data-highligthed="yes" data-mobile="no" data-selected="yes" data-ticket-label="true" className="flex-1 h-64 p-5 relative bg-PP-Colors-alt-background rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8">
               <div data-state="Default" data-variant="Default" className="px-2.5 py-0.5 left-[113.50px] top-[-10px] absolute bg-PP-Colors-alt-foreground rounded-lg inline-flex justify-center items-center gap-2.5">
