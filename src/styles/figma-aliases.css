@@ -25,7 +25,7 @@
   .bg-Hero-Colors-secondary { background-color: var(--hero-colors-secondary); }
   .text-Hero-Colors-secondary-foreground { color: var(--hero-colors-secondary-foreground); }
   .bg-Hero-Colors-muted-background { background-color: var(--hero-colors-muted-background); }
-  .bg-Hero-Colors-muted-foregroung { background-color: var(--hero-colors-muted-foreground); }
+  .bg-Hero-Colors-muted-foreground { background-color: var(--hero-colors-muted-foreground); }
 
   /* ========== PRICE POINTS (PP) ========== */
   .bg-PP-Colors-background { background-color: var(--pp-colors-background); }
@@ -41,7 +41,7 @@
   .bg-PP-Colors-secondary { background-color: var(--pp-colors-secondary); }
   .text-PP-Colors-secondary-foreground { color: var(--pp-colors-secondary-foreground); }
   .bg-PP-Colors-muted-background { background-color: var(--pp-colors-muted-background); }
-  .bg-PP-Colors-muted-foregroung { background-color: var(--pp-colors-muted-foreground); }
+  .bg-PP-Colors-muted-foreground { background-color: var(--pp-colors-muted-foreground); }
 
   /* ========== EXTRA PRIZES (EB) ========== */
   .bg-EB-Colors-background { background-color: var(--eb-colors-background); }
@@ -55,7 +55,9 @@
   .bg-EB-Colors-secondary { background-color: var(--eb-colors-secondary); }
   .text-EB-Colors-secondary-foreground { color: var(--eb-colors-secondary-foreground); }
   .bg-EB-Colors-muted-background { background-color: var(--eb-colors-muted-background); }
-  .bg-EB-Colors-muted-foregroung { background-color: var(--eb-colors-muted-foreground); }
+  .bg-EB-Colors-muted-foreground { background-color: var(--eb-colors-muted-foreground); }
+  .text-EB-Colors-muted-background { color: var(--eb-colors-muted-background); }
+  .text-EB-Colors-muted-foreground { color: var(--eb-colors-muted-foreground); }
 
   /* ========== WINNERS ========== */
   .bg-Winners-Colors-background { background-color: var(--winners-colors-background); }
@@ -69,5 +71,5 @@
   .bg-Winners-Colors-secondary { background-color: var(--winners-colors-secondary); }
   .text-Winners-Colors-secondary-foreground { color: var(--winners-colors-secondary-foreground); }
   .bg-Winners-Colors-muted-background { background-color: var(--winners-colors-muted-background); }
-  .bg-Winners-Colors-muted-foregroung { background-color: var(--winners-colors-muted-foreground); }
+  .bg-Winners-Colors-muted-foreground { background-color: var(--winners-colors-muted-foreground); }
 }

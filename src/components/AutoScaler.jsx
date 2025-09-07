@@ -36,7 +36,7 @@ export default function AutoScaler({
         width: targetWidth,
         height: scaledHeight ?? "auto",
         overflow: "hidden",
-        borderRadius: 12,
+        borderRadius: 0,
         background: "white",
       }}
     >

@@ -61,6 +61,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogDe
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, } from "@/components/ui/dropdown-menu";
 import SectionActionsMenu from "./components/SectionActionsMenu";
 
+import { buildThemeVars } from "./theme-utils";
+
 /* ----------------------------- Helpers ----------------------------- */
 
 const uid = () =>
@@ -194,6 +196,15 @@ const SECTIONS = {
 
 function ThemePopover({ globalTheme, setGlobalTheme }) {
   const colors = globalTheme?.colors ?? {};
+  const order = [
+    "background",
+    "foreground",
+    "primary", "primary-foreground",
+    "secondary", "secondary-foreground",
+    "alt-background", "alt-foreground",
+    "border",
+  ];
+
   const set = (key, val) =>
     setGlobalTheme((t) => ({
       ...t,
@@ -221,9 +232,14 @@ function ThemePopover({ globalTheme, setGlobalTheme }) {
       <PopoverContent align="end" side="bottom" sideOffset={8} className="w-80 p-3">
         <div className="space-y-3 text-sm">
           <div className="font-semibold">Global Colors</div>
-          {Object.keys(colors).map((keyName) => (
+
+          {order.filter(k => k in colors).map((keyName) => (
             <Row key={keyName} label={keyName.replace(/-/g, " ")} keyName={keyName} />
           ))}
+
+          <div className="pt-2 text-xs text-gray-500">
+            Muted background/foreground are auto-derived from your background & foreground.
+          </div>
         </div>
       </PopoverContent>
     </Popover>
@@ -491,7 +507,7 @@ function SortableBlock({
       className={[
         "relative bg-white shadow-sm transition overflow-visible",
         selected
-          ? "z-10 outline outline-2 outline-blue-500  ring-0"
+          ? "z-10 outline  outline-2 outline-blue-500  ring-0"
           : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500 ",
       ].join(" ")}
 
@@ -638,6 +654,10 @@ function SortableBlock({
 /* ------------------------------- App ------------------------------- */
 
 export default function App() {
+
+
+
+
   const [hydrated, setHydrated] = useState(false);
   const didAutoSelectOnce = useRef(false);
 
@@ -676,15 +696,13 @@ export default function App() {
     colors: {
       background: "#ffffff",
       foreground: "#18181b",
-      "muted-background": "#d7d7dc",
-      "muted-foreground": "#71717a",
       "alt-background": "#f0f0f9",
       "alt-foreground": "#000000",
       primary: "#000000",
       "primary-foreground": "#ffffff",
       border: "#e4e4e7",
       secondary: "#e4e4e7",
-      "secondary-foreground": "#71717a"
+      "secondary-foreground": "#71717a",
     },
   });
 
@@ -716,9 +734,7 @@ export default function App() {
     setHandoffOpen(false);
   };
 
-  useEffect(() => {
-    setCSSVars(document.documentElement, "colors", globalTheme.colors);
-  }, [globalTheme]);
+  
 
   const [approvedMeta, setApprovedMeta] = useState(null);
   const approvedMode = !!approvedMeta?.approved;
@@ -774,7 +790,8 @@ export default function App() {
         );
       }
       if (loaded.globalTheme?.colors) {
-        setGlobalTheme({ colors: { ...loaded.globalTheme.colors } });
+        const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } = loaded.globalTheme.colors;
+        setGlobalTheme({ colors: rest });
       }
       if (loaded.meta?.approved) {
         setApprovedMeta({ ...loaded.meta });
@@ -1124,6 +1141,13 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="text-gray-500"
+              onClick={() => setThemeMode((m) => (m === "light" ? "dark" : "light"))}
+            >
+              {themeMode === "light" ? "Dark mode" : "Light mode"}
+            </Button>
             {!approvedMode && (
               <>
                 <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
@@ -1193,7 +1217,7 @@ export default function App() {
         {activeBlockId && (
 
 
-          <aside className=" fixed left-4 top-20 z-40 w-[290px] sm:w-[290px] max-h-[calc(100vh-6rem)] overflow-y-auto rounded-md border bg-white shadow-lg p-4"
+          <aside className=" fixed left-4 top-18 z-40 w-[290px] sm:w-[290px] max-h-[calc(100vh-6rem)] overflow-y-auto rounded-md border bg-white shadow-lg p-4"
             role="dialog"
             aria-modal="true"
           >
@@ -1383,31 +1407,32 @@ export default function App() {
                           <div className="text-xs text-gray-500">No copy-editable parts in this section.</div>
                         )}
                       </div>
+                      <div className="mt-4 mb-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="secondary" className="w-full justify-between">
+                              More Actions
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-64">
+                            <SectionActionsMenu
+                              section={blocks.find(b => b.id === activeBlockId)}
+
+                              onDelete={() => handleDelete(activeBlockId)}
+                              onMoveUp={() => handleMoveUp(activeBlockId)}
+                              onMoveDown={() => handleMoveDown(activeBlockId)}
+
+
+                            />
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </ScrollArea>
                   </div>
                 )}
 
 
-                <div className="mt-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="secondary" className="w-full justify-between">
-                        More Actions
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-64">
-                      <SectionActionsMenu
-                        section={blocks.find(b => b.id === activeBlockId)}
 
-                        onDelete={() => handleDelete(activeBlockId)}
-                        onMoveUp={() => handleMoveUp(activeBlockId)}
-                        onMoveDown={() => handleMoveDown(activeBlockId)}
-
-
-                      />
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
               </div>
             </div>
 
@@ -1516,7 +1541,7 @@ export default function App() {
                   <DialogDescription>Choose what you want to insert below.</DialogDescription>
                 </DialogHeader>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <Button
                     variant="outline"
                     className="justify-start"

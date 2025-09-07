@@ -52,6 +52,8 @@
   --eb-colors-alt-background: var(--colors-alt-background);
   --eb-colors-alt-foreground: var(--colors-alt-foreground);
   --eb-colors-secondary: var(--colors-secondary, #18181b);
+  --eb-colors-muted-background: var(--colors-muted-background);
+  --eb-colors-muted-foreground: var(--colors-muted-foreground);
 }
   /* Winners Colors */
 :root {
