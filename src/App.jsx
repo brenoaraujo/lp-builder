@@ -706,6 +706,41 @@ export default function App() {
     },
   });
 
+// Light/Dark mode state
+const [themeMode, setThemeMode] = useState("light");
+
+// Start with system preference (optional)
+useEffect(() => {
+  const mq = window.matchMedia?.("(prefers-color-scheme: light)");
+  if (mq) setThemeMode(mq.matches ? "dark" : "light");
+  const onChange = (e) => setThemeMode(e.matches ? "dark" : "light");
+  mq?.addEventListener?.("change", onChange);
+  return () => mq?.removeEventListener?.("change", onChange);
+}, []);
+
+// Write CSS vars whenever colors or mode change
+useEffect(() => {
+  const vars = buildThemeVars(globalTheme.colors, themeMode);
+  setCSSVars(document.documentElement, "colors", vars);
+  document.documentElement.setAttribute("data-theme", themeMode); // optional
+}, [globalTheme, themeMode]);
+
+  // (optional) start with system preference
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-color-scheme: light)");
+    if (mq) setThemeMode(mq.matches ? "dark" : "light");
+    const onChange = (e) => setThemeMode(e.matches ? "dark" : "light");
+    mq?.addEventListener?.("change", onChange);
+    return () => mq?.removeEventListener?.("change", onChange);
+  }, []);
+
+  // 2) write CSS vars whenever colors or mode change
+  useEffect(() => {
+    const vars = buildThemeVars(globalTheme.colors, themeMode);
+    setCSSVars(document.documentElement, "colors", vars);
+    document.documentElement.setAttribute("data-theme", themeMode); // optional data attr
+  }, [globalTheme, themeMode]);
+
   const [handoffOpen, setHandoffOpen] = useState(false);
   const [handoffDefaults, setHandoffDefaults] = useState(null);
   useEffect(() => {
