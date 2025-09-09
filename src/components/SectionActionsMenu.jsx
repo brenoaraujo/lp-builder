@@ -4,6 +4,9 @@
 
 import { DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 
+const isOnboarding =
+  typeof window !== "undefined" && window.location.hash.includes("/onboarding");
+
 export default function SectionActionsMenu({
     section,                 // The selected block object (can be null)
     onDuplicate,             // () => void
@@ -19,15 +22,11 @@ export default function SectionActionsMenu({
 
     return (
         <>
-           
-           
-
+        
             <DropdownMenuGroup>
                 {/* If later you want the *exact same* popovers to open inside the selected block,
            wire these to trigger the same state you use in SortableBlock and pass them in as props. */}
                 
-
-
                 <DropdownMenuItem disabled={!hasSection} onClick={() => onMoveUp?.()}>
                     Move Up
                 </DropdownMenuItem>

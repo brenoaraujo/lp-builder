@@ -8,6 +8,8 @@ export default function EditableSection({
   onCopyDiscovered,
   children,
   discoverKey,
+  fromOnboarding = false,
+  autoFocus = false,
 }) {
   const rootRef = useRef(null);
 
