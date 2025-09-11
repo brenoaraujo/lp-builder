@@ -26,98 +26,110 @@ export default function EditorSidebar({
   closePanel, handleDelete, handleMoveUp, handleMoveDown,
   onTogglePartFromSidebar, onCopyChangeFromSidebar,
   variantIndex, setVariantForId, variantForId, setBlocks, blocks,
+  mode = "builder",
+    hideVariantPicker = false,
+    hideAdvancedActions = false,
+    staticLayout = false,
+    hideCloseAction = false,
 }) {
   const activeEntry = activeBlock ? SECTIONS_REG[activeBlock.type] : null;
 
   return (
-    <aside
-      className="fixed left-4 top-18 z-40 w-[290px] max-h-[calc(100vh-6rem)] overflow-y-auto rounded-md border bg-white shadow-lg p-4"
-      role="dialog"
-      aria-modal="true"
-    >
+   <aside
+     className={
+       staticLayout
+         ? "w-[280px] rounded-xl bg-slate-50 border border-slate-200  p-6"
+         : "fixed left-4 top-18 z-40 w-[290px] max-h-[calc(100vh-6rem)] overflow-y-auto rounded-md border bg-white shadow-lg p-4"
+     }
+   >
+    {!hideVariantPicker && (
       <div className="flex items-center justify-between">
         <div className="text-md font-semibold text-gray-700 mb-4">Section</div>
         <button type="button" onClick={closePanel} className="rounded p-1 hover:bg-gray-100" aria-label="Close">
           <X className="h-4 w-4" />
         </button>
       </div>
-
+    )}
       <div className="space-y-2">
         {/* Layout picker */}
-        <div className="text-xs font-semibold text-gray-500 mb-2">Layout</div>
-        <Popover open={variantForId === activeBlockId} onOpenChange={(open) => setVariantForId(open ? activeBlockId : null)}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-between text-gray-500 mb-4"
-              disabled={approvedMode || !activeBlockId}
-            >
-              {activeEntry?.labels?.[variantIndex] ?? `${activeEntry?.label ?? "Variant"} ${variantIndex + 1}`}
-              <ArrowRight />
-            </Button>
-          </PopoverTrigger>
+        {!hideVariantPicker && (
+            <>
+            <div className="text-xs font-semibold text-gray-500 mb-2">Layout</div>
+            <Popover open={variantForId === activeBlockId} onOpenChange={(open) => setVariantForId(open ? activeBlockId : null)}>
+            <PopoverTrigger asChild>
+                <Button
+                variant="outline"
+                className="w-full justify-between text-gray-500 mb-4"
+                disabled={approvedMode || !activeBlockId}
+                >
+                {activeEntry?.labels?.[variantIndex] ?? `${activeEntry?.label ?? "Variant"} ${variantIndex + 1}`}
+                <ArrowRight />
+                </Button>
+            </PopoverTrigger>
 
-          <PopoverContent
-            side="right" align="start" sideOffset={8}
-            className="z-[9999] w-[300px] p-0 rounded-xl bg-white shadow-lg p-2"
-          >
-            <div className="px-3 py-2 text-sm font-semibold">Replace Component</div>
-            <ScrollArea className="h-[60vh] p-3">
-              {(SECTIONS_REG[activeBlock?.type]?.variants || []).map((Preview, i) => {
-                const labels = SECTIONS_REG[activeBlock?.type]?.labels || [];
-                const selected = (activeBlock?.variant ?? 0) === i;
-                return (
-                  <div
-                    key={i}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
-                      if (approvedMode || !activeBlockId) return;
-                      setBlocks(arr => arr.map(b => (b.id === activeBlockId ? { ...b, variant: i } : b)));
-                      setVariantForId(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (approvedMode || !activeBlockId) return;
-                      if (e.key === "Enter" || e.key === " ") {
+            <PopoverContent
+                side="right" align="start" sideOffset={8}
+                className="z-[9999] w-[300px] p-0 rounded-xl bg-white shadow-lg p-2"
+            >
+                <div className="px-3 py-2 text-sm font-semibold">Replace Component</div>
+                <ScrollArea className="h-[60vh] p-3">
+                {(SECTIONS_REG[activeBlock?.type]?.variants || []).map((Preview, i) => {
+                    const labels = SECTIONS_REG[activeBlock?.type]?.labels || [];
+                    const selected = (activeBlock?.variant ?? 0) === i;
+                    return (
+                    <div
+                        key={i}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => {
+                        if (approvedMode || !activeBlockId) return;
                         setBlocks(arr => arr.map(b => (b.id === activeBlockId ? { ...b, variant: i } : b)));
                         setVariantForId(null);
-                      }
-                    }}
-                    className={[
-                      "w-full overflow-hidden rounded-md border bg-white text-left transition mb-4",
-                      selected
-                        ? "outline outline-2 -outline-offset-2 outline-blue-500 hover:outline-blue-700"
-                        : "hover:outline hover:outline-2 hover:-outline-offset-2 hover:outline-blue-200",
-                    ].join(" ")}
-                  >
-                    <div className="px-3 pt-2 pb-2 text-xs font-medium text-gray-700">
-                      {labels[i] ?? `Variant ${i + 1}`}
+                        }}
+                        onKeyDown={(e) => {
+                        if (approvedMode || !activeBlockId) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                            setBlocks(arr => arr.map(b => (b.id === activeBlockId ? { ...b, variant: i } : b)));
+                            setVariantForId(null);
+                        }
+                        }}
+                        className={[
+                        "w-full overflow-hidden rounded-md border bg-white text-left transition mb-4",
+                        selected
+                            ? "outline outline-2 -outline-offset-2 outline-blue-500 hover:outline-blue-700"
+                            : "hover:outline hover:outline-2 hover:-outline-offset-2 hover:outline-blue-200",
+                        ].join(" ")}
+                    >
+                        <div className="px-3 pt-2 pb-2 text-xs font-medium text-gray-700">
+                        {labels[i] ?? `Variant ${i + 1}`}
+                        </div>
+                        <Separator />
+                        <div className="p-2">
+                        <div className="overflow-hidden rounded-md">
+                            <AutoScaler designWidth={1440} targetWidth={240} maxHeight={520}>
+                            <div data-scope={activeBlock?.type}>
+                                <EditableSection
+                                discoverKey={`${activeBlock?.type}:${i}`}
+                                controls={activeBlock?.controls || {}}
+                                copyValues={activeBlock?.copy || {}}
+                                >
+                                <Preview preview />
+                                </EditableSection>
+                            </div>
+                            </AutoScaler>
+                        </div>
+                        </div>
                     </div>
-                    <Separator />
-                    <div className="p-2">
-                      <div className="overflow-hidden rounded-md">
-                        <AutoScaler designWidth={1440} targetWidth={240} maxHeight={520}>
-                          <div data-scope={activeBlock?.type}>
-                            <EditableSection
-                              discoverKey={`${activeBlock?.type}:${i}`}
-                              controls={activeBlock?.controls || {}}
-                              copyValues={activeBlock?.copy || {}}
-                            >
-                              <Preview preview />
-                            </EditableSection>
-                          </div>
-                        </AutoScaler>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </ScrollArea>
-          </PopoverContent>
-        </Popover>
+                    );
+                })}
+                </ScrollArea>
+            </PopoverContent>
+            </Popover>
+            </>
+        )}
 
         {/* Display toggles */}
-        <Separator className="my-3" />
+        {!hideVariantPicker && (<Separator className="my-3" />)}
         <ScrollArea className="max-h-[60vh] pr-2">
           <div className="mb-4">
             <div className="text-xs font-semibold text-gray-500 mb-2">Display Sections</div>
@@ -190,11 +202,13 @@ export default function EditorSidebar({
           </div>
 
           {/* More actions */}
-          <div className="mt-4 mb-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary" className="w-full justify-between">
-                  More Actions
+          {!hideAdvancedActions && (
+            <>
+              <div className="mt-4 mb-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" className="w-full justify-between">
+                      More Actions
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64">
@@ -207,7 +221,10 @@ export default function EditorSidebar({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+          </>
+          )}
         </ScrollArea>
+       
       </div>
     </aside>
   );

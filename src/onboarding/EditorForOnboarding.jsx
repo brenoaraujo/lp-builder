@@ -65,7 +65,7 @@ export default function EditorForOnboarding({
   const Comp = Variants[virtualBlock.variant] || (() => null);
 
   return (
-    <div className="flex gap-4">
+    <div className="grid gap-4 md:grid-cols-[280px_1fr]">
       <EditorSidebar
         activeBlockId={activeBlockId}
         activeBlock={activeBlock}
@@ -74,9 +74,9 @@ export default function EditorForOnboarding({
         approvedMode={approvedMode}
         SECTIONS_REG={SECTIONS_REG}
         closePanel={closePanel}
-        handleDelete={() => {}}
-        handleMoveUp={() => {}}
-        handleMoveDown={() => {}}
+        handleDelete={undefined}
+        handleMoveUp={undefined}
+        handleMoveDown={undefined}
         onTogglePartFromSidebar={_onTogglePart}
         onCopyChangeFromSidebar={_onCopyChange}
         variantIndex={virtualBlock.variant}
@@ -89,9 +89,14 @@ export default function EditorForOnboarding({
           });
         }}
         blocks={[virtualBlock]}
+        mode="onboarding"
+        hideVariantPicker
+        hideAdvancedActions
+        staticLayout
+        hideCLoseAction
       />
 
-      <div className="flex-1 p-4">
+      <div className="p-4 border shadow-lg border-slate-200 bg-white rounded-lg">
         <AutoScaler designWidth={1440} targetWidth={720} maxHeight={9999}>
           <div data-scope={sectionKey}>
             <EditableSection

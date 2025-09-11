@@ -26,7 +26,10 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";                            // optional; remove if you don't use it
+import { toast } from "sonner";     
+
+//--Icons --
+import { X, Plus, ChevronDown, ArrowRight,ArrowLeft, Pencil } from "lucide-react";
 
 
 
@@ -66,14 +69,15 @@ const normalizeCopyParts = (list) =>
 function StepHeader({ currentIndex }) {
     const pct = Math.round((currentIndex / (STEP_KEYS.length - 1)) * 100);
     return (
-        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b">
-            <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
-                <div className="text-sm font-medium">Onboarding</div>
-                <Separator className="flex-1" />
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b ">
+            <div className="mx-auto  max-w-[1100px]  py-3 flex items-center gap-3 justify-between box-border">
+                <div className="text-xl font-bold">LP BUILDER</div>
+                <div className="flex items-center gap-2">
                 <div className="w-48">
                     <Progress value={pct} />
                 </div>
                 <div className="text-xs text-muted-foreground w-12 text-right">{pct}%</div>
+                </div>
             </div>
         </div>
     );
@@ -95,20 +99,20 @@ function VariantCarousel({ sectionKey }) {
     if (variants.length === 0) return null;
 
     return (
-        <div className="flex gap-3 overflow-x-auto py-1">
+        <div className="flex gap-3  p-1 ">
             {variants.map(v => (
                 <Card
                     key={v.key}
                     onClick={() => setVariant(sectionKey, v.key)}
                     className={[
-                        "min-w-[260px] cursor-pointer transition",
-                        active === v.key ? "ring-2 ring-primary" : "hover:ring-1 hover:ring-primary/40"
+                        "w-full cursor-pointer transition shadow-lg",
+                        active === v.key ? "ring-2 ring-blue-400" : "hover:ring-1 hover:ring-blue-400/40"
                     ].join(" ")}
                 >
                     <CardHeader className="py-3">
-                        <CardTitle className="text-sm">{v.label}</CardTitle>
+                        <CardTitle className="text-sm border-b py-2">{v.label}</CardTitle>
                     </CardHeader>
-                    <CardContent className="py-3">
+                    <CardContent className="py-3 text-center">
                         {typeof def.thumbnail === "function"
                             ? def.thumbnail(v.key, state)
                             : (v.render ? v.render(state) : null)}
@@ -161,11 +165,11 @@ export default function OnboardingWizard() {
 
     return (
 
-        <div className="min-h-screen bg-blue-background text-foreground onboarding">
+        <div className="min-h-screen bg-slate-50  text-foreground onboarding">
             <StepHeader currentIndex={stepIndex} />
 
             <div className=" p-4 flex flex-1  justify-center box-border">
-                <div className="w-full max-w-[800px] box-border ">
+                <div className="w-full max-w-[1100px] box-border ">
                     {/* STEP CONTENT */}
                     {stepKey === "welcome" && (
                         <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -195,15 +199,27 @@ export default function OnboardingWizard() {
 
                     {stepKey === "hero" && (
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-semibold">Choose your Hero layout</h2>
-                            <VariantCarousel sectionKey="hero" />
+                            
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
+                                <h2 className="text-4xl font-medium">Choose Hero Layout</h2>
+                                <p className="text-base text-slate-500">Select how your hero section will looks like </p>
+                            </div>
+                            <VariantCarousel 
+                                sectionKey="hero" 
+                               
+                            />
                         </div>
                     )}
 
 
                     {stepKey === "heroEdit" && (
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-semibold">Edit Hero components</h2>
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
+                                <h2 className="text-4xl font-medium">Edit Hero components</h2>
+                                <p className="text-base text-slate-500">Customize your hero by removing and change components copy </p>
+                            </div>
                             <EditorForOnboarding
                                 sectionKey="hero"
                                 variantKey={overridesBySection.hero?.variant || "A"}
@@ -217,7 +233,12 @@ export default function OnboardingWizard() {
 
                     {stepKey === "extraPrizes" && (
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-semibold">Choose Extra Prizes layout</h2>
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
+                                <h2 className="text-4xl font-medium">Choose Extra Prizes Layout</h2>
+                                <p className="text-base text-slate-500">Select how your Extra Prizes section will looks like </p>
+                            </div>
+                            
                             <VariantCarousel sectionKey="extraPrizes" />
                         </div>
                     )}
@@ -225,7 +246,11 @@ export default function OnboardingWizard() {
 
                     {stepKey === "extraPrizesEdit" && (
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-semibold">Edit Extra Prizes components</h2>
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
+                                <h2 className="text-4xl font-medium">Edit Extra Prizes Components</h2>
+                                <p className="text-base text-slate-500">Customize your Extra Prizes by removing and change components copy </p>
+                            </div>
                             <EditorForOnboarding
                                 sectionKey="extraPrizes"
                                 variantKey={overridesBySection.extraPrizes?.variant || "A"}
@@ -239,7 +264,11 @@ export default function OnboardingWizard() {
 
                     {stepKey === "winners" && (
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-semibold">Choose Winners layout</h2>
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
+                                <h2 className="text-4xl font-medium">Choose Winners Layout</h2>
+                                <p className="text-base text-slate-500">Select how your Winners section will looks like</p>
+                            </div>
                             <VariantCarousel sectionKey="winners" />
                         </div>
                     )}
@@ -247,7 +276,11 @@ export default function OnboardingWizard() {
 
                     {stepKey === "winnersEdit" && (
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-semibold">Edit Winners components</h2>
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
+                                <h2 className="text-4xl font-medium">Edit Winners Components</h2>
+                                <p className="text-base text-slate-500">Customize your Winners components by removing and change components copy </p>
+                            </div>
                             <EditorForOnboarding
                                 sectionKey="winners"
                                 variantKey={overridesBySection.winners?.variant || "A"}

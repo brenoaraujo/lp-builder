@@ -39,7 +39,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 
-import { X, Plus, ChevronDown, ArrowRight, Pencil } from "lucide-react";
+import { X, Plus, ChevronDown, ArrowRight, Pencil, GripVertical } from "lucide-react";
 import SectionActionsMenu from "./components/SectionActionsMenu";
 import { toast } from "sonner";
 
@@ -49,7 +49,7 @@ import * as EditableSectionMod from "@/components/EditableSection";
 
 import { useBuilderOverrides }
   from "./context/BuilderOverridesContext.jsx";
-  import { SECTION_ORDER } from "./onboarding/sectionCatalog.jsx";
+import { SECTION_ORDER } from "./onboarding/sectionCatalog.jsx";
 
 const AutoScaler =
   AutoScalerMod.default ??
@@ -172,11 +172,11 @@ function useHashRoute() {
 function ThemePopover({ globalTheme, setGlobalTheme }) {
   const colors = globalTheme?.colors ?? {};
   const order = [
-    "background", "foreground",
-    "primary", "primary-foreground",
-    "secondary", "secondary-foreground",
-    "alt-background", "alt-foreground",
-    "border",
+    "background",
+    "primary",
+    "secondary",
+    "alt-background",
+
   ];
   const set = (key, val) =>
     setGlobalTheme((t) => ({ ...t, colors: { ...(t.colors || {}), [key]: val } }));
@@ -205,9 +205,6 @@ function ThemePopover({ globalTheme, setGlobalTheme }) {
           {order.filter(k => k in colors).map((keyName) => (
             <Row key={keyName} label={keyName.replace(/-/g, " ")} keyName={keyName} />
           ))}
-          <div className="pt-2 text-xs text-gray-500">
-            Muted background/foreground are auto-derived from your background &amp; foreground.
-          </div>
         </div>
       </PopoverContent>
     </Popover>
@@ -363,8 +360,14 @@ function SortableBlock({
   availableThemeKeys = [], readOnly = false,
   onSelect, selected, variantOpen, onVariantOpenChange, contentOpen, onContentOpenChange,
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id, disabled: readOnly });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef, // may be undefined on older dnd-kit, that's fine
+    transform,
+    transition
+  } = useSortable({ id, disabled: readOnly });
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   const entry = SECTIONS[type];
@@ -420,6 +423,29 @@ function SortableBlock({
           : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500",
       ].join(" ")}
     >
+      {/* Drag handle */}
+      {!readOnly && (
+        <button
+          type="button"
+          aria-label="Drag to reorder"
+          title="Drag to reorder"
+          ref={setActivatorNodeRef}         // activator handle for dnd-kit
+          {...attributes}
+          {...listeners}
+          className={[
+            "absolute -right-10 top-3 z-20 grid h-7 w-7 place-items-center",
+            "rounded-md border bg-slate-100 text-slate-600",
+            "hover:bg-blue-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-500 focus:text-white ",
+            // hidden by default, visible when block is hovered or selected
+            "opacity-0 group-hover:opacity-100",
+            selected ? "opacity-100" : "",
+            "transition-opacity cursor-grab active:cursor-grabbing"
+          ].join(" ")}    // <-- join with a space!
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
+
       {/* Canvas content */}
       <div
         ref={contentRef}
@@ -551,17 +577,17 @@ function blocksFromOverrides(ovr = {}) {
       variant,
       controls: sect?.display || {},
       copy: sect?.copy || {},
-      overrides: sect?.theme || { enabled:false, values:{}, valuesPP:{} },
+      overrides: sect?.theme || { enabled: false, values: {}, valuesPP: {} },
     });
   };
 
-  if (ovr.hero?.visible !== false)        push("hero",        ovr.hero?.variant || "A", ovr.hero);
+  if (ovr.hero?.visible !== false) push("hero", ovr.hero?.variant || "A", ovr.hero);
   if (ovr.extraPrizes?.visible !== false) push("extraPrizes", ovr.extraPrizes?.variant || "A", ovr.extraPrizes);
-  if (ovr.winners?.visible !== false)     push("winners",     ovr.winners?.variant || "A", ovr.winners);
+  if (ovr.winners?.visible !== false) push("winners", ovr.winners?.variant || "A", ovr.winners);
   return out.length ? out : [{
     id: crypto?.randomUUID?.() ?? `hero_${Date.now()}`,
     type: "hero", variant: 0, controls: {}, copy: {},
-    overrides: { enabled:false, values:{}, valuesPP:{} },
+    overrides: { enabled: false, values: {}, valuesPP: {} },
   }];
 }
 
@@ -573,23 +599,23 @@ function blocksFromOverrides(ovr = {}) {
 export default function MainBuilder() {
 
   function blocksFromOverrides(ovr) {
-  const order = ["hero", "extraPrizes", "winners"]; // keep this consistent with your app
-  const toIndex = (v) => (v === "B" ? 1 : 0);       // "A" → 0, "B" → 1
+    const order = ["hero", "extraPrizes", "winners"]; // keep this consistent with your app
+    const toIndex = (v) => (v === "B" ? 1 : 0);       // "A" → 0, "B" → 1
 
-  return order
-    .filter((k) => (ovr?.[k]?.visible !== false)) // default visible unless explicitly false
-    .map((k) => {
-      const s = ovr[k] || {};
-      return {
-        id: crypto?.randomUUID?.() ?? `b_${k}_${Date.now()}`,
-        type: k,
-        variant: toIndex(s.variant || "A"),
-        controls: s.display || {},
-        copy: s.copy || {},
-        overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
-      };
-    });
-}
+    return order
+      .filter((k) => (ovr?.[k]?.visible !== false)) // default visible unless explicitly false
+      .map((k) => {
+        const s = ovr[k] || {};
+        return {
+          id: crypto?.randomUUID?.() ?? `b_${k}_${Date.now()}`,
+          type: k,
+          variant: toIndex(s.variant || "A"),
+          controls: s.display || {},
+          copy: s.copy || {},
+          overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
+        };
+      });
+  }
 
 
   // Auto-open onboarding the first time
@@ -649,14 +675,14 @@ export default function MainBuilder() {
 
   // Start with system preference and keep CSS vars in sync (✅ single place now)
   useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-color-scheme: light)");
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
     if (mq) setThemeMode(mq.matches ? "dark" : "light");
     const onChange = (e) => setThemeMode(e.matches ? "dark" : "light");
     mq?.addEventListener?.("change", onChange);
     return () => mq?.removeEventListener?.("change", onChange);
   }, []);
   useEffect(() => {
-    const vars = buildThemeVars(globalTheme.colors, themeMode);
+    const vars = buildThemeVars(globalTheme.colors, themeMode); // mode-aware
     setCSSVars(document.documentElement, "colors", vars);
     document.documentElement.setAttribute("data-theme", themeMode);
   }, [globalTheme, themeMode]);
@@ -698,59 +724,83 @@ export default function MainBuilder() {
   };
 
   // Hydrate from URL hash (supports old & new snapshots)
-useEffect(() => {
-  const rawHash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
-  const isRouteHash = rawHash.startsWith("/"); // "#/", "#/onboarding", etc.
 
-  // 1) If the hash is a snapshot (NOT a route), hydrate from it
-  if (!isRouteHash && rawHash.length > 0) {
-    const loaded = decodeState(rawHash);
-    if (!loaded) { setHydrated(true); return; }
-
-    if (Array.isArray(loaded)) {
-      setBlocks(loaded.map((b) => ({
-        id: b.id, type: b.type, variant: Number.isInteger(b.variant) ? b.variant : 0,
-        controls: b.controls || {}, copy: b.copy || {},
-        overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
-      })));
-      setHydrated(true);
-      return;
+  // listem os theme preference
+  // Hydrate theme mode (respect saved pref; otherwise fall back to OS)
+  useEffect(() => {
+    const stored = localStorage.getItem("lpb.theme.mode");
+    if (stored === "light" || stored === "dark") {
+      setThemeMode(stored);
+      return; // don't attach OS listener if user chose explicitly
     }
 
-    if (loaded && typeof loaded === "object") {
-      if (Array.isArray(loaded.blocks)) {
-        setBlocks(loaded.blocks.map((b) => ({
+    // No stored pref → use OS and keep it in sync
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    setThemeMode(mq?.matches ? "dark" : "light");
+    const onChange = (e) => setThemeMode(e.matches ? "dark" : "light");
+    mq?.addEventListener?.("change", onChange);
+    return () => mq?.removeEventListener?.("change", onChange);
+  }, []);
+
+  // Persist user preference when it changes
+  useEffect(() => {
+    try { localStorage.setItem("lpb.theme.mode", themeMode); } catch { }
+  }, [themeMode]);
+
+
+  useEffect(() => {
+    const rawHash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+    const isRouteHash = rawHash.startsWith("/"); // "#/", "#/onboarding", etc.
+
+    // 1) If the hash is a snapshot (NOT a route), hydrate from it
+    if (!isRouteHash && rawHash.length > 0) {
+      const loaded = decodeState(rawHash);
+      if (!loaded) { setHydrated(true); return; }
+
+      if (Array.isArray(loaded)) {
+        setBlocks(loaded.map((b) => ({
           id: b.id, type: b.type, variant: Number.isInteger(b.variant) ? b.variant : 0,
           controls: b.controls || {}, copy: b.copy || {},
           overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
         })));
+        setHydrated(true);
+        return;
       }
-      if (loaded.globalTheme?.colors) {
-        const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } = loaded.globalTheme.colors;
-        setGlobalTheme({ colors: rest });
-      }
-      if (loaded.meta?.approved) setApprovedMeta({ ...loaded.meta });
-    }
-    setHydrated(true);
-    return;
-  }
 
-  // 2) Otherwise (no snapshot / just a route), hydrate from onboarding overrides
-  try {
-    const raw = localStorage.getItem("builderOverrides");
-    if (raw) {
-      const ovr = JSON.parse(raw);
-      const nextBlocks = blocksFromOverrides(ovr);
-      if (nextBlocks.length > 0) setBlocks(nextBlocks);
+      if (loaded && typeof loaded === "object") {
+        if (Array.isArray(loaded.blocks)) {
+          setBlocks(loaded.blocks.map((b) => ({
+            id: b.id, type: b.type, variant: Number.isInteger(b.variant) ? b.variant : 0,
+            controls: b.controls || {}, copy: b.copy || {},
+            overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
+          })));
+        }
+        if (loaded.globalTheme?.colors) {
+          const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } = loaded.globalTheme.colors;
+          setGlobalTheme({ colors: rest });
+        }
+        if (loaded.meta?.approved) setApprovedMeta({ ...loaded.meta });
+      }
+      setHydrated(true);
+      return;
     }
-  } catch {}
-  setHydrated(true);
-}, []);
-useEffect(() => {
-  if (!hydrated || approvedMode) return;
-  const payload = encodeState(packSnapshot(blocks, globalTheme));
-  history.replaceState(null, "", `#${payload}`);
-}, [blocks, globalTheme, hydrated, approvedMode]);
+
+    // 2) Otherwise (no snapshot / just a route), hydrate from onboarding overrides
+    try {
+      const raw = localStorage.getItem("builderOverrides");
+      if (raw) {
+        const ovr = JSON.parse(raw);
+        const nextBlocks = blocksFromOverrides(ovr);
+        if (nextBlocks.length > 0) setBlocks(nextBlocks);
+      }
+    } catch { }
+    setHydrated(true);
+  }, []);
+  useEffect(() => {
+    if (!hydrated || approvedMode) return;
+    const payload = encodeState(packSnapshot(blocks, globalTheme));
+    history.replaceState(null, "", `#${payload}`);
+  }, [blocks, globalTheme, hydrated, approvedMode]);
 
   // Share, reset, approve
   const [toastMsg, setToastMsg] = useState(null);
@@ -993,12 +1043,13 @@ useEffect(() => {
           </div>
 
           <div className="flex items-center gap-2">
-            <a href="#/onboarding" onClick={(e) => {try { localStorage.removeItem("onboardingCompleted");localStorage.removeItem("builderOverrides"); reset(); } catch { }}} className="text-xs underline text-muted-foreground" >
+            <a href="#/onboarding" onClick={(e) => { try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); reset(); } catch { } }} className="text-xs underline text-muted-foreground" >
               Restart onboarding
             </a>
+            {/* darkmode
             <Button variant="outline" className="text-gray-500" onClick={() => setThemeMode((m) => (m === "light" ? "dark" : "light"))}>
               {themeMode === "light" ? "Dark mode" : "Light mode"}
-            </Button>
+            </Button> */}
 
             {!approvedMode ? (
               <>
@@ -1069,6 +1120,7 @@ useEffect(() => {
             variantForId={variantForId}
             setBlocks={setBlocks}
             blocks={blocks}
+            mode="builder"
           />
         )}
 
@@ -1307,7 +1359,7 @@ function MainBuilderWithOverrides() {
         <a
           href="#/onboarding"
           onClick={(e) => {
-            try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides");reset(); } catch { }
+            try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); reset(); } catch { }
             // allow the href navigation to happen (no preventDefault)
           }}
           className="text-xs underline text-muted-foreground"

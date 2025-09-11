@@ -1,75 +1,99 @@
 @layer utilities {
   /* ========== GLOBAL Colors (always present) ========== */
+  /* Backgrounds */
   .bg-Colors-background { background-color: var(--colors-background); }
+  .bg-Colors-alt-background { background-color: var(--colors-alt-background); }
+  .bg-Colors-primary { background-color: var(--colors-primary); }
+  .bg-Colors-secondary { background-color: var(--colors-secondary); }
+
+  /* Text */
   .text-Colors-foreground { color: var(--colors-foreground); }
   .text-Colors-muted-foreground { color: var(--colors-muted-foreground); }
-  .bg-Colors-alt-background { background-color: var(--colors-alt-background); }
   .text-Colors-alt-foreground { color: var(--colors-alt-foreground); }
-  .bg-Colors-primary { background-color: var(--colors-primary); }
   .text-Colors-primary-foreground { color: var(--colors-primary-foreground); }
-  .border-Colors-border { border-color: var(--colors-border); }
-  .bg-Colors-secondary { background-color: var(--colors-secondary); }
   .text-Colors-secondary-foreground { color: var(--colors-secondary-foreground); }
 
+  /* Border */
+  .border-Colors-border { border-color: var(--colors-border); }
+
   /* ========== HERO ========== */
+  /* Backgrounds */
   .bg-Hero-Colors-background { background-color: var(--hero-colors-background); }
-  .text-Hero-Colors-foreground { color: var(--hero-colors-foreground); }
-  .text-Hero-Colors-muted-foreground { color: var(--hero-colors-muted-foreground); }
   .bg-Hero-Colors-alt-background { background-color: var(--hero-colors-alt-background); }
-  .text-Hero-Colors-alt-foreground { color: var(--hero-colors-alt-foreground); }
   .bg-Hero-Colors-primary { background-color: var(--hero-colors-primary); }
-  .text-Hero-Colors-primary {color: var(--hero-colors-primary); }
-  .text-Hero-Colors-primary-foreground { color: var(--hero-colors-primary-foreground); }
-  
-  .border-Hero-Colors-border { border-color: var(--hero-colors-border); }
   .bg-Hero-Colors-secondary { background-color: var(--hero-colors-secondary); }
-  .text-Hero-Colors-secondary-foreground { color: var(--hero-colors-secondary-foreground); }
   .bg-Hero-Colors-muted-background { background-color: var(--hero-colors-muted-background); }
   .bg-Hero-Colors-muted-foreground { background-color: var(--hero-colors-muted-foreground); }
 
+  /* Text */
+  .text-Hero-Colors-foreground { color: var(--hero-colors-foreground); }
+  .text-Hero-Colors-muted-foreground { color: var(--hero-colors-muted-foreground); }
+  .text-Hero-Colors-alt-foreground { color: var(--hero-colors-alt-foreground); }
+  .text-Hero-Colors-primary { color: var(--hero-colors-primary); }
+  .text-Hero-Colors-primary-foreground { color: var(--hero-colors-primary-foreground); }
+  .text-Hero-Colors-secondary-foreground { color: var(--hero-colors-secondary-foreground); }
+
+  /* Border */
+  .border-Hero-Colors-border { border-color: var(--hero-colors-border); }
+
   /* ========== PRICE POINTS (PP) ========== */
+  /* Backgrounds */
   .bg-PP-Colors-background { background-color: var(--pp-colors-background); }
-  .text-PP-Colors-foreground { color: var(--pp-colors-foreground); }
-  .text-PP-Colors-muted-foreground { color: var(--pp-colors-muted-foreground); }
   .bg-PP-Colors-alt-background { background-color: var(--pp-colors-alt-background); }
   .bg-PP-Colors-alt-foreground { background-color: var(--pp-colors-alt-foreground); }
-  .text-PP-Colors-alt-background { color: var(--pp-colors-alt-background); }
-  .text-PP-Colors-alt-foreground { color: var(--pp-colors-alt-foreground); }
   .bg-PP-Colors-primary { background-color: var(--pp-colors-primary); }
-  .text-PP-Colors-primary-foreground { color: var(--pp-colors-primary-foreground); }
-  .border-PP-Colors-border { border-color: var(--pp-colors-border); }
   .bg-PP-Colors-secondary { background-color: var(--pp-colors-secondary); }
-  .text-PP-Colors-secondary-foreground { color: var(--pp-colors-secondary-foreground); }
+  .bg-PP-Colors-secondary-foreground { background-color: var(--pp-colors-secondary-foreground); }
   .bg-PP-Colors-muted-background { background-color: var(--pp-colors-muted-background); }
   .bg-PP-Colors-muted-foreground { background-color: var(--pp-colors-muted-foreground); }
 
+  /* Text */
+  .text-PP-Colors-foreground { color: var(--pp-colors-foreground); }
+  .text-PP-Colors-muted-foreground { color: var(--pp-colors-muted-foreground); }
+  .text-PP-Colors-alt-background { color: var(--pp-colors-alt-background); }
+  .text-PP-Colors-alt-foreground { color: var(--pp-colors-alt-foreground); }
+  .text-PP-Colors-primary-foreground { color: var(--pp-colors-primary-foreground); }
+  .text-PP-Colors-secondary-foreground { color: var(--pp-colors-secondary-foreground); }
+
+  /* Border */
+  .border-PP-Colors-border { border-color: var(--pp-colors-border); }
+
   /* ========== EXTRA PRIZES (EB) ========== */
+  /* Backgrounds */
   .bg-EB-Colors-background { background-color: var(--eb-colors-background); }
-  .text-EB-Colors-foreground { color: var(--eb-colors-foreground); }
-  .text-EB-Colors-muted-foreground { color: var(--eb-colors-muted-foreground); }
   .bg-EB-Colors-alt-background { background-color: var(--eb-colors-alt-background); }
-  .text-EB-Colors-alt-foreground { color: var(--eb-colors-alt-foreground); }
   .bg-EB-Colors-primary { background-color: var(--eb-colors-primary); }
-  .text-EB-Colors-primary-foreground { color: var(--eb-colors-primary-foreground); }
-  .border-EB-Colors-border { border-color: var(--eb-colors-border); }
   .bg-EB-Colors-secondary { background-color: var(--eb-colors-secondary); }
-  .text-EB-Colors-secondary-foreground { color: var(--eb-colors-secondary-foreground); }
   .bg-EB-Colors-muted-background { background-color: var(--eb-colors-muted-background); }
   .bg-EB-Colors-muted-foreground { background-color: var(--eb-colors-muted-foreground); }
-  .text-EB-Colors-muted-background { color: var(--eb-colors-muted-background); }
+
+  /* Text */
+  .text-EB-Colors-foreground { color: var(--eb-colors-foreground); }
   .text-EB-Colors-muted-foreground { color: var(--eb-colors-muted-foreground); }
+  .text-EB-Colors-alt-foreground { color: var(--eb-colors-alt-foreground); }
+  .text-EB-Colors-primary-foreground { color: var(--eb-colors-primary-foreground); }
+  .text-EB-Colors-secondary-foreground { color: var(--eb-colors-secondary-foreground); }
+  .text-EB-Colors-muted-background { color: var(--eb-colors-muted-background); }
+
+  /* Border */
+  .border-EB-Colors-border { border-color: var(--eb-colors-border); }
 
   /* ========== WINNERS ========== */
+  /* Backgrounds */
   .bg-Winners-Colors-background { background-color: var(--winners-colors-background); }
-  .text-Winners-Colors-foreground { color: var(--winners-colors-foreground); }
-  .text-Winners-Colors-muted-foreground { color: var(--winners-colors-muted-foreground); }
   .bg-Winners-Colors-alt-background { background-color: var(--winners-colors-alt-background); }
-  .text-Winners-Colors-alt-foreground { color: var(--winners-colors-alt-foreground); }
   .bg-Winners-Colors-primary { background-color: var(--winners-colors-primary); }
-  .text-Winners-Colors-primary-foreground { color: var(--winners-colors-primary-foreground); }
-  .border-Winners-Colors-border { border-color: var(--winners-colors-border); }
   .bg-Winners-Colors-secondary { background-color: var(--winners-colors-secondary); }
-  .text-Winners-Colors-secondary-foreground { color: var(--winners-colors-secondary-foreground); }
   .bg-Winners-Colors-muted-background { background-color: var(--winners-colors-muted-background); }
   .bg-Winners-Colors-muted-foreground { background-color: var(--winners-colors-muted-foreground); }
+
+  /* Text */
+  .text-Winners-Colors-foreground { color: var(--winners-colors-foreground); }
+  .text-Winners-Colors-muted-foreground { color: var(--winners-colors-muted-foreground); }
+  .text-Winners-Colors-alt-foreground { color: var(--winners-colors-alt-foreground); }
+  .text-Winners-Colors-primary-foreground { color: var(--winners-colors-primary-foreground); }
+  .text-Winners-Colors-secondary-foreground { color: var(--winners-colors-secondary-foreground); }
+
+  /* Border */
+  .border-Winners-Colors-border { border-color: var(--winners-colors-border); }
 }

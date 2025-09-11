@@ -45,7 +45,15 @@ export default {
         "eb-alt-fg": "var(--eb-colors-alt-foreground)",
         "eb-secondary": "var(--eb-colors-secondary)",
       },
+      fontFamily: {
+        app: ['var(--font-app)'],
+        primary: ['var(--font-primary)'],
+        headline: ['var(--font-headline)'],
+        numbers: ['var(--font-numbers)'],
+      },
     },
   },
   plugins: [],
+  
 };
+
