@@ -13,6 +13,7 @@ import EditableSection from "../components/EditableSection.jsx";
 import { HeroA, HeroB } from "../sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "../sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "../sections/Winners.jsx";
+import { FeatureA, FeatureB } from "../sections/Feature.jsx";
 
 import AutoScaler from "../components/AutoScaler.jsx";
 
@@ -26,10 +27,10 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";     
+import { toast } from "sonner";
 
 //--Icons --
-import { X, Plus, ChevronDown, ArrowRight,ArrowLeft, Pencil } from "lucide-react";
+import { X, Plus, ChevronDown, ArrowRight, ArrowLeft, Pencil } from "lucide-react";
 
 
 
@@ -45,11 +46,14 @@ const STEP_KEYS = [
     "extraPrizesEdit",// 5. edit
     "winners",        // 6. choose
     "winnersEdit",    // 7. edit
+    "feature",        // 6. choose
+    "featureEdit",    // 7. edit
     "review"          // 8. review
 ];
 
 
-
+const PREVIEW_WIDTH = 420;   // 👈 tweak this
+const PREVIEW_MAX_H = 420;
 
 // helpers
 const toArray = (x) =>
@@ -66,6 +70,8 @@ const normalizeCopyParts = (list) =>
         })
         .filter(Boolean);
 
+
+
 function StepHeader({ currentIndex }) {
     const pct = Math.round((currentIndex / (STEP_KEYS.length - 1)) * 100);
     return (
@@ -73,10 +79,10 @@ function StepHeader({ currentIndex }) {
             <div className="mx-auto  max-w-[1100px]  py-3 flex items-center gap-3 justify-between box-border">
                 <div className="text-xl font-bold">LP BUILDER</div>
                 <div className="flex items-center gap-2">
-                <div className="w-48">
-                    <Progress value={pct} />
-                </div>
-                <div className="text-xs text-muted-foreground w-12 text-right">{pct}%</div>
+                    <div className="w-48">
+                        <Progress value={pct} />
+                    </div>
+                    <div className="text-xs text-muted-foreground w-12 text-right">{pct}%</div>
                 </div>
             </div>
         </div>
@@ -89,24 +95,36 @@ function StepHeader({ currentIndex }) {
 
 
 // [Onboarding][REPLACE] compact scroller for many variants
-function VariantCarousel({ sectionKey }) {
+function VariantCarousel({ sectionKey, onPicked }) {
     const { overridesBySection, setVariant } = useBuilderOverrides();
     const def = SECTIONS[sectionKey] || { variants: [], thumbnail: () => null, title: sectionKey };
     const state = overridesBySection?.[sectionKey] || {};
     const variants = Array.isArray(def.variants) ? def.variants : [];
-    const active = state.variant || variants[0]?.key || "A";
+    const active = state.variant ?? null;
+    
+
+
 
     if (variants.length === 0) return null;
+
+    const choose = (key) => {
+        setVariant(sectionKey, key);
+        onPicked?.(key);
+    };
+
 
     return (
         <div className="flex gap-3  p-1 ">
             {variants.map(v => (
                 <Card
                     key={v.key}
-                    onClick={() => setVariant(sectionKey, v.key)}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => choose(v.key)}
+                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && choose(v.key)}
                     className={[
-                        "w-full cursor-pointer transition shadow-lg",
-                        active === v.key ? "ring-2 ring-blue-400" : "hover:ring-1 hover:ring-blue-400/40"
+                        "w-full cursor-pointer transition shadow-lg transition  duration-800 ease-in-out-sine hover:-translate-y-2 hover:shadow-xl",
+                        active === v.key ? "ring-2 ring-blue-500" : "hover:ring-2 hover:ring-blue-500"
                     ].join(" ")}
                 >
                     <CardHeader className="py-3">
@@ -123,6 +141,7 @@ function VariantCarousel({ sectionKey }) {
     );
 }
 
+
 function resolveByVariant(sectionKey, variant = "A") {
     if (sectionKey === "hero") return variant === "B" ? HeroB : HeroA;
     if (sectionKey === "extraPrizes") return variant === "B" ? ExtraPrizesB : ExtraPrizesA;
@@ -134,6 +153,8 @@ export default function OnboardingWizard() {
     const { overridesBySection, setVisible, setVariant, setDisplay, setCopy } = useBuilderOverrides();
     const [stepIndex, setStepIndex] = useState(0);
     const stepKey = STEP_KEYS[stepIndex];
+    const advance = (steps = 1) =>
+       setStepIndex((i) => Math.min(i + steps, STEP_KEYS.length - 1));
 
     // [Onboarding] ensure defaults so previews don't show as blank
     useEffect(() => {
@@ -142,9 +163,9 @@ export default function OnboardingWizard() {
             if (overridesBySection[k]?.visible === undefined) setVisible(k, true);
         });
         // preselect hero variant A if none
-        if (!overridesBySection.hero?.variant) {
-            // default to A
-        }
+        //if (!overridesBySection.hero?.variant) {
+        // default to A
+        //}
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -198,23 +219,24 @@ export default function OnboardingWizard() {
 
 
                     {stepKey === "hero" && (
-                        <div className="space-y-6">
-                            
+                        <div className="space-y-12">
+
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
                                 <h2 className="text-4xl font-medium">Choose Hero Layout</h2>
                                 <p className="text-base text-slate-500">Select how your hero section will looks like </p>
                             </div>
-                            <VariantCarousel 
-                                sectionKey="hero" 
-                               
+                            <VariantCarousel
+                                sectionKey="hero"
+                                onPicked={() => setStepIndex(i => Math.min(i + 1, STEP_KEYS.length - 1))}
+
                             />
                         </div>
                     )}
 
 
                     {stepKey === "heroEdit" && (
-                        <div className="space-y-6">
+                        <div className="space-y-12">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
                                 <h2 className="text-4xl font-medium">Edit Hero components</h2>
@@ -232,20 +254,20 @@ export default function OnboardingWizard() {
 
 
                     {stepKey === "extraPrizes" && (
-                        <div className="space-y-6">
+                        <div className="space-y-12">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
                                 <h2 className="text-4xl font-medium">Choose Extra Prizes Layout</h2>
                                 <p className="text-base text-slate-500">Select how your Extra Prizes section will looks like </p>
                             </div>
-                            
-                            <VariantCarousel sectionKey="extraPrizes" />
+
+                            <VariantCarousel sectionKey="extraPrizes" onPicked={() => setStepIndex(i => i + 1)} />
                         </div>
                     )}
 
 
                     {stepKey === "extraPrizesEdit" && (
-                        <div className="space-y-6">
+                        <div className="space-y-12">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
                                 <h2 className="text-4xl font-medium">Edit Extra Prizes Components</h2>
@@ -263,19 +285,19 @@ export default function OnboardingWizard() {
 
 
                     {stepKey === "winners" && (
-                        <div className="space-y-6">
+                        <div className="space-y-12">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
                                 <h2 className="text-4xl font-medium">Choose Winners Layout</h2>
                                 <p className="text-base text-slate-500">Select how your Winners section will looks like</p>
                             </div>
-                            <VariantCarousel sectionKey="winners" />
+                            <VariantCarousel sectionKey="winners" onPicked={() => setStepIndex(i => i + 1)} />
                         </div>
                     )}
 
 
                     {stepKey === "winnersEdit" && (
-                        <div className="space-y-6">
+                        <div className="space-y-12">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
                                 <h2 className="text-4xl font-medium">Edit Winners Components</h2>
@@ -291,8 +313,46 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
+                    {stepKey === "feature" && (
+                        <div className="space-y-12">
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
+                                <h2 className="text-4xl font-medium">Choose Feature Layout</h2>
+                                <p className="text-base text-slate-500">Add custom content to your page</p>
+                            </div>
+                            <VariantCarousel sectionKey="feature" onPicked={() => advance(1)} />
+                            <Button
+                                variant="ghost"
+                                onClick={() => {
+                                    setVisible("feature", false); // hide this section
+                                    advance(2); // skip its edit step as well
+                                }}
+                            >
+                                Skip this section
+                            </Button>
+                        </div>
+                    )}
+
+
+                    {stepKey === "featureEdit" && (
+                        <div className="space-y-12">
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
+                                <h2 className="text-4xl font-medium">Edit Feature Components</h2>
+                                <p className="text-base text-slate-500">Customize your section components by removing and change components copy </p>
+                            </div>
+                            <EditorForOnboarding
+                                sectionKey="feature"
+                                variantKey={overridesBySection.winners?.variant || "A"}
+                                overrides={overridesBySection.winners}
+                                onTogglePart={(id, v) => setDisplay("feature", id, v)}
+                                onCopyChange={(id, t) => setCopy("feature", id, t)}
+                            />
+                        </div>
+                    )}
+
                     {stepKey === "review" && (
-                        <div className="space-y-6">
+                        <div className="space-y-12">
                             <h2 className="text-2xl font-semibold">Review & Finish</h2>
                             <Card>
                                 <CardHeader><CardTitle>Summary</CardTitle></CardHeader>
@@ -323,8 +383,8 @@ export default function OnboardingWizard() {
                     )}
 
                     {/* Nav buttons */}
-                    <div className="flex justify-between pt-4">
-                        <Button variant="ghost" onClick={back} disabled={stepIndex === 0}>Back</Button>
+                    <div className="flex justify-end pt-4">
+
                         <div className="flex gap-2">
                             {stepIndex < STEP_KEYS.length - 1 ? (
                                 <Button onClick={next}>Next</Button>

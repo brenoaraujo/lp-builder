@@ -46,7 +46,7 @@ export function buildThemeVars(colors = {}, mode = "light") {
     // Light
     background = "#ffffff",
     primary = "#000000",
-    secondary = "#e4e4e7",
+    secondary = "#F1F5F9",
     "alt-background": altBg = "#f0f0f9",
     border = "#e4e4e7",
 

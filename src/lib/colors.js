@@ -46,7 +46,7 @@ function shade(hex, t=0.16){ return mix(hex, "#000000", t); } // closer to black
 // Build the full theme your components already expect from 3–4 core swatches
 function computeThemeFromCore({
   primary   = "#000000",
-  secondary = "#e4e4e7",
+  secondary = "#F1F5F9",
   accent    = "#6366f1",   // optional "alternative" / highlight
   background= "#ffffff",
 }) {

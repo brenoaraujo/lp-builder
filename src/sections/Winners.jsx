@@ -39,21 +39,21 @@ export function WinnersA() {
                 <div
                   data-portrait="No"
                   data-ratio="5:4"
-                  className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-muted-background"
+                  className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
                 />
               </div>
               <div className="w-full p-1 flex justify-start items-center gap-2">
                 <div
                   data-portrait="No"
                   data-ratio="5:4"
-                  className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-muted-background"
+                  className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
                 />
               </div>
               <div className="w-full p-1 flex justify-start items-center gap-2">
                 <div
                   data-portrait="No"
                   data-ratio="5:4"
-                  className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-muted-background"
+                  className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
                 />
               </div>
             </div>

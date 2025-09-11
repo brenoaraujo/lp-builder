@@ -233,7 +233,7 @@ export function ExtraPrizesB() {
           <div
             data-portrait="No"
             data-ratio="5:4"
-            className="w-[507px] h-96 rounded-lg inline-flex flex-col justify-start items-start overflow-hidden bg-PP-Colors-alt-background relative"
+            className="w-[507px] h-96 rounded-lg inline-flex flex-col justify-start items-start overflow-hidden bg-PP-Colors-secondary relative"
           />
         </div>
 

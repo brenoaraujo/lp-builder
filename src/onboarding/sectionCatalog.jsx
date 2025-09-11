@@ -6,63 +6,97 @@ import AutoScaler from "../components/AutoScaler.jsx";
 import { HeroA, HeroB } from "../sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "../sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "../sections/Winners.jsx";
+import { FeatureA, FeatureB } from "../sections/Feature.jsx";
 
 // [Onboarding] "Field descriptors" – keep these aligned with your data-* labels.
 // You can expand them later as you add sections.
 export const SECTION_ORDER = ["hero", "extraPrizes", "winners"];
+export const THUMB_DESIGN_W = 1440;   // your section design width
+export const THUMB_MIN_W    = 320;    // keep small cards readable
+export const THUMB_MAX_W    = 900;    // optional safety cap
+export const THUMB_MAX_H    = 420;    // keep thumbs short
+
+function useParentWidth() {
+  const ref = React.useRef(null);
+  const [w, setW] = React.useState(THUMB_MIN_W);
+  React.useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(() => {
+      const px = ref.current?.clientWidth || THUMB_MIN_W;
+      setW(Math.max(THUMB_MIN_W, Math.min(THUMB_MAX_W, px)));
+    });
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w];
+}
+
+export function ThumbFrame({ children, maxH = THUMB_MAX_H }) {
+  const [ref, w] = useParentWidth();
+  return (
+    <div ref={ref} className="w-full overflow-hidden rounded-xl">
+      <AutoScaler designWidth={THUMB_DESIGN_W} targetWidth={w} maxHeight={maxH}>
+        {children}
+      </AutoScaler>
+    </div>
+  );
+}
+
 
 export const SECTIONS = {
   hero: {
     title: "Hero",
-    // Two layouts you already use: A and B
     variants: [
-      { key: "A", label: "Hero A", render: (props) => <HeroA {...props} /> },
-      { key: "B", label: "Hero B", render: (props) => <HeroB {...props} /> },
+      { key: "A", label: "Hero A" },
+      { key: "B", label: "Hero B" },
     ],
-    copyFields: ["Headline", "Subheadline", "CTA Label"],     // <-- must be an array
-    displayFields: ["Buy Now Button", "Legal Copy"],    
-    thumbnail: (variantKey, overrides) => (
-      <AutoScaler designWidth={1440} targetWidth={360} maxHeight={9999}>
-        <div className="w-[1440px]">
-          {variantKey === "B" ? <HeroB overrides={overrides} /> : <HeroA overrides={overrides} />}
-        </div>
-      </AutoScaler>
+    // 👇 responsive thumbnail (fills the card)
+    thumbnail: (key = "A") => (
+      <ThumbFrame>
+        {key === "B" ? <HeroB preview /> : <HeroA preview />}
+      </ThumbFrame>
     ),
-
+    skippable: false,
   },
 
   extraPrizes: {
     title: "Extra Prizes",
     variants: [
-      { key: "A", label: "Layout A", render: (p) => <ExtraPrizesA {...p} /> },
-      { key: "B", label: "Layout B", render: (p) => <ExtraPrizesB {...p} /> },
+      { key: "A", label: "Extra Prizes A" },
+      { key: "B", label: "Extra Prizes B" },
     ],
-    copyFields: ["Section Label", "Headline"],                 // <-- array
-    displayFields: ["Show Countdown", "Show CTA"],  
-    
-    thumbnail: (key, ov) => (
-      <AutoScaler designWidth={1440} targetWidth={360} maxHeight={9999}>
-        <div className="w-[1440px]">
-          {key === "B" ? <ExtraPrizesB overrides={ov} /> : <ExtraPrizesA overrides={ov} />}
-        </div>
-      </AutoScaler>
+    thumbnail: (key = "A") => (
+      <ThumbFrame>
+        {key === "B" ? <ExtraPrizesB preview /> : <ExtraPrizesA preview />}
+      </ThumbFrame>
     ),
+    skippable: false,
   },
 
   winners: {
     title: "Winners",
     variants: [
-      { key: "A", label: "Layout A", render: (p) => <WinnersA {...p} /> },
-      { key: "B", label: "Layout B", render: (p) => <WinnersB {...p} /> },
+      { key: "A", label: "Winners A" },
+      { key: "B", label: "Winners B" },
     ],
-    copyFields: ["Section Label", "Headline"],                 // <-- array
-    displayFields: ["Show Table", "Show CTA"], 
-    thumbnail: (key, ov) => (
-      <AutoScaler designWidth={1440} targetWidth={360} maxHeight={9999}>
-        <div className="w-[1440px]">
-          {key === "B" ? <WinnersB overrides={ov} /> : <WinnersA overrides={ov} />}
-        </div>
-      </AutoScaler>
+    thumbnail: (key = "A") => (
+      <ThumbFrame>
+        {key === "B" ? <WinnersB preview /> : <WinnersA preview />}
+      </ThumbFrame>
     ),
+    skippable: false,
+  },
+  feature: {
+    title: "Feature",
+    variants: [
+      { key: "A", label: "Feature A" },
+      { key: "B", label: "Feature B" },
+    ],
+    thumbnail: (key = "A") => (
+      <ThumbFrame>
+        {key === "B" ? <FeatureB preview /> : <FeatureA preview />}
+      </ThumbFrame>
+    ),
+    skippable: true,
   },
 };

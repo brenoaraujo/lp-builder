@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { HeroA, HeroB } from "./sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "./sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "./sections/Winners.jsx";
+import { FeatureA, FeatureB } from "./sections/Feature.jsx";
 
 // Onboarding
 import OnboardingWizard from "./onboarding/OnboardingWizard.jsx";
@@ -418,7 +419,7 @@ function SortableBlock({
       ref={setNodeRef}
       style={{ ...style, ...overrideStyle }}
       className={[
-        "relative bg-white shadow-sm transition overflow-visible",
+        "relative bg-white  transition overflow-visible",
         selected ? "z-10 outline outline-2 outline-blue-500 ring-0"
           : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500",
       ].join(" ")}
@@ -584,6 +585,7 @@ function blocksFromOverrides(ovr = {}) {
   if (ovr.hero?.visible !== false) push("hero", ovr.hero?.variant || "A", ovr.hero);
   if (ovr.extraPrizes?.visible !== false) push("extraPrizes", ovr.extraPrizes?.variant || "A", ovr.extraPrizes);
   if (ovr.winners?.visible !== false) push("winners", ovr.winners?.variant || "A", ovr.winners);
+  if (ovr.feature?.visible !== false) push("feature", ovr.winners?.variant || "A", ovr.winners);
   return out.length ? out : [{
     id: crypto?.randomUUID?.() ?? `hero_${Date.now()}`,
     type: "hero", variant: 0, controls: {}, copy: {},
@@ -599,7 +601,7 @@ function blocksFromOverrides(ovr = {}) {
 export default function MainBuilder() {
 
   function blocksFromOverrides(ovr) {
-    const order = ["hero", "extraPrizes", "winners"]; // keep this consistent with your app
+    const order = ["hero", "extraPrizes", "winners", "feature"]; // keep this consistent with your app
     const toIndex = (v) => (v === "B" ? 1 : 0);       // "A" → 0, "B" → 1
 
     return order
@@ -647,12 +649,13 @@ export default function MainBuilder() {
     setContentForId(null);
   }
   useEffect(() => { if (activeBlockId == null) { setVariantForId(null); setContentForId(null); } }, [activeBlockId]);
+  {/* if you want the first block selected on the first
   useEffect(() => {
     if (!didAutoSelectOnce.current && !activeBlockId && blocks.length) {
       setActiveBlockId(blocks[0].id);
       didAutoSelectOnce.current = true;
     }
-  }, [activeBlockId, blocks]);
+  }, [activeBlockId, blocks]);*/}
 
   const [partsByBlock, setPartsByBlock] = useState({});
   const [copyPartsByBlock, setCopyPartsByBlock] = useState({});
@@ -666,7 +669,7 @@ export default function MainBuilder() {
       primary: "#000000",
       "primary-foreground": "#ffffff",
       border: "#e4e4e7",
-      secondary: "#e4e4e7",
+      secondary: "#F1F5F9",
       "secondary-foreground": "#71717a",
     },
   });
@@ -866,7 +869,7 @@ export default function MainBuilder() {
         primary: "#000000",
         "primary-foreground": "#ffffff",
         border: "#e4e4e7",
-        secondary: "#e4e4e7",
+        secondary: "#F1F5F9",
         "secondary-foreground": "#71717a",
       },
     });
@@ -1127,7 +1130,7 @@ export default function MainBuilder() {
         {/* Canvas */}
         <main className="flex-1 p-4 flex justify-center box-border">
           <div className="w-full max-w-[800px] box-border">
-            <div className="space-y-4">
+            <div className="">
               {blocks.length === 0 ? (
                 <div className="border border-dashed p-10 text-center text-gray-500">
                   No sections yet. Use the buttons on the left to add some 👈
@@ -1140,9 +1143,9 @@ export default function MainBuilder() {
                   onDragEnd={onDragEnd}
                 >
                   <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                    <div>
+                    <div style={{background:"var(--colors-background)" }}>
                       {blocks.map((b, i) => (
-                        <div key={b.id} className="group relative">
+                        <div key={b.id} className= {i > 0 ? "-mt-px group relative" : "group relative"}>
                           <SortableBlock
                             id={b.id}
                             type={b.type}
@@ -1228,6 +1231,9 @@ export default function MainBuilder() {
                   </Button>
                   <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "winners")}>
                     Winners
+                  </Button>
+                  <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "feature")}>
+                    Feature
                   </Button>
                 </div>
 
@@ -1348,10 +1354,12 @@ function MainBuilderWithOverrides() {
   const hero = overridesBySection.hero || {};
   const extra = overridesBySection.extraPrizes || {};
   const winners = overridesBySection.winners || {};
+  const feature = overridesBySection.feature || {};
 
   const HeroComponent = hero?.variant === "B" ? HeroB : HeroA;
   const ExtraPrizesComponent = extra?.variant === "B" ? ExtraPrizesB : ExtraPrizesA;
   const WinnersComponent = winners?.variant === "B" ? WinnersB : WinnersA;
+  const FeatureComponent = feature?.variant === "B" ? FeatureB : FeatureA;
 
   return (
     <div data-app-root>
