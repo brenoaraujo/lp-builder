@@ -342,7 +342,10 @@ function VariantDock({ open, type, currentVariant, onPick, onClose }) {
         </ScrollArea>
         <div className="border-t p-2 flex justify-end">
           <DialogClose asChild>
-            <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onClose}>Close</Button>
           </DialogClose>
         </div>
       </DialogContent>
@@ -622,12 +625,17 @@ export default function MainBuilder() {
 
 
   // Auto-open onboarding the first time
-  useEffect(() => {
-    const done = window.localStorage.getItem("onboardingCompleted") === "1";
-    if (!done && window.location.hash !== "#/onboarding") {
-      window.location.hash = "/onboarding";
-    }
-  }, []);
+useEffect(() => {
+  const done = localStorage.getItem("onboardingCompleted") === "1";
+  const wantsWizard = new URLSearchParams(window.location.search).get("wizard") === "1";
+
+  if (!done || wantsWizard) {
+    if (location.hash !== "#/onboarding") location.hash = "/onboarding";
+  } else if (location.hash === "#/onboarding") {
+    // if user already finished and hits a stale wizard hash, kick them to builder
+    location.hash = "/";
+  }
+}, []);
 
 
 
@@ -1339,12 +1347,8 @@ export default function MainBuilder() {
 
 export function AppRouterShell() {
   const route = useHashRoute();
-  const done = (window.localStorage.getItem("onboardingCompleted") === "1");
-
-  // If user hasn’t finished yet or explicitly navigates, show the wizard
+  const done = localStorage.getItem("onboardingCompleted") === "1";
   if (route === "/onboarding" || !done) return <OnboardingWizard />;
-
-  // After finishing, show the full builder (not the preview shell)
   return <MainBuilder />;
 }
 

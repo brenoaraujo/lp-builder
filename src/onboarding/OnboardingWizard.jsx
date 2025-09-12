@@ -101,7 +101,7 @@ function VariantCarousel({ sectionKey, onPicked }) {
     const state = overridesBySection?.[sectionKey] || {};
     const variants = Array.isArray(def.variants) ? def.variants : [];
     const active = state.variant ?? null;
-    
+
 
 
 
@@ -154,7 +154,7 @@ export default function OnboardingWizard() {
     const [stepIndex, setStepIndex] = useState(0);
     const stepKey = STEP_KEYS[stepIndex];
     const advance = (steps = 1) =>
-       setStepIndex((i) => Math.min(i + steps, STEP_KEYS.length - 1));
+        setStepIndex((i) => Math.min(i + steps, STEP_KEYS.length - 1));
 
     // [Onboarding] ensure defaults so previews don't show as blank
     useEffect(() => {
@@ -177,20 +177,25 @@ export default function OnboardingWizard() {
     }
     function finish() {
         try {
-            window.localStorage.setItem("onboardingCompleted", "1");
+            localStorage.setItem("onboardingCompleted", "1");
         } catch { }
-        // Optional toast
-        try { toast?.success?.("Onboarding complete. Your page reflects these settings."); } catch { }
-        setTimeout(() => { window.location.hash = "/"; }, 0);
+
+        // strip any ?wizard=1 so shared links don't reopen the wizard
+        const url = new URL(window.location.href);
+        url.searchParams.delete("wizard");
+        history.replaceState(null, "", url.toString());
+
+        // go to builder shell
+        window.location.hash = "/";
     }
 
     return (
 
-        <div className="min-h-screen bg-slate-50  text-foreground onboarding">
+        <div className="min-h-screen flex flex-col bg-slate-50 text-foreground onboarding">
             <StepHeader currentIndex={stepIndex} />
 
-            <div className=" p-4 flex flex-1  justify-center box-border">
-                <div className="w-full max-w-[1100px] box-border ">
+            <div className="flex-1 min-h-0 p-4 flex justify-center box-border">
+                <div className="w-full max-w-[1100px] h-full box-border ">
                     {/* STEP CONTENT */}
                     {stepKey === "welcome" && (
                         <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -236,19 +241,22 @@ export default function OnboardingWizard() {
 
 
                     {stepKey === "heroEdit" && (
-                        <div className="space-y-12">
+                        <div className="space-y-12 h-full min-h-0">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0"><ArrowLeft />Back</Button>
                                 <h2 className="text-4xl font-medium">Edit Hero components</h2>
                                 <p className="text-base text-slate-500">Customize your hero by removing and change components copy </p>
                             </div>
+                            <div className="h-full min-h-0">
                             <EditorForOnboarding
                                 sectionKey="hero"
                                 variantKey={overridesBySection.hero?.variant || "A"}
                                 overrides={overridesBySection.hero}
                                 onTogglePart={(id, visible) => setDisplay("hero", id, visible)}
                                 onCopyChange={(id, text) => setCopy("hero", id, text)}
+                                onSaveNext={() => setStepIndex(i => Math.min(i + 1, STEP_KEYS.length - 1))}
                             />
+                            </div>
                         </div>
                     )}
 
@@ -279,6 +287,7 @@ export default function OnboardingWizard() {
                                 overrides={overridesBySection.extraPrizes}
                                 onTogglePart={(id, v) => setDisplay("extraPrizes", id, v)}
                                 onCopyChange={(id, t) => setCopy("extraPrizes", id, t)}
+                                onSaveNext={() => setStepIndex(i => Math.min(i + 1, STEP_KEYS.length - 1))}
                             />
                         </div>
                     )}
@@ -309,6 +318,7 @@ export default function OnboardingWizard() {
                                 overrides={overridesBySection.winners}
                                 onTogglePart={(id, v) => setDisplay("winners", id, v)}
                                 onCopyChange={(id, t) => setCopy("winners", id, t)}
+                                onSaveNext={() => setStepIndex(i => Math.min(i + 1, STEP_KEYS.length - 1))}
                             />
                         </div>
                     )}
@@ -347,6 +357,7 @@ export default function OnboardingWizard() {
                                 overrides={overridesBySection.winners}
                                 onTogglePart={(id, v) => setDisplay("feature", id, v)}
                                 onCopyChange={(id, t) => setCopy("feature", id, t)}
+                                onSaveNext={() => setStepIndex(i => Math.min(i + 1, STEP_KEYS.length - 1))}
                             />
                         </div>
                     )}
@@ -382,7 +393,7 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
-                    {/* Nav buttons */}
+                    {/* Nav buttons
                     <div className="flex justify-end pt-4">
 
                         <div className="flex gap-2">
@@ -392,7 +403,7 @@ export default function OnboardingWizard() {
                                 <Button onClick={finish}>Finish</Button>
                             )}
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

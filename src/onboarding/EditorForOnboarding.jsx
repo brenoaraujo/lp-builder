@@ -24,7 +24,14 @@ export default function EditorForOnboarding({
   overrides = {},
   onTogglePart,
   onCopyChange,
+  onSaveNext,
 }) {
+
+  // Measure the preview column so thumbnails scale to available width
+  const previewRef = React.useRef(null);
+  const previewWidth = useElementWidth(previewRef);
+  const targetWidth = Math.max(360, Math.min(1440, previewWidth || 0));
+
   const virtualId = React.useMemo(() => `onb_${sectionKey}`, [sectionKey]);
   const variantIndex = variantKey === "B" ? 1 : 0;
 
@@ -65,7 +72,8 @@ export default function EditorForOnboarding({
   const Comp = Variants[virtualBlock.variant] || (() => null);
 
   return (
-    <div className="grid gap-4 md:grid-cols-[280px_1fr]">
+    <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)] gap-6">
+      <div className="h-full min-h-0">
       <EditorSidebar
         activeBlockId={activeBlockId}
         activeBlock={activeBlock}
@@ -94,10 +102,13 @@ export default function EditorForOnboarding({
         hideAdvancedActions
         staticLayout
         hideCLoseAction
+        onSaveNext={onSaveNext}
       />
-
-      <div className="p-4 border shadow-lg border-slate-200 bg-white rounded-lg">
-        <AutoScaler designWidth={1440} targetWidth={720} maxHeight={9999}>
+      </div>
+        <div className="h-full min-h-0">
+      <div className="h-full w-full rounded-lg border border-slate-200 bg-white shadow-lg p-4">
+        <div ref={previewRef}>  
+        <AutoScaler designWidth={1440} targetWidth={targetWidth}>
           <div data-scope={sectionKey}>
             <EditableSection
               discoverKey={`onb:${sectionKey}:${virtualBlock.variant}`}
@@ -124,7 +135,21 @@ export default function EditorForOnboarding({
             </EditableSection>
           </div>
         </AutoScaler>
+        </div>
+      </div>
       </div>
     </div>
   );
+}
+// Local width hook (same logic you used in the builder)
+function useElementWidth(ref) {
+  const [w, setW] = React.useState(0);
+  React.useEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(() => setW(ref.current?.clientWidth || 0));
+    ro.observe(ref.current);
+    setW(ref.current?.clientWidth || 0);
+    return () => ro.disconnect();
+  }, [ref]);
+  return w;
 }
