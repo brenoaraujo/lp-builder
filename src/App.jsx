@@ -599,6 +599,7 @@ function blocksFromOverrides(ovr = {}) {
 /* ------------------------------------------------------------------ */
 
 export default function MainBuilder() {
+  
 
   function blocksFromOverrides(ovr) {
     const order = ["hero", "extraPrizes", "winners", "feature"]; // keep this consistent with your app
@@ -678,7 +679,7 @@ export default function MainBuilder() {
 
   // Start with system preference and keep CSS vars in sync (✅ single place now)
   useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const mq = window.matchMedia?.("(prefers-color-scheme: light)");
     if (mq) setThemeMode(mq.matches ? "dark" : "light");
     const onChange = (e) => setThemeMode(e.matches ? "dark" : "light");
     mq?.addEventListener?.("change", onChange);
