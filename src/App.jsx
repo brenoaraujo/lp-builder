@@ -675,16 +675,16 @@ export default function MainBuilder() {
     },
   });
 
-  const [themeMode, setThemeMode] = useState("light");
+  const [themeMode, setThemeMode] = useState(() => {
+  try {
+    return localStorage.getItem("lpb.theme.mode") === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+});
 
   // Start with system preference and keep CSS vars in sync (✅ single place now)
-  useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-color-scheme: light)");
-    if (mq) setThemeMode(mq.matches ? "dark" : "light");
-    const onChange = (e) => setThemeMode(e.matches ? "dark" : "light");
-    mq?.addEventListener?.("change", onChange);
-    return () => mq?.removeEventListener?.("change", onChange);
-  }, []);
+
   useEffect(() => {
     const vars = buildThemeVars(globalTheme.colors, themeMode); // mode-aware
     setCSSVars(document.documentElement, "colors", vars);
