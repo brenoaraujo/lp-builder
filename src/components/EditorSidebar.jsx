@@ -55,6 +55,44 @@ export default function EditorSidebar({
 
 
   const activeEntry = activeBlock ? SECTIONS_REG[activeBlock.type] : null;
+const getControlChecked = (part) => {
+  const v = activeBlock?.controls?.[part.id];
+  return typeof v === "boolean" ? v : (part.visible !== false);
+};
+
+// Read one control flag, defaulting to ON when undefined
+const isControlOn = (id, defaultOn = true) => {
+  const v = activeBlock?.controls?.[id];
+  return typeof v === "boolean" ? v : defaultOn;
+};
+
+/**
+ * Copy item visibility:
+ * 1) If copy item declares a controlling id (displayId/visibleIfId/controlId), use it.
+ * 2) Else: if any OFF control id is a prefix of the copy id, hide it (e.g., "buyButton" → hides "buyButtonText").
+ * 3) Else: if an exact OFF exists for this id, hide it.
+ * 4) Else: fall back to the part's default visibility (if found in partList).
+ */
+const isCopyVisible = (copyItem) => {
+  const controls = activeBlock?.controls || {};
+  const controlId = copyItem.displayId || copyItem.visibleIfId || copyItem.controlId;
+
+  if (controlId) return isControlOn(controlId, true);
+
+  for (const key in controls) {
+    if (controls[key] === false && String(copyItem.id).startsWith(String(key))) return false;
+  }
+  if (controls.hasOwnProperty(copyItem.id) && controls[copyItem.id] === false) return false;
+
+  const part = Array.isArray(partList) ? partList.find(p => p.id === copyItem.id) : null;
+  if (part) return part.visible !== false;
+
+  return true;
+};
+
+// Filtered copy list used by the "Copy" panel
+const visibleCopyList = Array.isArray(copyList) ? copyList.filter((p) => isCopyVisible(p)) : [];
+
 
   return (
     <aside className={
@@ -64,9 +102,9 @@ export default function EditorSidebar({
     }
     >
       <div className={staticLayout
-       ? "flex h-full flex-col overflow-hidden overscroll-contain"
-       : "flex h-[calc(100vh-6rem)] flex-col overflow-hidden overscroll-contain"
-   }>
+        ? "flex h-full flex-col overflow-hidden overscroll-contain"
+        : "flex h-[calc(100vh-6rem)] flex-col overflow-hidden overscroll-contain"
+      }>
         {!hideVariantPicker && (
           <div className="shrink-0 p-4 pb-0 flex items-center justify-between">
             <div className="text-md font-semibold text-gray-700 mb-4">Section</div>
@@ -173,9 +211,9 @@ export default function EditorSidebar({
                 <div className="space-y-2">
                   {partList.length > 0 ? (
                     partList.map((p) => {
-                      const controls = activeBlock?.controls || {};
-                      const checked = controls[p.id] !== undefined ? controls[p.id] : p.visible;
+                      const checked = getControlChecked(p);               // ✅ uses default when undefined
                       if (!checked && p.hideSwitchWhenHidden) return null;
+
                       return (
                         <div
                           key={p.id}
@@ -186,6 +224,7 @@ export default function EditorSidebar({
                           onKeyDown={(e) =>
                             !approvedMode && (e.key === "Enter" || e.key === " ") && onTogglePartFromSidebar(p.id, !checked)
                           }
+                          aria-pressed={checked}
                         >
                           <span className="truncate">{p.label}</span>
                           <Switch
@@ -193,6 +232,7 @@ export default function EditorSidebar({
                             onCheckedChange={(v) => !approvedMode && onTogglePartFromSidebar(p.id, v)}
                             className="h-4 w-7"
                             disabled={approvedMode}
+                            onClick={(e) => e.stopPropagation()} // prevent double-toggle via row click
                           />
                         </div>
                       );
@@ -208,8 +248,8 @@ export default function EditorSidebar({
               {/* Copy edits */}
               <div>
                 <div className="text-xs font-semibold text-gray-500 my-4">Copy</div>
-                {copyList.length > 0 ? (
-                  copyList.map((p) => {
+                {visibleCopyList.length > 0 ? (
+                  visibleCopyList.map((p) => {
                     const current =
                       activeBlock?.copy && typeof activeBlock.copy[p.id] === "string"
                         ? activeBlock.copy[p.id]

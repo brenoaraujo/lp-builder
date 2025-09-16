@@ -15,7 +15,9 @@ import { SECTIONS } from "./sections/registry.js";
 import EditorSidebar from "./components/EditorSidebar.jsx";
 
 // Theme + utilities
-import { buildThemeVars } from "./theme-utils";
+import { applySavedTheme, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults } from "./theme-utils";
+import ThemeAside from "@/components/ThemeAside.jsx";
+
 
 // UI/UX libs
 import {
@@ -40,7 +42,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 
-import { X, Plus, ChevronDown, ArrowRight, Pencil, GripVertical } from "lucide-react";
+import { X, Plus, ChevronDown, ArrowRight, Pencil, GripVertical, Settings } from "lucide-react";
 import SectionActionsMenu from "./components/SectionActionsMenu";
 import { toast } from "sonner";
 
@@ -51,6 +53,10 @@ import * as EditableSectionMod from "@/components/EditableSection";
 import { useBuilderOverrides }
   from "./context/BuilderOverridesContext.jsx";
 import { SECTION_ORDER } from "./onboarding/sectionCatalog.jsx";
+
+
+
+
 
 const AutoScaler =
   AutoScalerMod.default ??
@@ -342,9 +348,9 @@ function VariantDock({ open, type, currentVariant, onPick, onClose }) {
         </ScrollArea>
         <div className="border-t p-2 flex justify-end">
           <DialogClose asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onClose}>Close</Button>
           </DialogClose>
         </div>
@@ -602,7 +608,75 @@ function blocksFromOverrides(ovr = {}) {
 /* ------------------------------------------------------------------ */
 
 export default function MainBuilder() {
-  
+
+  useEffect(() => {
+  try { readBaselineColors(); } catch {}
+  applySavedTheme("light");
+  restoreFonts();
+}, []);
+
+  useEffect(() => {
+    // apply saved colors (fallbacks handled inside buildThemeVars)
+    try {
+      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
+      setCSSVars(
+        document.documentElement,
+        "colors",
+        buildThemeVars(saved, "light")
+      );
+    } catch { }
+
+    // apply saved fonts (injects <link> if needed and sets --font-*)
+    restoreFonts();
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
+      if (Object.keys(saved).length) {
+        const mode =
+          document.documentElement.classList.contains("dark") ||
+            document.documentElement.getAttribute("data-theme") === "dark"
+            ? "dark"
+            : "light";
+        const vars = buildThemeVars(saved, mode);
+        setCSSVars(document.documentElement, "colors", vars);
+      }
+    } catch (e) {
+      // no-op
+    }
+  }, []);
+
+  useEffect(() => {
+    // A) apply saved fonts (Google link + CSS vars)
+    restoreFonts(); // reads localStorage("theme.fonts") and sets --font-*   [oai_citation:2‡theme-utils.js](file-service://file-AyBvJCMD7EdZSo3293cQzG)
+
+    // B) apply saved colors from onboarding
+    try {
+      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
+      const root = document.documentElement;
+      const isDark =
+        root.classList.contains("dark") ||
+        root.getAttribute("data-theme") === "dark";
+      const vars = buildThemeVars(saved, isDark ? "dark" : "light");
+      setCSSVars(root, "colors", vars); // writes --colors-* that your tokens file uses   [oai_citation:3‡tokens.css](file-service://file-JSeoZxz1kuYvEJhDoque2F)
+    } catch { }
+
+    // C) if onboarding is completed, don’t sit on its route
+    if (localStorage.getItem("onboardingCompleted") === "1" &&
+      window.location.hash.startsWith("#/onboarding")) {
+      window.location.hash = "/";
+    }
+  }, []);
+
+  useEffect(() => {
+    const done = localStorage.getItem("onboardingCompleted") === "1";
+    const hash = window.location.hash.replace(/^#/, "");
+    // If user finished onboarding, never sit on the onboarding route
+    if (done && hash.startsWith("/onboarding")) {
+      window.location.hash = "/";
+    }
+  }, []);
 
   function blocksFromOverrides(ovr) {
     const order = ["hero", "extraPrizes", "winners", "feature"]; // keep this consistent with your app
@@ -625,19 +699,19 @@ export default function MainBuilder() {
 
 
   // Auto-open onboarding the first time
-useEffect(() => {
-  const done = localStorage.getItem("onboardingCompleted") === "1";
-  const wantsWizard = new URLSearchParams(window.location.search).get("wizard") === "1";
+  useEffect(() => {
+    const done = localStorage.getItem("onboardingCompleted") === "1";
+    const wantsWizard = new URLSearchParams(window.location.search).get("wizard") === "1";
 
-  if (!done || wantsWizard) {
-    if (location.hash !== "#/onboarding") location.hash = "/onboarding";
-  } else if (location.hash === "#/onboarding") {
-    // if user already finished and hits a stale wizard hash, kick them to builder
-    location.hash = "/";
-  }
-}, []);
+    if (!done || wantsWizard) {
+      if (location.hash !== "#/onboarding") location.hash = "/onboarding";
+    } else if (location.hash === "#/onboarding") {
+      // if user already finished and hits a stale wizard hash, kick them to builder
+      location.hash = "/";
+    }
+  }, []);
 
-
+const [themeOpen, setThemeOpen] = useState(false);
 
   // Builder state
   const [hydrated, setHydrated] = useState(false);
@@ -684,19 +758,20 @@ useEffect(() => {
   });
 
   const [themeMode, setThemeMode] = useState(() => {
-  try {
-    return localStorage.getItem("lpb.theme.mode") === "dark" ? "dark" : "light";
-  } catch {
-    return "light";
-  }
-});
+    try {
+      return localStorage.getItem("lpb.theme.mode") === "dark" ? "dark" : "light";
+    } catch {
+      return "light";
+    }
+  });
 
   // Start with system preference and keep CSS vars in sync (✅ single place now)
 
   useEffect(() => {
-    const vars = buildThemeVars(globalTheme.colors, themeMode); // mode-aware
-    setCSSVars(document.documentElement, "colors", vars);
-    document.documentElement.setAttribute("data-theme", themeMode);
+    if (localStorage.getItem("theme.colors")) return;
+  const vars = buildThemeVars(globalTheme.colors, themeMode);
+  setCSSVars(document.documentElement, "colors", vars);
+  document.documentElement.setAttribute("data-theme", themeMode);
   }, [globalTheme, themeMode]);
 
   const [handoffOpen, setHandoffOpen] = useState(false);
@@ -720,6 +795,23 @@ useEffect(() => {
     catch { navigator.clipboard?.writeText(`${formData.company} / ${formData.project}\n${url}`); }
     setHandoffOpen(false);
   };
+
+  useEffect(() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
+    if (Object.keys(saved).length) {
+      // merge into state (so ThemePanel sees them)
+      setGlobalTheme(t => ({ ...t, colors: { ...(t.colors||{}), ...saved } }));
+      // and write the CSS vars immediately
+      const mode =
+        document.documentElement.classList.contains("dark") ||
+        document.documentElement.getAttribute("data-theme") === "dark"
+          ? "dark"
+          : "light";
+      setCSSVars(document.documentElement, "colors", buildThemeVars(saved, mode));
+    }
+  } catch {}
+}, []);
 
   const [approvedMeta, setApprovedMeta] = useState(null);
   const approvedMode = !!approvedMeta?.approved;
@@ -889,6 +981,8 @@ useEffect(() => {
     window.__share_toast_timer = setTimeout(() => setToastMsg(null), 1600);
   };
 
+ 
+
   const [approveOpen, setApproveOpen] = useState(false);
   const [approvalLink, setApprovalLink] = useState("");
   const [approvalMeta, setApprovalMeta] = useState({
@@ -1038,6 +1132,28 @@ useEffect(() => {
   const copyList = copyPartsByBlock[activeBlockId] || [];
   const variantIndex = activeBlock?.variant ?? 0;
 
+function resetThemeInApp() {
+  try {
+    localStorage.removeItem("theme.colors");
+    localStorage.removeItem("theme.fonts");
+  } catch {}
+
+  // blow away any inline overrides first
+  clearInlineColorVars();
+
+  // rebuild from tokens.css
+  const fresh = readTokenDefaults();
+  const vars = buildThemeVars(fresh, "light");
+  setCSSVars(document.documentElement, "colors", vars);
+
+  // fonts + any other UI that depends on saved theme
+  applySavedTheme("light");
+
+  // (optional) toast/UI feedback here
+}
+
+  
+
   /* ------------------------------- UI ------------------------------ */
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1065,8 +1181,8 @@ useEffect(() => {
 
             {!approvedMode ? (
               <>
-                <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
-                <Button variant="outline" onClick={resetAll} className="text-gray-500">Reset</Button>
+               {/*} <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
+                <Button variant="outline" onClick={resetThemeInApp} className="text-gray-500">Reset</Button>*/}
                 <Button variant="outline" onClick={share} className="text-gray-500">Share</Button>
                 <Button onClick={() => setApproveOpen(true)}>Finish &amp; handoff</Button>
               </>
@@ -1110,6 +1226,17 @@ useEffect(() => {
           >
             <Pencil className="h-5 w-5 text-gray-700" />
           </button>
+
+        )}
+        {!activeBlockId && blocks.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setThemeOpen(true)}                
+            aria-label="Fonts & Colors"
+            className="fixed left-3 top-32 z-40 grid h-10 w-10 place-items-center rounded-full border bg-white shadow hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <Settings className="h-5 w-5 text-gray-700" />
+          </button>
         )}
 
         {/* Sidebar */}
@@ -1152,9 +1279,9 @@ useEffect(() => {
                   onDragEnd={onDragEnd}
                 >
                   <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                    <div style={{background:"var(--colors-background)" }}>
+                    <div style={{ background: "var(--colors-background)" }}>
                       {blocks.map((b, i) => (
-                        <div key={b.id} className= {i > 0 ? "-mt-px group relative" : "group relative"}>
+                        <div key={b.id} className={i > 0 ? "-mt-px group relative" : "group relative"}>
                           <SortableBlock
                             id={b.id}
                             type={b.type}
@@ -1255,6 +1382,8 @@ useEffect(() => {
         </main>
       </div>
 
+      <ThemeAside open={themeOpen} onClose={() => setThemeOpen(false)} />
+
       {/* Variant dock */}
       {blocks.find((b) => b.id === (null /* dock id unused here */)) && (
         <VariantDock open={false} type="hero" currentVariant={0} onPick={() => { }} onClose={() => { }} />
@@ -1333,8 +1462,11 @@ useEffect(() => {
           </div>
         </DialogContent>
       </Dialog>
+      
     </div>
+    
   );
+  
 }
 
 /* ------------------------------------------------------------------ */
@@ -1355,6 +1487,7 @@ export function AppRouterShell() {
 
 function MainBuilderWithOverrides() {
   const { overridesBySection } = useBuilderOverrides();      // <-- use context!
+  
 
   const hero = overridesBySection.hero || {};
   const extra = overridesBySection.extraPrizes || {};

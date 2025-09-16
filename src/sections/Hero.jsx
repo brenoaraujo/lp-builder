@@ -26,16 +26,16 @@ export function HeroA() {
                 data-copy-id="hero-price-points-headline"
                 data-label="Headline"
                 data-maxchars="60"
-                className="text-Hero-Colors-foreground text-4xl text-left font-bold leading-[48px]"
+                className="text-Hero-Colors-foreground font-headline text-4xl text-left font-bold leading-[48px]"
               >
                 A simple but powerful headline that sells!
               </h1>
 
               <div className="flex flex-col">
-                <span className="text-Colors-muted-foreground text-base text-left mb-4">
+                <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4">
                   Current estimated payout
                 </span>
-                <span className="text-Hero-Colors-primary text-7xl font-bold font-numbers text-left">
+                <span className="text-Hero-Colors-foreground text-7xl font-bold font-numbers text-left">
                   $1,346,000
                 </span>
               </div>
@@ -49,7 +49,7 @@ export function HeroA() {
               data-label="Countdown"
               className="py-3 bg-Hero-Colors-background rounded-md flex flex-col gap-2"
             >
-              <p className="text-Colors-muted-foreground text-sm leading-tight">
+              <p className="text-Colors-muted-foreground font-primary text-sm leading-tight">
                 Grand Prize Deadline: Mar 14, 6pm
               </p>
               <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function HeroA() {
         >
           <h2
             data-display="true"
-            className="text-Colors-foreground text-2xl font-bold text-center"
+            className="text-Colors-foreground text-2xl font-bold text-center font-headline"
             data-copy="true"
             data-copy-id="pp-headline"
             data-label="Price Points Headline"
@@ -109,7 +109,7 @@ export function HeroA() {
           <div className="w-full grid grid-cols-4 gap-4">
             {/* Card 1 – highlighted */}
             <div className="h-64 p-5 relative bg-PP-Colors-secondary rounded-lg outline outline-1 outline-PP-Colors-border flex flex-col items-center justify-center gap-6">
-              <div className="px-2.5 py-0.5 absolute -top-2 bg-PP-Colors-alt-foreground rounded-lg text-PP-Colors-alt-background text-xs font-medium">
+              <div className="px-2.5 py-0.5 absolute -top-2 bg-PP-Colors-alt-foreground rounded-lg text-PP-Colors-alt-background text-xs font-medium font-primary">
                 Best Value
               </div>
 
@@ -149,8 +149,8 @@ export function HeroA() {
           {/* Cart row */}
           <div className="w-full px-6 py-4 bg-PP-Colors-secondary rounded-lg outline outline-1 outline-PP-Colors-border flex items-center gap-4">
             <div className="flex items-center gap-4">
-              <ShoppingCart className="text-PP-Colors-foreground" />
-              <div className="text-PP-Colors-foreground text-lg font-bold leading-none">
+              <ShoppingCart className="text-PP-Colors-secondary-foreground" />
+              <div className="text-PP-Colors-secondary-foreground text-lg font-bold leading-none font-primary">
                 400 tickets for $60
               </div>
             </div>
@@ -160,7 +160,7 @@ export function HeroA() {
               data-show-right-icon="true"
               className="ml-auto h-11 px-4 bg-PP-Colors-primary rounded-lg inline-flex items-center gap-2"
             >
-              <span className="text-PP-Colors-primary-foreground text-sm font-medium leading-tight">
+              <span className="text-PP-Colors-primary-foreground text-sm font-medium leading-tight font-primary">
                 BUY TICKETS
               </span>
               <ArrowRight className="text-PP-Colors-primary-foreground" />
@@ -176,7 +176,7 @@ export function HeroA() {
 
 export function HeroB() {
   return (
-    <section className="rounded-xl p-6 bg-Hero-Colors-background">
+    <section className="p-6 bg-Hero-Colors-background">
       <div className="w-[1440px] py-24 bg-Hero-Colors-background inline-flex flex-col justify-start items-center gap-12 overflow-hidden">
         <div className="w-full max-w-[1280px] inline-flex justify-start items-center gap-16">
           <div className="w-full inline-flex flex-col justify-start items-center gap-11">
@@ -187,7 +187,7 @@ export function HeroB() {
                   data-copy-id="hero-headline"
                   data-label="Headline"
                   data-maxchars="60"
-                  className="self-stretch text-center justify-center text-Hero-Colors-foreground text-4xl font-bold font-primary leading-[48px]"
+                  className="self-stretch text-center justify-center text-Hero-Colors-foreground text-4xl font-bold font-headline leading-[48px]"
                 >
                   A simple but powerful headline that sells!
                 </div>
@@ -198,7 +198,7 @@ export function HeroB() {
               <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal">
                 Current estimated payout
               </div>
-              <div className="justify-start text-Hero-Colors-primary text-7xl font-bold font-numbers ">
+              <div className="justify-start text-Hero-Colors-foreground text-7xl font-bold font-numbers ">
                 $1,346,000
               </div>
             </div>
@@ -348,7 +348,7 @@ export function HeroB() {
           {/* Cart */}
           <div className="px-6 py-4 bg-PP-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex justify-start items-center gap-2">
             <div className="w-56 flex justify-start items-center gap-4">
-              <ShoppingCart className="text-PP-Colors-foreground" />
+              <ShoppingCart className="text-PP-Colors-secondary-foreground" />
               <div className="w-48 justify-start text-PP-Colors-secondary-foreground text-lg font-bold font-primary leading-none">
                 400 tickets for $60
               </div>

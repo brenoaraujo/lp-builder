@@ -1,6 +1,6 @@
 import React from "react";
-import  EditorSidebar  from "../components/EditorSidebar.jsx";
-import { SECTIONS } from "../sections/registry.js"; 
+import EditorSidebar from "../components/EditorSidebar.jsx";
+import { SECTIONS } from "../sections/registry.js";
 
 import { X, Plus, ChevronDown, ArrowRight, Pencil } from "lucide-react";
 
@@ -25,7 +25,17 @@ export default function EditorForOnboarding({
   onTogglePart,
   onCopyChange,
   onSaveNext,
+  hideHiddenCopy = false,
 }) {
+
+
+
+
+  const display = overrides?.display || {};
+  const copy = overrides?.copy || {};
+
+  const copyObj = overrides?.copy || {};
+  const isVisible = (id) => display[id] !== false;
 
   // Measure the preview column so thumbnails scale to available width
   const previewRef = React.useRef(null);
@@ -66,7 +76,7 @@ export default function EditorForOnboarding({
   const activeBlock = virtualBlock;
   const SECTIONS_REG = SECTIONS;
   const approvedMode = false;
-  const closePanel = () => {};
+  const closePanel = () => { };
 
   const Variants = SECTIONS_REG[sectionKey]?.variants || [];
   const Comp = Variants[virtualBlock.variant] || (() => null);
@@ -74,69 +84,69 @@ export default function EditorForOnboarding({
   return (
     <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)] gap-6">
       <div className="h-full min-h-0">
-      <EditorSidebar
-        activeBlockId={activeBlockId}
-        activeBlock={activeBlock}
-        partList={partList}
-        copyList={copyList}
-        approvedMode={approvedMode}
-        SECTIONS_REG={SECTIONS_REG}
-        closePanel={closePanel}
-        handleDelete={undefined}
-        handleMoveUp={undefined}
-        handleMoveDown={undefined}
-        onTogglePartFromSidebar={_onTogglePart}
-        onCopyChangeFromSidebar={_onCopyChange}
-        variantIndex={virtualBlock.variant}
-        setVariantForId={setVariantForId}
-        variantForId={variantForId}
-        setBlocks={(updater) => {
-          setVirtualBlock((prev) => {
-            const next = typeof updater === "function" ? updater([prev])[0] : updater;
-            return next || prev;
-          });
-        }}
-        blocks={[virtualBlock]}
-        mode="onboarding"
-        hideVariantPicker
-        hideAdvancedActions
-        staticLayout
-        hideCLoseAction
-        onSaveNext={onSaveNext}
-      />
+        <EditorSidebar
+          activeBlockId={activeBlockId}
+          activeBlock={activeBlock}
+          partList={partList}
+          copyList={copyList}
+          approvedMode={approvedMode}
+          SECTIONS_REG={SECTIONS_REG}
+          closePanel={closePanel}
+          handleDelete={undefined}
+          handleMoveUp={undefined}
+          handleMoveDown={undefined}
+          onTogglePartFromSidebar={_onTogglePart}
+          onCopyChangeFromSidebar={_onCopyChange}
+          variantIndex={virtualBlock.variant}
+          setVariantForId={setVariantForId}
+          variantForId={variantForId}
+          setBlocks={(updater) => {
+            setVirtualBlock((prev) => {
+              const next = typeof updater === "function" ? updater([prev])[0] : updater;
+              return next || prev;
+            });
+          }}
+          blocks={[virtualBlock]}
+          mode="onboarding"
+          hideVariantPicker
+          hideAdvancedActions
+          staticLayout
+          hideCLoseAction
+          onSaveNext={onSaveNext}
+        />
       </div>
-        <div className="h-full min-h-0">
-      <div className="h-full w-full rounded-lg border border-slate-200 bg-white shadow-lg p-4">
-        <div ref={previewRef}>  
-        <AutoScaler designWidth={1440} targetWidth={targetWidth}>
-          <div data-scope={sectionKey}>
-            <EditableSection
-              discoverKey={`onb:${sectionKey}:${virtualBlock.variant}`}
-              controls={virtualBlock.controls}
-              copyValues={virtualBlock.copy}
-              onPartsDiscovered={(found) => {
-                const arr = Array.isArray(found)
-                  ? found
-                  : found && typeof found === "object"
-                    ? Object.values(found)
-                    : [];
-                setPartList(arr);
-              }}
-              onCopyDiscovered={(found) => {
-                const arr = Array.isArray(found)
-                  ? found
-                  : found && typeof found === "object"
-                    ? Object.values(found)
-                    : [];
-                setCopyList(arr);
-              }}
-            >
-              <Comp />
-            </EditableSection>
+      <div className="h-full min-h-0">
+        <div className="h-full w-full rounded-lg border border-slate-200 bg-white shadow-lg p-4">
+          <div ref={previewRef}>
+            <AutoScaler designWidth={1440} targetWidth={targetWidth}>
+              <div data-scope={sectionKey}>
+                <EditableSection
+                  discoverKey={`onb:${sectionKey}:${virtualBlock.variant}`}
+                  controls={virtualBlock.controls}
+                  copyValues={virtualBlock.copy}
+                  onPartsDiscovered={(found) => {
+                    const arr = Array.isArray(found)
+                      ? found
+                      : found && typeof found === "object"
+                        ? Object.values(found)
+                        : [];
+                    setPartList(arr);
+                  }}
+                  onCopyDiscovered={(found) => {
+                    const arr = Array.isArray(found)
+                      ? found
+                      : found && typeof found === "object"
+                        ? Object.values(found)
+                        : [];
+                    setCopyList(arr);
+                  }}
+                >
+                  <Comp />
+                </EditableSection>
+              </div>
+            </AutoScaler>
           </div>
-        </AutoScaler>
         </div>
-      </div>
       </div>
     </div>
   );

@@ -47,7 +47,6 @@ function shade(hex, t=0.16){ return mix(hex, "#000000", t); } // closer to black
 function computeThemeFromCore({
   primary   = "#000000",
   secondary = "#F1F5F9",
-  accent    = "#6366f1",   // optional "alternative" / highlight
   background= "#ffffff",
 }) {
   const foreground = pickTextOn(background);
@@ -55,7 +54,7 @@ function computeThemeFromCore({
   const mutedBg = mix(background, foreground, 0.08);    // light gray on light bg
   const mutedFg = mix(foreground, background, 0.45);    // mid gray
 
-  const altBackground  = tint(accent, 0.90);            // very light accent wash
+  const altBackground  = tint(secondary, 0.90);            // very light accent wash
   const altForeground  = pickTextOn(altBackground);
 
   return {
