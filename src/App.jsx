@@ -15,7 +15,8 @@ import { SECTIONS } from "./sections/registry.js";
 import EditorSidebar from "./components/EditorSidebar.jsx";
 
 // Theme + utilities
-import { applySavedTheme, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults } from "./theme-utils";
+import { applySavedTheme, applyThemeSnapshot, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults, readThemeMode, loadGoogleFont, applyFonts} from "./theme-utils.js"
+import { snapshotThemeNow } from "./theme-utils.js";
 import ThemeAside from "@/components/ThemeAside.jsx";
 
 
@@ -42,7 +43,7 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 
-import { X, Plus, ChevronDown, ArrowRight, Pencil, GripVertical, Settings } from "lucide-react";
+import { X, Plus, ChevronDown, ArrowRight, Pencil, GripVertical, Paintbrush } from "lucide-react";
 import SectionActionsMenu from "./components/SectionActionsMenu";
 import { toast } from "sonner";
 
@@ -135,6 +136,11 @@ function decodeState(s) {
   }
 }
 
+// share only base theme roles (derived ones are recomputed on load)
+const BASE_COLOR_KEYS = ["background", "primary", "secondary", "alt-background", "border"];
+const onlyBaseColors = (obj = {}) =>
+  Object.fromEntries(BASE_COLOR_KEYS.map(k => [k, obj[k]]).filter(([, v]) => !!v));
+
 // Email handoff
 const PRODUCTION_EMAIL = "baraujo@ascendfs.com";
 function buildApprovalMailto(to, { company, project, approverName, approverEmail, notes, url }) {
@@ -153,9 +159,37 @@ function buildApprovalMailto(to, { company, project, approverName, approverEmail
   return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-const packSnapshot = (blocks, globalTheme) => ({ blocks, globalTheme });
-const unpackSnapshot = (payload) =>
-  Array.isArray(payload) ? { blocks: payload, globalTheme: null } : payload || { blocks: [], globalTheme: null };
+function packSnapshot({ blocks, globalTheme }) {
+  // pull the in-use theme & fonts from localStorage so the share matches exactly
+  let savedColors = {};
+  let savedFonts = {};
+  try { savedColors = JSON.parse(localStorage.getItem("theme.colors") || "{}"); } catch { }
+  try { savedFonts = JSON.parse(localStorage.getItem("theme.fonts") || "{}"); } catch { }
+
+  // include builder overrides so the preview matches
+  let overrides = {};
+  try { overrides = JSON.parse(localStorage.getItem("builderOverrides") || "{}"); } catch { }
+
+  return {
+    blocks,
+    globalTheme: { colors: onlyBaseColors(globalTheme?.colors || {}) },
+    theme: { colors: savedColors, fonts: savedFonts },
+    overrides,
+    meta: { v: 1 } // version for future-proofing
+  };
+}
+
+
+function unpackSnapshot(obj) {
+  if (!obj || typeof obj !== "object") return { blocks: [], globalTheme: {} };
+  const {
+    blocks = [],
+    globalTheme = {},
+    theme = {},
+    overrides = {},
+  } = obj;
+  return { blocks, globalTheme, theme, overrides };
+}
 
 // Simple hash-route hook
 function useHashRoute() {
@@ -167,7 +201,6 @@ function useHashRoute() {
   }, []);
   return route;
 }
-
 
 
 
@@ -460,7 +493,7 @@ function SortableBlock({
       <div
         ref={contentRef}
         style={overrideStyle}
-        onClick={(e) => { e.stopPropagation(); onSelect?.(id); }}
+        onClick={(e) => { e.stopPropagation(); onSelect?.(id); window.dispatchEvent(new Event("lp:section-selected")); }}
       >
         <AutoScaler designWidth={1440} targetWidth={targetWidth} maxHeight={9999}>
           <div data-scope={type} style={overrideStyle}>
@@ -609,65 +642,52 @@ function blocksFromOverrides(ovr = {}) {
 
 export default function MainBuilder() {
 
-  useEffect(() => {
-  try { readBaselineColors(); } catch {}
-  applySavedTheme("light");
-  restoreFonts();
-}, []);
-
-  useEffect(() => {
-    // apply saved colors (fallbacks handled inside buildThemeVars)
-    try {
-      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
-      setCSSVars(
-        document.documentElement,
-        "colors",
-        buildThemeVars(saved, "light")
-      );
-    } catch { }
-
-    // apply saved fonts (injects <link> if needed and sets --font-*)
-    restoreFonts();
+  const HAS_SNAPSHOT = useMemo(() => {
+    const raw = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+    return !!raw && !raw.startsWith("/");
   }, []);
 
+  // [ADD] Single source of truth to hydrate theme on load (colors + fonts)
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
-      if (Object.keys(saved).length) {
-        const mode =
-          document.documentElement.classList.contains("dark") ||
-            document.documentElement.getAttribute("data-theme") === "dark"
-            ? "dark"
-            : "light";
-        const vars = buildThemeVars(saved, mode);
-        setCSSVars(document.documentElement, "colors", vars);
+    const raw = location.hash.startsWith("#") ? location.hash.slice(1) : "";
+    const isRouteHash = raw.startsWith("/"); // "#/...", "#/onboarding", etc.
+
+    // 1) If URL hash carries a snapshot (NOT a route), hydrate from it
+    if (!isRouteHash && raw.length > 0) {
+      const loaded = decodeState(raw); // your own helper below in this file
+      if (loaded && typeof loaded === "object") {
+        // Newer snapshots may include full theme (colors + fonts)
+        if (loaded.theme && (loaded.theme.colors || loaded.theme.fonts)) {
+          applyThemeSnapshot(loaded.theme, { persist: true }); // apply + save
+        } else if (loaded.globalTheme?.colors) {
+          // Back-compat: legacy snapshots with only colors
+          const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } =
+            loaded.globalTheme.colors || {};
+          try { localStorage.setItem("theme.colors", JSON.stringify(rest)); } catch { }
+          const mode = readThemeMode();
+          setCSSVars(document.documentElement, "colors", buildThemeVars(rest, mode));
+        }
+        // Fonts from legacy snapshots are handled by applySavedTheme() below if they were saved earlier
       }
-    } catch (e) {
-      // no-op
+
+      // Mark onboarding as done when opening share links
+      try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
+
+    } else {
+      // 2) No snapshot → apply whatever is saved (colors + fonts) in one call
+      applySavedTheme(); // reads theme.colors + theme.fonts and applies both
     }
-  }, []);
 
-  useEffect(() => {
-    // A) apply saved fonts (Google link + CSS vars)
-    restoreFonts(); // reads localStorage("theme.fonts") and sets --font-*   [oai_citation:2‡theme-utils.js](file-service://file-AyBvJCMD7EdZSo3293cQzG)
+    // 3) Keep other tabs/windows in sync
+    const onStorage = (e) => {
+      if (e.key === "theme.colors" || e.key === "theme.fonts") {
+        applySavedTheme();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [HAS_SNAPSHOT]);
 
-    // B) apply saved colors from onboarding
-    try {
-      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
-      const root = document.documentElement;
-      const isDark =
-        root.classList.contains("dark") ||
-        root.getAttribute("data-theme") === "dark";
-      const vars = buildThemeVars(saved, isDark ? "dark" : "light");
-      setCSSVars(root, "colors", vars); // writes --colors-* that your tokens file uses   [oai_citation:3‡tokens.css](file-service://file-JSeoZxz1kuYvEJhDoque2F)
-    } catch { }
-
-    // C) if onboarding is completed, don’t sit on its route
-    if (localStorage.getItem("onboardingCompleted") === "1" &&
-      window.location.hash.startsWith("#/onboarding")) {
-      window.location.hash = "/";
-    }
-  }, []);
 
   useEffect(() => {
     const done = localStorage.getItem("onboardingCompleted") === "1";
@@ -711,7 +731,7 @@ export default function MainBuilder() {
     }
   }, []);
 
-const [themeOpen, setThemeOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
 
   // Builder state
   const [hydrated, setHydrated] = useState(false);
@@ -739,6 +759,9 @@ const [themeOpen, setThemeOpen] = useState(false);
       didAutoSelectOnce.current = true;
     }
   }, [activeBlockId, blocks]);*/}
+
+
+
 
   const [partsByBlock, setPartsByBlock] = useState({});
   const [copyPartsByBlock, setCopyPartsByBlock] = useState({});
@@ -768,11 +791,42 @@ const [themeOpen, setThemeOpen] = useState(false);
   // Start with system preference and keep CSS vars in sync (✅ single place now)
 
   useEffect(() => {
-    if (localStorage.getItem("theme.colors")) return;
-  const vars = buildThemeVars(globalTheme.colors, themeMode);
-  setCSSVars(document.documentElement, "colors", vars);
-  document.documentElement.setAttribute("data-theme", themeMode);
+    // Always set the DOM attribute so readThemeMode() is reliable
+    document.documentElement.setAttribute("data-theme", themeMode);
+
+    // Only paint inline colors from state if there are NO saved colors yet.
+    if (!localStorage.getItem("theme.colors")) {
+      const vars = buildThemeVars(globalTheme.colors, themeMode);
+      setCSSVars(document.documentElement, "colors", vars);
+    }
   }, [globalTheme, themeMode]);
+
+        const persistColors = useCallback((partialColors) => {
+    // merge with current
+    const next = { ...(globalTheme?.colors || {}), ...(partialColors || {}) };
+
+    // write CSS vars now
+    const mode = readThemeMode?.() || "light";
+    const vars = buildThemeVars(next, mode);
+    setCSSVars(document.documentElement, "colors", vars);
+
+    // persist so refresh picks it up
+    try { localStorage.setItem("theme.colors", JSON.stringify(next)); } catch { }
+
+    // keep React state in sync (so UI shows the new swatches immediately)
+    setGlobalTheme((t) => ({ ...(t || {}), colors: next }));
+  }, [globalTheme]);
+
+  const persistFonts = useCallback((map) => {
+    // optional: best-effort auto-load any webfont
+    ["primary", "headline", "numbers"].forEach((k) => {
+      const fam = map?.[k];
+      if (fam) loadGoogleFont(fam);
+    });
+
+    // applies + persists per key under theme.fonts
+    applyFonts(map || {});
+  }, []);
 
   const [handoffOpen, setHandoffOpen] = useState(false);
   const [handoffDefaults, setHandoffDefaults] = useState(null);
@@ -797,21 +851,21 @@ const [themeOpen, setThemeOpen] = useState(false);
   };
 
   useEffect(() => {
-  try {
-    const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
-    if (Object.keys(saved).length) {
-      // merge into state (so ThemePanel sees them)
-      setGlobalTheme(t => ({ ...t, colors: { ...(t.colors||{}), ...saved } }));
-      // and write the CSS vars immediately
-      const mode =
-        document.documentElement.classList.contains("dark") ||
-        document.documentElement.getAttribute("data-theme") === "dark"
-          ? "dark"
-          : "light";
-      setCSSVars(document.documentElement, "colors", buildThemeVars(saved, mode));
-    }
-  } catch {}
-}, []);
+    try {
+      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
+      if (Object.keys(saved).length) {
+        // merge into state (so ThemePanel sees them)
+        setGlobalTheme(t => ({ ...t, colors: { ...(t.colors || {}), ...saved } }));
+        // and write the CSS vars immediately
+        const mode =
+          document.documentElement.classList.contains("dark") ||
+            document.documentElement.getAttribute("data-theme") === "dark"
+            ? "dark"
+            : "light";
+        setCSSVars(document.documentElement, "colors", buildThemeVars(saved, mode));
+      }
+    } catch { }
+  }, []);
 
   const [approvedMeta, setApprovedMeta] = useState(null);
   const approvedMode = !!approvedMeta?.approved;
@@ -856,7 +910,7 @@ const [themeOpen, setThemeOpen] = useState(false);
     const rawHash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
     const isRouteHash = rawHash.startsWith("/"); // "#/", "#/onboarding", etc.
 
-    // 1) If the hash is a snapshot (NOT a route), hydrate from it
+    // 1) If the hash is a snapshot (NOT a route), hydrate from it first
     if (!isRouteHash && rawHash.length > 0) {
       const loaded = decodeState(rawHash);
       if (!loaded) { setHydrated(true); return; }
@@ -867,11 +921,7 @@ const [themeOpen, setThemeOpen] = useState(false);
           controls: b.controls || {}, copy: b.copy || {},
           overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
         })));
-        setHydrated(true);
-        return;
-      }
-
-      if (loaded && typeof loaded === "object") {
+      } else if (loaded && typeof loaded === "object") {
         if (Array.isArray(loaded.blocks)) {
           setBlocks(loaded.blocks.map((b) => ({
             id: b.id, type: b.type, variant: Number.isInteger(b.variant) ? b.variant : 0,
@@ -879,17 +929,29 @@ const [themeOpen, setThemeOpen] = useState(false);
             overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
           })));
         }
+        // If the snapshot contains theme colors, persist + apply them immediately
         if (loaded.globalTheme?.colors) {
-          const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } = loaded.globalTheme.colors;
+          // keep all roles you use, just ignore the auto-muted pair
+          const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } =
+            loaded.globalTheme.colors || {};
           setGlobalTheme({ colors: rest });
+          try { localStorage.setItem("theme.colors", JSON.stringify(rest)); } catch { }
+          // Make the preview use the shared colors right away (includes 'foreground')
+          const mode = readThemeMode?.() || "light";
+          setCSSVars(document.documentElement, "colors", buildThemeVars(rest, mode));
+        }
+        if (loaded.theme && (loaded.theme.colors || loaded.theme.fonts)) {
+          applyThemeSnapshot(loaded.theme, { persist: true });
         }
         if (loaded.meta?.approved) setApprovedMeta({ ...loaded.meta });
       }
+      // visiting a share link should not trigger onboarding
+      try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
       setHydrated(true);
       return;
     }
 
-    // 2) Otherwise (no snapshot / just a route), hydrate from onboarding overrides
+    // 2) Otherwise (no snapshot / just a route), hydrate from onboarding overrides if present
     try {
       const raw = localStorage.getItem("builderOverrides");
       if (raw) {
@@ -900,11 +962,16 @@ const [themeOpen, setThemeOpen] = useState(false);
     } catch { }
     setHydrated(true);
   }, []);
+
   useEffect(() => {
     if (!hydrated || approvedMode) return;
-    const payload = encodeState(packSnapshot(blocks, globalTheme));
+    const payload = encodeState(packSnapshot({ blocks, globalTheme }));
     history.replaceState(null, "", `#${payload}`);
   }, [blocks, globalTheme, hydrated, approvedMode]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", themeMode);
+  }, [themeMode]);
 
   // Share, reset, approve
   const [toastMsg, setToastMsg] = useState(null);
@@ -917,18 +984,31 @@ const [themeOpen, setThemeOpen] = useState(false);
       window.__share_toast_timer = setTimeout(() => setToastMsg(null), 2200);
       return;
     }
-    let url = "";
+
+    // 1) Build the exact payload you already decode on load
+    const payload = encodeState({
+      blocks: blocks.map(b => ({
+        id: b.id,
+        type: b.type,
+        variant: Number.isInteger(b.variant) ? b.variant : 0,
+        controls: b.controls || {},
+        copy: b.copy || {},
+        overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
+      })),
+      // share only the roles you actually use
+      globalTheme: { colors: onlyBaseColors(globalTheme?.colors || {}) },
+    });
+
+    const url = `${location.origin}${location.pathname}#${payload}`;
+
+    // 2) Replace the hash once (don’t assign location.hash separately)
     try {
-      const payload = encodeState({ blocks, globalTheme });
-      url = `${location.origin}${location.pathname}#${payload}`;
-      location.hash = payload;
       history.replaceState(null, "", `#${payload}`);
     } catch {
-      setToastMsg("Could not create share link");
-      clearTimeout(window.__share_toast_timer);
-      window.__share_toast_timer = setTimeout(() => setToastMsg(null), 2200);
-      return;
+      // no-op; worst case the URL won’t update but payload still copies
     }
+
+    // 3) Copy to clipboard with fallback
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(url);
@@ -952,9 +1032,33 @@ const [themeOpen, setThemeOpen] = useState(false);
         setToastMsg("Copy failed — link in address bar");
       }
     }
+
     clearTimeout(window.__share_toast_timer);
     window.__share_toast_timer = setTimeout(() => setToastMsg(null), 2000);
   };
+
+
+  function buildShareUrl() {
+    // 1) collect builder state (use your existing getters)
+    const blocks = getBlocksSomehow?.() || blocks;        // <- keep your source of truth here
+    const overrides = overridesBySection || null;         // if you need it
+
+    // 2) collect theme snapshot (exact colors + fonts)
+    const theme = snapshotThemeNow();
+
+    // 3) pack everything
+    const payload = { blocks, overrides, theme, meta: { v: 1 } };
+    const hash = encodeState(payload);
+
+    // 4) make URL with hash only (no onboarding flags)
+    return `${location.origin}${location.pathname}#${hash}`;
+  }
+
+  function onShareClick() {
+    const url = buildShareUrl();
+    navigator.clipboard?.writeText(url).catch(() => { });
+    // your toast/snackbar here…
+  }
 
   const resetAll = () => {
     if (approvedMode) return;
@@ -981,7 +1085,7 @@ const [themeOpen, setThemeOpen] = useState(false);
     window.__share_toast_timer = setTimeout(() => setToastMsg(null), 1600);
   };
 
- 
+
 
   const [approveOpen, setApproveOpen] = useState(false);
   const [approvalLink, setApprovalLink] = useState("");
@@ -1132,27 +1236,29 @@ const [themeOpen, setThemeOpen] = useState(false);
   const copyList = copyPartsByBlock[activeBlockId] || [];
   const variantIndex = activeBlock?.variant ?? 0;
 
-function resetThemeInApp() {
-  try {
-    localStorage.removeItem("theme.colors");
-    localStorage.removeItem("theme.fonts");
-  } catch {}
+  function resetThemeInApp() {
+    try {
+      localStorage.removeItem("theme.colors");
+      localStorage.removeItem("theme.fonts");
+    } catch { }
 
-  // blow away any inline overrides first
-  clearInlineColorVars();
+    // blow away any inline overrides first
+    clearInlineColorVars();
 
-  // rebuild from tokens.css
-  const fresh = readTokenDefaults();
-  const vars = buildThemeVars(fresh, "light");
-  setCSSVars(document.documentElement, "colors", vars);
+    // rebuild from tokens.css
+    const fresh = readTokenDefaults();
+    const vars = buildThemeVars(fresh, "light");
+    setCSSVars(document.documentElement, "colors", vars);
 
-  // fonts + any other UI that depends on saved theme
-  applySavedTheme("light");
+    // fonts + any other UI that depends on saved theme
+    applySavedTheme("light");
 
-  // (optional) toast/UI feedback here
-}
+    // (optional) toast/UI feedback here
+  }
 
-  
+
+
+
 
   /* ------------------------------- UI ------------------------------ */
   return (
@@ -1181,7 +1287,7 @@ function resetThemeInApp() {
 
             {!approvedMode ? (
               <>
-               {/*} <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
+                {/*} <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
                 <Button variant="outline" onClick={resetThemeInApp} className="text-gray-500">Reset</Button>*/}
                 <Button variant="outline" onClick={share} className="text-gray-500">Share</Button>
                 <Button onClick={() => setApproveOpen(true)}>Finish &amp; handoff</Button>
@@ -1231,11 +1337,11 @@ function resetThemeInApp() {
         {!activeBlockId && blocks.length > 0 && (
           <button
             type="button"
-            onClick={() => setThemeOpen(true)}                
+            onClick={() => setThemeOpen(true)}
             aria-label="Fonts & Colors"
             className="fixed left-3 top-32 z-40 grid h-10 w-10 place-items-center rounded-full border bg-white shadow hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <Settings className="h-5 w-5 text-gray-700" />
+            <Paintbrush className="h-5 w-5 text-gray-700" />
           </button>
         )}
 
@@ -1279,7 +1385,7 @@ function resetThemeInApp() {
                   onDragEnd={onDragEnd}
                 >
                   <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                    <div style={{ background: "var(--colors-background)" }}>
+                    <div style={{ background: "var(--colors-background)", color: "var(--colors-foreground)" }}>
                       {blocks.map((b, i) => (
                         <div key={b.id} className={i > 0 ? "-mt-px group relative" : "group relative"}>
                           <SortableBlock
@@ -1382,7 +1488,11 @@ function resetThemeInApp() {
         </main>
       </div>
 
-      <ThemeAside open={themeOpen} onClose={() => setThemeOpen(false)} />
+      <ThemeAside 
+      open={themeOpen} 
+      onClose={() => setThemeOpen(false)} 
+      onColorsChange={persistColors}
+      onFontsChange={persistFonts} />
 
       {/* Variant dock */}
       {blocks.find((b) => b.id === (null /* dock id unused here */)) && (
@@ -1462,11 +1572,11 @@ function resetThemeInApp() {
           </div>
         </DialogContent>
       </Dialog>
-      
+
     </div>
-    
+
   );
-  
+
 }
 
 /* ------------------------------------------------------------------ */
@@ -1479,6 +1589,20 @@ function resetThemeInApp() {
 
 export function AppRouterShell() {
   const route = useHashRoute();
+  const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
+  const isSnapshot = !!hash && !hash.startsWith("/");
+
+  // If a share/snapshot URL is present, mark onboarding completed and go straight to the builder.
+  React.useEffect(() => {
+    if (isSnapshot) {
+      try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
+    }
+  }, [isSnapshot]);
+
+  if (isSnapshot) {
+    return <MainBuilder />;  // <-- render builder even if onboarding wasn't completed before
+  }
+
   const done = localStorage.getItem("onboardingCompleted") === "1";
   if (route === "/onboarding" || !done) return <OnboardingWizard />;
   return <MainBuilder />;
@@ -1487,7 +1611,7 @@ export function AppRouterShell() {
 
 function MainBuilderWithOverrides() {
   const { overridesBySection } = useBuilderOverrides();      // <-- use context!
-  
+
 
   const hero = overridesBySection.hero || {};
   const extra = overridesBySection.extraPrizes || {};

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
-import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readTokenDefaults } from "../theme-utils.js";
+import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readTokenDefaults, readThemeMode, resetThemeToBaseline } from "../theme-utils.js";
 
 /* Small color input row */
 function ColorRole({ label, value, onChange }) {
@@ -36,7 +36,7 @@ const FONT_OPTIONS = [
   { label: "Oswald", value: "Oswald", gf: { family: "Oswald", axis: "wght@400;700" } },
 ];
 
-export default function ThemeAside({ open, onClose }) {
+export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange }) {
   // Load saved or token defaults
   const initialColors = useMemo(() => {
     try {
@@ -52,26 +52,26 @@ export default function ThemeAside({ open, onClose }) {
     try { return JSON.parse(localStorage.getItem("theme.fonts") || "{}"); } catch { return {}; }
   });
 
-  // When panel opens, snapshot the currently-saved colors to support "Cancel"
-  const savedColorsRef = useRef(initialColors);
   useEffect(() => {
-    if (!open) return;
-    try {
-      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
-      const current = Object.keys(saved).length ? saved : readTokenDefaults();
-      savedColorsRef.current = current;
-      setColors(current);
-      // live preview on open to make sure UI matches
-      const vars = buildThemeVars(current, "light");
-      setCSSVars(document.documentElement, "colors", vars);
-      setCSSVars(document.body, "colors", vars);
-    } catch {}
-  }, [open]);
+   if (!open) return;
+   // live preview of current font picks
+   applyFonts(fonts);
+ }, [open, fonts]);
+
+  useEffect(() => {
+    const handleSectionSelected = () => {
+      onClose?.(); // close the aside
+    };
+    // listen for our custom event
+    window.addEventListener("lp:section-selected", handleSectionSelected);
+    return () => window.removeEventListener("lp:section-selected", handleSectionSelected);
+  }, [onClose]);
 
   // Live preview while open
   useEffect(() => {
     if (!open) return;
-    const vars = buildThemeVars(colors, "light");
+    const mode = readThemeMode();
+    const vars = buildThemeVars(colors, mode);
     setCSSVars(document.documentElement, "colors", vars);
     setCSSVars(document.body, "colors", vars);
   }, [open, colors]);
@@ -81,12 +81,6 @@ export default function ThemeAside({ open, onClose }) {
     if (!open) return;
     const onKey = (e) => {
       if (e.key === "Escape") {
-        // revert to last-saved on cancel
-        const back = savedColorsRef.current;
-        const vars = buildThemeVars(back, "light");
-        setColors(back);
-        setCSSVars(document.documentElement, "colors", vars);
-        setCSSVars(document.body, "colors", vars);
         onClose?.();
       }
     };
@@ -96,42 +90,37 @@ export default function ThemeAside({ open, onClose }) {
 
   // Helpers
   const setRole = (key) => (hex) => {
-    if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return; // guard invalid hex
-    setColors((c) => ({ ...c, [key]: hex }));
+    if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return;
+    setColors((prev) => {
+      let next = { ...prev, [key]: hex };
+    if (key === "background" && "foreground" in next) {
+      // let buildThemeVars pick a readable foreground for the new bg
+      const { foreground, ...rest } = next;
+      next = rest;
+    }
+    onColorsChange?.(next);
+    return next;
+      
+    });
   };
-
   function handlePickFont(token, v) {
     const picked = FONT_OPTIONS.find((f) => f.value === v);
-    if (picked?.gf) loadGoogleFont(picked.gf.family, picked.gf.axis);
     const next = { ...fonts, [token]: picked?.gf?.family || v };
     setFonts(next);
-    applyFonts(next); // writes localStorage + sets --font-* vars
+    onFontsChange?.(next); // parent handles loading + applyFonts + persist
   }
 
-  function handleSave() {
-    try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch {}
-    const vars = buildThemeVars(colors, "light");
-    setCSSVars(document.documentElement, "colors", vars);
-    setCSSVars(document.body, "colors", vars);
-    savedColorsRef.current = colors; // update snapshot
-    onClose?.();
-  }
 
   function handleReset() {
-    try { localStorage.removeItem("theme.colors"); } catch {}
+    resetThemeToBaseline();
     const fresh = readTokenDefaults();
     setColors(fresh);
-    const vars = buildThemeVars(fresh, "light");
-    setCSSVars(document.documentElement, "colors", vars);
-    setCSSVars(document.body, "colors", vars);
+    onColorsChange?.(fresh);
+    onFontsChange?.({ primary: null, headline: null, numbers: null }); // clears overrides
+
   }
 
   function handleCancel() {
-    const back = savedColorsRef.current;
-    setColors(back);
-    const vars = buildThemeVars(back, "light");
-    setCSSVars(document.documentElement, "colors", vars);
-    setCSSVars(document.body, "colors", vars);
     onClose?.();
   }
 
@@ -222,8 +211,8 @@ export default function ThemeAside({ open, onClose }) {
 
         {/* Footer */}
         <div className="shrink-0 border-t bg-slate-50 p-3 flex flex-col gap-2">
-          <Button className="flex-1" onClick={handleSave}>Save</Button>
-          <Button variant="outline" onClick={handleReset}>Reset</Button>
+
+          <Button variant="outline" onClick={handleReset}>Reset to defauts</Button>
           {/*<Button variant="ghost" onClick={handleCancel}>Cancel</Button>*/}
         </div>
       </div>

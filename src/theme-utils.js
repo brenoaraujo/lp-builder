@@ -100,6 +100,7 @@ function readVar(name) {
 export function readTokenDefaults() {
   return {
     background: readVar("--colors-background") || "#ffffff",
+    foreground: readVar("--colors-foreground") || "#18181b",
     primary: readVar("--colors-primary") || "#000000",
     secondary: readVar("--colors-secondary") || "#0e85fb", // whatever tokens.css defines
     "alt-background": readVar("--colors-alt-background") || "#f0f0f9",
@@ -310,4 +311,45 @@ export function clearInlineColorVars(keys = []) {
       list.forEach((k) => el.style.removeProperty(`--${pfx}-${k}`));
     });
   });
+}
+
+
+// --- Sharing helpers -------------------------------------------------------
+// Take a concrete snapshot of the *current* theme so a viewer sees the same thing.
+export function snapshotThemeNow() {
+  // Prefer saved colors/fonts; if missing, read live tokens so the snapshot is explicit.
+  let colors = {};
+  let fonts = {};
+  try { colors = JSON.parse(localStorage.getItem("theme.colors") || "{}"); } catch {}
+  try { fonts  = JSON.parse(localStorage.getItem("theme.fonts")  || "{}"); } catch {}
+  if (!colors || !Object.keys(colors).length) colors = readTokenDefaults();
+  return { colors, fonts };
+}
+
+// Apply a theme snapshot without guessing. Optionally persist.
+export function applyThemeSnapshot(snap, { persist = false } = {}) {
+  const root = ROOT();
+  const mode = readThemeMode();
+  const colors = snap?.colors || {};
+  const fonts  = snap?.fonts  || {};
+
+  // colors
+  const vars = buildThemeVars(colors, mode);
+  setCSSVars(root, "colors", vars);
+
+  // fonts
+  applyFonts(fonts || {}); // applyFonts already persists per-key if provided
+
+  if (persist) {
+    try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch {}
+    try { localStorage.setItem("theme.fonts",  JSON.stringify(fonts));  } catch {}
+  }
+}
+
+// Tiny base64 helpers used by share links (safe to duplicate if you already have them).
+export function encodeState(obj) {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+}
+export function decodeState(str) {
+  try { return JSON.parse(decodeURIComponent(escape(atob(str)))); } catch { return null; }
 }
