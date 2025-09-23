@@ -31,7 +31,7 @@ export function HeroA() {
                 A simple but powerful headline that sells!
               </h1>
 
-              <div className="flex flex-col">
+              <div className="flex flex-col" data-display="yes" data-label="Jackpot">
                 <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4">
                   Current estimated payout
                 </span>
@@ -176,9 +176,9 @@ export function HeroA() {
 
 export function HeroB() {
   return (
-    <section className="p-6 bg-Hero-Colors-background">
-      <div className="w-[1440px] py-24 bg-Hero-Colors-background inline-flex flex-col justify-start items-center gap-12 overflow-hidden">
-        <div className="w-full max-w-[1280px] inline-flex justify-start items-center gap-16">
+    <section className="p-6 bg-Hero-Colors-background h-full">
+      <div className="w-[1440px] py-24  inline-flex flex-col justify-start items-center gap-12 overflow-hidden ">
+        <div className="w-full h-full max-w-[1280px] inline-flex justify-start items-center gap-16" >
           <div className="w-full inline-flex flex-col justify-start items-center gap-11">
             <div className="self-stretch flex flex-col justify-start items-center gap-6">
               <div className="self-stretch flex flex-col justify-start items-center gap-2">
@@ -194,7 +194,7 @@ export function HeroB() {
               </div>
             </div>
 
-            <div className="flex flex-col justify-center items-center">
+            <div className="flex flex-col justify-center items-center" data-display="yes" data-label="Jackpot">
               <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal">
                 Current estimated payout
               </div>

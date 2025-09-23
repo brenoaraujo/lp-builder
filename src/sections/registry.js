@@ -4,6 +4,7 @@ import { ExtraPrizesA, ExtraPrizesB } from "./ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "./Winners.jsx";
 import { FeatureA, FeatureB } from "./Feature.jsx";
 import { NavbarA, NavbarB } from "./Navbar.jsx";
+import { FooterA, FooterB } from "./Footer.jsx";
 
 export const SECTIONS = {
   Navbar: {
@@ -15,6 +16,16 @@ export const SECTIONS = {
     hiddenInOnboarding: true,       // do not show in Onboarding
     hiddenInPicker: true,           // do not show in Add Section modal
     fixedPosition: "top",
+  },
+  Footer: {
+    id: "Footer",
+    label: "Footer",
+    variants: [FooterA, FooterB],
+    labels: ["Default", "Bordered"],
+    defaultVariant: 0,
+    hiddenInOnboarding: true,
+    hiddenInPicker: true,
+    fixedPosition: "bottom",
   },
   hero: {
     label: "Hero",

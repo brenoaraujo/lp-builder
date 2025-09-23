@@ -59,7 +59,7 @@ export default function EditableSection({
       id,
       label: el.getAttribute("data-label") || id,
       defaultText: (el.textContent || "").trim(),
-      maxChars: Number(el.getAttribute("data-max-chars")) || 120,
+      maxChars: Number(el.getAttribute("data-max-chars") ?? el.getAttribute("data-maxchars")) || 120,
     };
   });
 

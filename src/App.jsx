@@ -7,6 +7,7 @@ import { ExtraPrizesA, ExtraPrizesB } from "./sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "./sections/Winners.jsx";
 import { FeatureA, FeatureB } from "./sections/Feature.jsx";
 import { NavbarA, NavbarB } from "./sections/Navbar.jsx";
+import { FooterA, FooterB } from "./sections/Footer.jsx";
 
 // Onboarding
 import OnboardingWizard from "./onboarding/OnboardingWizard.jsx";
@@ -768,6 +769,12 @@ export function MainBuilder() {
   const [partsByBlock, setPartsByBlock] = useState({});
   const [copyPartsByBlock, setCopyPartsByBlock] = useState({});
 
+  // Fixed sections (Navbar/Footer) state for controls/copy
+  const [navbarControls, setNavbarControls] = useState({});
+  const [navbarCopy, setNavbarCopy] = useState({});
+  const [footerControls, setFooterControls] = useState({});
+  const [footerCopy, setFooterCopy] = useState({});
+
   const [globalTheme, setGlobalTheme] = useState({
     colors: {
       background: "#ffffff",
@@ -1149,12 +1156,24 @@ export function MainBuilder() {
   const handlePartsDiscovered = useCallback((blockId, foundParts) => {
     const arr = Array.isArray(foundParts) ? foundParts : foundParts && typeof foundParts === "object" ? Object.values(foundParts) : [];
     setPartsByBlock((prev) => ({ ...prev, [blockId]: arr }));
-    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, controls: pruneControls(b.controls || {}, arr) } : b)));
+    if (blockId === "Navbar") {
+      setNavbarControls((prev) => pruneControls(prev || {}, arr));
+    } else if (blockId === "Footer") {
+      setFooterControls((prev) => pruneControls(prev || {}, arr));
+    } else {
+      setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, controls: pruneControls(b.controls || {}, arr) } : b)));
+    }
   }, []);
   const handleCopyDiscovered = useCallback((blockId, foundCopyParts) => {
     const normalized = normalizeCopyParts(foundCopyParts);
     setCopyPartsByBlock((prev) => ({ ...prev, [blockId]: normalized }));
-    setBlocks(prev => prev.map(b => (b.id === blockId ? { ...b, copy: pruneCopy(b.copy || {}, normalized) } : b)));
+    if (blockId === "Navbar") {
+      setNavbarCopy((prev) => pruneCopy(prev || {}, normalized));
+    } else if (blockId === "Footer") {
+      setFooterCopy((prev) => pruneCopy(prev || {}, normalized));
+    } else {
+      setBlocks(prev => prev.map(b => (b.id === blockId ? { ...b, copy: pruneCopy(b.copy || {}, normalized) } : b)));
+    }
   }, []);
 
   // Block helpers
@@ -1209,6 +1228,14 @@ export function MainBuilder() {
 
   function onTogglePartFromSidebar(partId, nextVisible) {
     if (approvedMode || !activeBlockId) return;
+    if (activeBlockId === "Navbar") {
+      setNavbarControls((prev) => ({ ...(prev || {}), [partId]: !!nextVisible }));
+      return;
+    }
+    if (activeBlockId === "Footer") {
+      setFooterControls((prev) => ({ ...(prev || {}), [partId]: !!nextVisible }));
+      return;
+    }
     setBlocks((arr) =>
       arr.map((x) =>
         x.id === activeBlockId
@@ -1219,6 +1246,14 @@ export function MainBuilder() {
   }
   function onCopyChangeFromSidebar(partId, text) {
     if (approvedMode || !activeBlockId) return;
+    if (activeBlockId === "Navbar") {
+      setNavbarCopy((prev) => ({ ...(prev || {}), [partId]: text }));
+      return;
+    }
+    if (activeBlockId === "Footer") {
+      setFooterCopy((prev) => ({ ...(prev || {}), [partId]: text }));
+      return;
+    }
     setBlocks((arr) =>
       arr.map((x) =>
         x.id === activeBlockId ? { ...x, copy: { ...(x.copy || {}), [partId]: text } } : x
@@ -1230,8 +1265,20 @@ export function MainBuilder() {
     return <div className="min-h-screen grid place-items-center text-gray-500">Loading…</div>;
   }
 
+  // Fixed section variants/components
+  const NAVBAR_VARIANT = SECTIONS?.Navbar?.defaultVariant ?? 0;
+  const NavbarCmp = SECTIONS?.Navbar?.variants?.[NAVBAR_VARIANT] ?? NavbarA;
+  const FOOTER_VARIANT = SECTIONS?.Footer?.defaultVariant ?? 0;
+  const FooterCmp = SECTIONS?.Footer?.variants?.[FOOTER_VARIANT] ?? FooterA;
+
   // Derived view state
-  const activeBlock = blocks.find((b) => b.id === activeBlockId) || null;
+  let activeBlock = blocks.find((b) => b.id === activeBlockId) || null;
+  if (!activeBlock && activeBlockId === "Navbar") {
+    activeBlock = { id: "Navbar", type: "Navbar", variant: NAVBAR_VARIANT, controls: navbarControls, copy: navbarCopy, overrides: { enabled: false, values: {}, valuesPP: {} } };
+  }
+  if (!activeBlock && activeBlockId === "Footer") {
+    activeBlock = { id: "Footer", type: "Footer", variant: FOOTER_VARIANT, controls: footerControls, copy: footerCopy, overrides: { enabled: false, values: {}, valuesPP: {} } };
+  }
   const firstBlockId = blocks[0]?.id ?? null;
   const openEditorOnFirst = () => firstBlockId && setActiveBlockId(firstBlockId);
   const partList = partsByBlock[activeBlockId] || [];
@@ -1257,18 +1304,10 @@ export function MainBuilder() {
 
     // (optional) toast/UI feedback here
   }
+  
 
- 
-
-const NAVBAR_VARIANT = SECTIONS?.Navbar?.defaultVariant ?? 0;
-const NavbarCmp = SECTIONS?.Navbar?.variants?.[NAVBAR_VARIANT] ?? NavbarA;
-
-
-
-  const NAVBAR_DEFAULT_DATA = {
-    logoSrc: "https://placehold.co/150x56",
-    items: ["Home", "Prizes", "Winners", "Rules", "Contact"],
-    cta: { label: "BUY TICKETS", href: "#buy" },
+  const FOOTER_DEFAULT_DATA = {
+    // mirrors defaults inside FooterPrimitive but allows builder overrides later
   };
 
 
@@ -1385,17 +1424,35 @@ const NavbarCmp = SECTIONS?.Navbar?.variants?.[NAVBAR_VARIANT] ?? NavbarA;
         {/* Canvas */}
         <main className="flex-1 p-4 flex justify-center box-border">
           <div className="w-full max-w-[800px] box-border">
-            <AutoScaler designWidth={1440} targetWidth={800}>
-              <EditableSection
-                sectionId="Navbar"
-                label="Navbar"
-                variant={NAVBAR_VARIANT}
-                data={NAVBAR_DEFAULT_DATA}
-                fixedPosition="top"                 // optional hint prop if your editor uses it
-              >
-                <NavbarCmp data={NAVBAR_DEFAULT_DATA} />
-              </EditableSection>
-            </AutoScaler>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setActiveBlockId("Navbar")}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveBlockId("Navbar")}
+              className={[
+                "relative transition",
+                activeBlockId === "Navbar"
+                  ? "z-10 outline outline-2 outline-blue-500 ring-0"
+                  : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500",
+              ].join(" ")}
+            >
+              <AutoScaler designWidth={1440} targetWidth={800}>
+                <EditableSection
+                  sectionId="Navbar"
+                  label="Navbar"
+                  variant={NAVBAR_VARIANT}
+                  discoverKey={`Navbar:${NAVBAR_VARIANT}:${activeBlockId === "Navbar"}`}
+                  controls={navbarControls}
+                  copyValues={navbarCopy}
+                  onPartsDiscovered={(list) => handlePartsDiscovered("Navbar", list)}
+                  onCopyDiscovered={(list) => handleCopyDiscovered("Navbar", list)}
+                  fixedPosition="top"
+                >
+                  <NavbarCmp />
+                </EditableSection>
+              </AutoScaler>
+            </div>
+            
             <div className="">
               {blocks.length === 0 ? (
                 <div className="border border-dashed p-10 text-center text-gray-500">
@@ -1473,7 +1530,35 @@ const NavbarCmp = SECTIONS?.Navbar?.variants?.[NAVBAR_VARIANT] ?? NavbarA;
                 </DndContext>
               )}
             </div>
-
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setActiveBlockId("Footer")}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveBlockId("Footer")}
+              className={[
+                "relative transition",
+                activeBlockId === "Footer"
+                  ? "z-10 outline outline-2 outline-blue-500 ring-0"
+                  : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500",
+              ].join(" ")}
+            >
+              <AutoScaler designWidth={1440} targetWidth={800}>
+                <EditableSection
+                  sectionId="Footer"
+                  label="Footer"
+                  variant={FOOTER_VARIANT}
+                  data={FOOTER_DEFAULT_DATA}
+                  discoverKey={`Footer:${FOOTER_VARIANT}:${activeBlockId === "Footer"}`}
+                  controls={footerControls}
+                  copyValues={footerCopy}
+                  onPartsDiscovered={(list) => handlePartsDiscovered("Footer", list)}
+                  onCopyDiscovered={(list) => handleCopyDiscovered("Footer", list)}
+                  fixedPosition="bottom"
+                >
+                  <FooterCmp data={FOOTER_DEFAULT_DATA} />
+                </EditableSection>
+              </AutoScaler>
+            </div>
             {toastMsg && (
               <div className="fixed bottom-4 right-4 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg">
                 {toastMsg}
