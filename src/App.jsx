@@ -947,6 +947,8 @@ export function MainBuilder() {
           try { localStorage.setItem("theme.colors", JSON.stringify(rest)); } catch { }
           // Make the preview use the shared colors right away (includes 'foreground')
           const mode = readThemeMode?.() || "light";
+          // Clear any stale inline vars so we don't keep an old foreground/border
+          clearInlineColorVars();
           setCSSVars(document.documentElement, "colors", buildThemeVars(rest, mode));
         }
         if (loaded.theme && (loaded.theme.colors || loaded.theme.fonts)) {
