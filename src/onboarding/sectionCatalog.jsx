@@ -3,6 +3,7 @@
 
 import React from "react";
 import AutoScaler from "../components/AutoScaler.jsx";
+import { NavbarA, NavbarB } from "../sections/Navbar.jsx";
 import { HeroA, HeroB } from "../sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "../sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "../sections/Winners.jsx";
@@ -12,9 +13,9 @@ import { FeatureA, FeatureB } from "../sections/Feature.jsx";
 // You can expand them later as you add sections.
 export const SECTION_ORDER = ["hero", "extraPrizes", "winners"];
 export const THUMB_DESIGN_W = 1440;   // your section design width
-export const THUMB_MIN_W    = 320;    // keep small cards readable
-export const THUMB_MAX_W    = 900;    // optional safety cap
-export const THUMB_MAX_H    = 420;    // keep thumbs short
+export const THUMB_MIN_W = 320;    // keep small cards readable
+export const THUMB_MAX_W = 900;    // optional safety cap
+export const THUMB_MAX_H = 420;    // keep thumbs short
 
 function useParentWidth() {
   const ref = React.useRef(null);
@@ -44,6 +45,18 @@ export function ThumbFrame({ children, maxH = THUMB_MAX_H }) {
 
 
 export const SECTIONS = {
+
+  Navbar: {
+    id: "Navbar",
+    label: "Navbar",
+    variants: { A: NavbarA, B: NavbarB },
+    defaultVariant: "A",
+    hiddenInOnboarding: true,   // keep out of Onboarding
+    hiddenInPicker: true,       // keep out of Add Section modal
+    fixedPosition: "top",
+  },
+
+
   hero: {
     title: "Hero",
     variants: [

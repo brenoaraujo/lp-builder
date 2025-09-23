@@ -6,6 +6,7 @@ import { HeroA, HeroB } from "./sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "./sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "./sections/Winners.jsx";
 import { FeatureA, FeatureB } from "./sections/Feature.jsx";
+import { NavbarA, NavbarB } from "./sections/Navbar.jsx";
 
 // Onboarding
 import OnboardingWizard from "./onboarding/OnboardingWizard.jsx";
@@ -15,7 +16,7 @@ import { SECTIONS } from "./sections/registry.js";
 import EditorSidebar from "./components/EditorSidebar.jsx";
 
 // Theme + utilities
-import { applySavedTheme, applyThemeSnapshot, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults, readThemeMode, loadGoogleFont, applyFonts} from "./theme-utils.js"
+import { applySavedTheme, applyThemeSnapshot, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults, readThemeMode, loadGoogleFont, applyFonts } from "./theme-utils.js"
 import { snapshotThemeNow } from "./theme-utils.js";
 import ThemeAside from "@/components/ThemeAside.jsx";
 
@@ -193,13 +194,14 @@ function unpackSnapshot(obj) {
 
 // Simple hash-route hook
 function useHashRoute() {
-  const [route, setRoute] = React.useState(() => location.hash.replace(/^#/, "") || "/");
+  const get = () => location.hash.replace(/^#/, "");
+  const [route, setRoute] = React.useState(get);
   React.useEffect(() => {
-    const onHash = () => setRoute(location.hash.replace(/^#/, "") || "/");
+    const onHash = () => setRoute(get());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
-  return route;
+  return route || "/";
 }
 
 
@@ -627,7 +629,7 @@ function blocksFromOverrides(ovr = {}) {
   if (ovr.hero?.visible !== false) push("hero", ovr.hero?.variant || "A", ovr.hero);
   if (ovr.extraPrizes?.visible !== false) push("extraPrizes", ovr.extraPrizes?.variant || "A", ovr.extraPrizes);
   if (ovr.winners?.visible !== false) push("winners", ovr.winners?.variant || "A", ovr.winners);
-  if (ovr.feature?.visible !== false) push("feature", ovr.winners?.variant || "A", ovr.winners);
+  if (ovr.feature?.visible !== false) push("feature", ovr.winners?.variant || "A", ovr.feature);
   return out.length ? out : [{
     id: crypto?.randomUUID?.() ?? `hero_${Date.now()}`,
     type: "hero", variant: 0, controls: {}, copy: {},
@@ -640,7 +642,7 @@ function blocksFromOverrides(ovr = {}) {
 /* Main App (builder + onboarding route)                              */
 /* ------------------------------------------------------------------ */
 
-export default function MainBuilder() {
+export function MainBuilder() {
 
   const HAS_SNAPSHOT = useMemo(() => {
     const raw = location.hash.startsWith("#") ? location.hash.slice(1) : "";
@@ -801,7 +803,7 @@ export default function MainBuilder() {
     }
   }, [globalTheme, themeMode]);
 
-        const persistColors = useCallback((partialColors) => {
+  const persistColors = useCallback((partialColors) => {
     // merge with current
     const next = { ...(globalTheme?.colors || {}), ...(partialColors || {}) };
 
@@ -1256,7 +1258,18 @@ export default function MainBuilder() {
     // (optional) toast/UI feedback here
   }
 
+ 
 
+const NAVBAR_VARIANT = SECTIONS?.Navbar?.defaultVariant ?? 0;
+const NavbarCmp = SECTIONS?.Navbar?.variants?.[NAVBAR_VARIANT] ?? NavbarA;
+
+
+
+  const NAVBAR_DEFAULT_DATA = {
+    logoSrc: "https://placehold.co/150x56",
+    items: ["Home", "Prizes", "Winners", "Rules", "Contact"],
+    cta: { label: "BUY TICKETS", href: "#buy" },
+  };
 
 
 
@@ -1372,6 +1385,17 @@ export default function MainBuilder() {
         {/* Canvas */}
         <main className="flex-1 p-4 flex justify-center box-border">
           <div className="w-full max-w-[800px] box-border">
+            <AutoScaler designWidth={1440} targetWidth={800}>
+              <EditableSection
+                sectionId="Navbar"
+                label="Navbar"
+                variant={NAVBAR_VARIANT}
+                data={NAVBAR_DEFAULT_DATA}
+                fixedPosition="top"                 // optional hint prop if your editor uses it
+              >
+                <NavbarCmp data={NAVBAR_DEFAULT_DATA} />
+              </EditableSection>
+            </AutoScaler>
             <div className="">
               {blocks.length === 0 ? (
                 <div className="border border-dashed p-10 text-center text-gray-500">
@@ -1488,11 +1512,11 @@ export default function MainBuilder() {
         </main>
       </div>
 
-      <ThemeAside 
-      open={themeOpen} 
-      onClose={() => setThemeOpen(false)} 
-      onColorsChange={persistColors}
-      onFontsChange={persistFonts} />
+      <ThemeAside
+        open={themeOpen}
+        onClose={() => setThemeOpen(false)}
+        onColorsChange={persistColors}
+        onFontsChange={persistFonts} />
 
       {/* Variant dock */}
       {blocks.find((b) => b.id === (null /* dock id unused here */)) && (
@@ -1607,6 +1631,7 @@ export function AppRouterShell() {
   if (route === "/onboarding" || !done) return <OnboardingWizard />;
   return <MainBuilder />;
 }
+export default AppRouterShell;
 
 
 function MainBuilderWithOverrides() {

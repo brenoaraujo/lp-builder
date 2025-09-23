@@ -36,7 +36,7 @@ export function ExtraPrizesA() {
               Add a concise value statement that captures reader interest and previews content value. Focus on benefits while keeping it under two lines. Align with your blog categories.
             </div>
           </div>
-
+          {/* Countdown 
           <div
             data-display="yes"
             data-label="Countdown"
@@ -64,8 +64,8 @@ export function ExtraPrizesA() {
                 </div>
               ))}
             </div>
-          </div>
-
+          </div>*/}
+          {/* Buy Now 
           <div
             data-display="yes"
             data-copy="yes"
@@ -85,7 +85,8 @@ export function ExtraPrizesA() {
                 BUY NOW
               </div>
             </button>
-          </div>
+          </div>*/}
+
         </div>
 
         <div className="w-[1280px] inline-flex justify-center items-start gap-6 flex-wrap content-start">
@@ -110,12 +111,12 @@ export function ExtraPrizesA() {
                       {i === 1
                         ? "$5,000 cash prize"
                         : i === 2
-                        ? "Relax & recharge: Two all-inclusive stays at Castelvania Spa"
-                        : i === 3
-                        ? "6 months of free gas"
-                        : i === 4
-                        ? "Seasonal groceries covered "
-                        : "Two round-trip tickets to a spring vacation destination of your choice"}
+                          ? "Relax & recharge: Two all-inclusive stays at Castelvania Spa"
+                          : i === 3
+                            ? "6 months of free gas"
+                            : i === 4
+                              ? "Seasonal groceries covered "
+                              : "Two round-trip tickets to a spring vacation destination of your choice"}
                     </div>
                   </div>
                 </div>
@@ -178,7 +179,7 @@ export function ExtraPrizesB() {
                 Add a concise value statement that captures reader interest and previews content value. Focus on benefits while keeping it under two lines. Align with your blog categories.
               </div>
             </div>
-
+            {/* Countdown
             <div
               data-display="yes"
               data-label="Countdown"
@@ -207,7 +208,8 @@ export function ExtraPrizesB() {
                 ))}
               </div>
             </div>
-
+            */}
+            {/* Buy Now Button 
             <div
               data-display="yes"
               data-copy="yes"
@@ -227,7 +229,7 @@ export function ExtraPrizesB() {
                   BUY NOW
                 </div>
               </button>
-            </div>
+            </div>*/}
           </div>
 
           <div
@@ -260,12 +262,12 @@ export function ExtraPrizesB() {
                       {i === 1
                         ? "$5,000 cash prize"
                         : i === 2
-                        ? "Relax & recharge: Two all-inclusive stays at Castelvania Spa"
-                        : i === 3
-                        ? "6 months of free gas"
-                        : i === 4
-                        ? "Seasonal groceries covered "
-                        : "Two round-trip tickets to a spring vacation destination of your choice"}
+                          ? "Relax & recharge: Two all-inclusive stays at Castelvania Spa"
+                          : i === 3
+                            ? "6 months of free gas"
+                            : i === 4
+                              ? "Seasonal groceries covered "
+                              : "Two round-trip tickets to a spring vacation destination of your choice"}
                     </div>
                   </div>
                 </div>

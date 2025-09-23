@@ -3,8 +3,19 @@ import { HeroA, HeroB } from "./Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "./ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "./Winners.jsx";
 import { FeatureA, FeatureB } from "./Feature.jsx";
+import { NavbarA, NavbarB } from "./Navbar.jsx";
 
 export const SECTIONS = {
+  Navbar: {
+    id: "Navbar",
+    label: "Navbar",
+    variants: [NavbarA, NavbarB], // array, not object
+    labels: ["Default", "Bordered"], // optional, for your VariantDock
+    defaultVariant: 0,              // 0 = first item in the array
+    hiddenInOnboarding: true,       // do not show in Onboarding
+    hiddenInPicker: true,           // do not show in Add Section modal
+    fixedPosition: "top",
+  },
   hero: {
     label: "Hero",
     variants: [HeroA, HeroB],

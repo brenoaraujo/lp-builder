@@ -89,7 +89,7 @@ export function HeroA() {
 
         {/* Price points (toggleable group) */}
         <div
-          data-display="true"
+          
           data-label="Price Points"
           data-id="price-points"
           className="w-full max-w-[1280px] rounded-lg flex flex-col items-center gap-8"
@@ -147,7 +147,7 @@ export function HeroA() {
           </div>
 
           {/* Cart row */}
-          <div className="w-full px-6 py-4 bg-PP-Colors-secondary rounded-lg outline outline-1 outline-PP-Colors-border flex items-center gap-4">
+          <div className="px-6 py-4 bg-PP-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex justify-start items-center gap-2">
             <div className="flex items-center gap-4">
               <ShoppingCart className="text-PP-Colors-secondary-foreground" />
               <div className="text-PP-Colors-secondary-foreground text-lg font-bold leading-none font-primary">
@@ -249,7 +249,7 @@ export function HeroB() {
 
         {/* Price Points */}
         <div
-          data-display="true"
+          
           data-label="Price Points"
           data-id="price-points"
           data-item-1="true"
@@ -285,15 +285,11 @@ export function HeroB() {
               data-ticket-label="true"
               className="flex-1 h-64 p-5 relative bg-PP-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8"
             >
-              <div
-                data-state="Default"
-                data-variant="Default"
-                className="px-2.5 py-0.5 left-[113.50px] top-[-10px] absolute bg-PP-Colors-secondary rounded-lg inline-flex justify-center items-center gap-2.5"
-              >
-                <div className="justify-start text-PP-Colors-alt-background text-PP-Colors-alt-foreground text-xs font-medium font-primary leading-none">
+              
+                <div className="px-2.5 py-0.5 absolute -top-2 bg-PP-Colors-alt-foreground rounded-lg text-PP-Colors-alt-background text-xs font-medium font-primary">
                   Best Value
                 </div>
-              </div>
+              
 
               <div className="self-stretch flex flex-col justify-start items-center">
                 <div className="self-stretch text-center justify-start text-PP-Colors-secondary-foreground text-3xl font-bold font-primary">

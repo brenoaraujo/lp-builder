@@ -183,11 +183,6 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
         setCSSVars(document.documentElement, "colors", buildThemeVars(colors, themeMode));
         applySavedTheme(themeMode);
         onFinish?.();
-        setTimeout(() => {
-            if (location.hash.includes("onboarding")) {
-                window.location.replace("#/"); // robust hash nav
-            }
-        }, 0);
     };
 
     function resetReviewToDefaults() {
@@ -467,7 +462,7 @@ export default function OnboardingWizard() {
         const url = new URL(window.location.href);
         url.searchParams.delete("wizard");
         history.replaceState(null, "", url.toString());
-        window.location.hash = "/";
+        location.replace("#/");
     }
 
     return (
