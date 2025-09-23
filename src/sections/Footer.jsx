@@ -48,12 +48,31 @@ function FooterPrimitive({ data }) {
             <div className="text-center justify-start text-Colors-foreground text-sm font-normal leading-none" >
               We accept
             </div>
-            {/* Payment pills as placeholders using neutral tokens */}
-            {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="w-20 h-12 relative">
-                <div className="w-20 h-12 left-0 top-0 absolute bg-white rounded border border-Colors-border" />
-              </div>
-            ))}
+            {/* Payment icons */}
+            <div className="w-8 h-6 flex items-center justify-center">
+              <img src="/src/assets/icons/visa.svg" alt="Visa" className="h-full w-auto" />
+            </div>
+            <div className="w-8 h-6 flex items-center justify-center">
+              <img src="/src/assets/icons/visa-debit.svg" alt="Visa Debit" className="h-full w-auto" />
+            </div>
+            <div className="w-8 h-6 flex items-center justify-center">
+              <img src="/src/assets/icons/master.svg" alt="Mastercard" className="h-full w-auto" />
+            </div>
+            <div className="w-8 h-6 flex items-center justify-center">
+              <img src="/src/assets/icons/master-debit.svg" alt="Mastercard Debit" className="h-full w-auto" />
+            </div>
+            <div className="w-8 h-6 flex items-center justify-center">
+              <img src="/src/assets/icons/apple-pay.svg" alt="Apple Pay" className="h-full w-auto" />
+            </div>
+            <div className="w-8 h-6 flex items-center justify-center">
+              <img src="/src/assets/icons/amex.svg" alt="American Express" className="h-full w-auto" />
+            </div>
+            <div className="w-8 h-6 flex items-center justify-center">
+              <img src="/src/assets/icons/discover.svg" alt="Discover" className="h-full w-auto" />
+            </div>      
+            <div className="w-8 h-6 flex items-center justify-center">
+              <img src="/src/assets/icons/maestro.svg" alt="Maestro" className="h-full w-auto" />
+            </div>
           </div>
         </div>
 
@@ -135,15 +154,8 @@ function FooterPrimitive({ data }) {
 
         <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] border-Colors-border"></div>
         <div className="self-stretch py-4 inline-flex justify-between items-center">
-          <div className="w-4 h-6 bg-Colors-foreground" />
-          <div className="w-4 h-2.5 bg-Colors-foreground" />
-          <div className="w-4 h-4 bg-Colors-foreground" />
-          <div className="w-3.5 h-4 bg-Colors-foreground" />
-          <div className="w-4 h-6 bg-Colors-foreground" />
-          <div className="w-4 h-4 bg-Colors-foreground" />
-          <div className="w-3.5 h-4 bg-Colors-foreground" />
-          <div className="w-28 h-[4.97px] bg-Colors-foreground" />
-          <div className="w-3 h-1 bg-Colors-foreground" />
+          
+          
           <div className="inline-flex flex-col justify-start items-end gap-1">
             <div className="w-[508px] text-right justify-start text-Colors-foreground text-sm font-bold leading-none"  >
               {raisedText}
@@ -159,7 +171,7 @@ function FooterPrimitive({ data }) {
 }
 
 export function FooterA({ data }) {
-  return <FooterPrimitive data={data} />;
+  return <FooterPrimitive data={data} className="p-0 m-0" />;
 }
 
 export function FooterB({ data }) {

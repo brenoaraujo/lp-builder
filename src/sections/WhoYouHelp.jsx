@@ -1,5 +1,5 @@
-// FeatureA.jsx
-export function FeatureA() {
+//  HowYouHelpA.jsx
+export function  WhoYouHelpA({ preview = false }) {
     return (
         <section
             data-description="true"
@@ -8,7 +8,7 @@ export function FeatureA() {
             data-section-label="true"
             data-type="img_right"
             className="w-[1440px] py-24 bg-Colors-background inline-flex flex-col justify-start items-center gap-6 overflow-hidden"
-            aria-label="Feature"
+            aria-label=" HowYouHelp"
         >
             <div className="w-full max-w-[1280px] px-6 grid grid-cols-1 md:grid-cols-2 items-center gap-16">
                 {/* Copy */}
@@ -20,7 +20,7 @@ export function FeatureA() {
                             data-label="Section Label"
                             className="justify-start text-Colors-muted-foreground text-base text-left font-semibold font-primary"
                         >
-                            Section label
+                           More Than a Raffle. It’s Impact.
                         </div>
 
                         <div
@@ -28,7 +28,7 @@ export function FeatureA() {
                             data-label="Headline"
                             className="self-stretch justify-start text-Colors-foreground text-4xl text-left font-bold font-headline leading-10"
                         >
-                            Headline that shows solution&apos;s impact on user success
+                            Who You Help
                         </div>
 
                         <div
@@ -37,9 +37,7 @@ export function FeatureA() {
                             data-label="Description"
                             className="self-stretch justify-start text-Colors-muted-foreground text-base text-left font-normal font-primary leading-normal"
                         >
-                            Explain in one or two concise sentences how your solution transforms users&apos; challenges into
-                            positive outcomes. Focus on the end benefits that matter most to your target audience. Keep it
-                            clear and compelling.
+                            Every ticket makes a difference. Proceeds from this raffle go directly to support local programs, community initiatives, and causes that matter most. Your participation not only gives you a chance to win big—it helps create real impact for people in need.
                         </div>
                     </div>
 
@@ -60,7 +58,7 @@ export function FeatureA() {
                             className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
                         >
                             <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
-                                Buy Now
+                                Learn More
                             </div>
                         </div>
 
@@ -89,10 +87,11 @@ export function FeatureA() {
                 <div className="flex-1">
                     <div
                         data-portrait="No"
-                        data-ratio="73:41"
+                        data-ratio="4:3"
                         data-display="yes"
-                        data-label="Feature Image"
-                        className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary"
+                        data-label=" HowYouHelp Image"
+                        className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary h-[420px]"
+                        style={{ backgroundImage: "url(/src/assets/images/who-you-help.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                     >
                       
                     </div>
@@ -101,7 +100,7 @@ export function FeatureA() {
         </section>
     );
 }
-export function FeatureB() {
+export function  WhoYouHelpB({ preview = false }) {
     return (
         <section
             data-description="true"
@@ -110,17 +109,18 @@ export function FeatureB() {
             data-section-label="true"
             data-type="img_right"
             className="w-[1440px] py-24 bg-Colors-background inline-flex flex-col justify-start items-center gap-6 overflow-hidden"
-            aria-label="Feature"
+            aria-label=" HowYouHelp"
         >
             <div className="w-full max-w-[1280px] px-6 grid grid-cols-1 md:grid-cols-2 items-center gap-16">
                 {/* Visual (Image Right) */}
                 <div className="flex-1">
                     <div
                         data-portrait="No"
-                        data-ratio="73:41"
+                        data-ratio="4:3"
                         data-display="yes"
-                        data-label="Feature Image"
-                        className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary"
+                        data-label=" HowYouHelp Image"
+                        className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary  h-[420px]"
+                        style={{ backgroundImage: "url(/src/assets/images/who-you-help.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                     >
                       
                     </div>
@@ -134,7 +134,7 @@ export function FeatureB() {
                             data-label="Section Label"
                             className="justify-start text-Colors-muted-foreground text-base font-semibold font-primary text-left"
                         >
-                            Section label
+                            More Than a Raffle. It’s Impact.
                         </div>
 
                         <div
@@ -142,7 +142,7 @@ export function FeatureB() {
                             data-label="Headline"
                             className="self-stretch justify-start text-Colors-foreground text-4xl font-bold font-headline leading-10 text-left"
                         >
-                            Headline that shows solution&apos;s impact on user success
+                            Who You Help
                         </div>
 
                         <div
@@ -151,9 +151,7 @@ export function FeatureB() {
                             data-label="Description"
                             className="self-stretch justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal text-left"
                         >
-                            Explain in one or two concise sentences how your solution transforms users&apos; challenges into
-                            positive outcomes. Focus on the end benefits that matter most to your target audience. Keep it
-                            clear and compelling.
+                            Every ticket makes a difference. Proceeds from this raffle go directly to support local programs, community initiatives, and causes that matter most. Your participation not only gives you a chance to win big—it helps create real impact for people in need.
                         </div>
                     </div>
 
@@ -174,7 +172,7 @@ export function FeatureB() {
                             className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
                         >
                             <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
-                                Buy Now
+                                Learn More
                             </div>
                         </div>
 

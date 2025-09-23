@@ -148,11 +148,11 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
 
         {/* Body */}
         <div className="min-h-0 flex-1 overflow-auto p-4 space-y-8">
-          {/* Typography */}
+          {/* Typography -- DON'T REMOVE THIS FEATURE 
           <div className="space-y-3">
             <div className="text-sm font-semibold">Typography</div>
             <div className="grid gap-4">
-              {/* Body */}
+              
               <div className="space-y-1">
                 <div className="text-xs text-muted-foreground">Body</div>
                 <Select onValueChange={(v) => handlePickFont("primary", v)}>
@@ -166,7 +166,7 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
                   </SelectContent>
                 </Select>
               </div>
-              {/* Heading */}
+              
               <div className="space-y-1">
                 <div className="text-xs text-muted-foreground">Heading</div>
                 <Select onValueChange={(v) => handlePickFont("headline", v)}>
@@ -180,7 +180,7 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
                   </SelectContent>
                 </Select>
               </div>
-              {/* Numbers */}
+              
               <div className="space-y-1">
                 <div className="text-xs text-muted-foreground">Numbers</div>
                 <Select onValueChange={(v) => handlePickFont("numbers", v)}>
@@ -195,7 +195,7 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
                 </Select>
               </div>
             </div>
-          </div>
+          </div>*/}
 
           {/* Colors */}
           <div className="space-y-3">

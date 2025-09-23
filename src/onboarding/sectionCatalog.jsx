@@ -7,11 +7,11 @@ import { NavbarA, NavbarB } from "../sections/Navbar.jsx";
 import { HeroA, HeroB } from "../sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "../sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "../sections/Winners.jsx";
-import { FeatureA, FeatureB } from "../sections/Feature.jsx";
+import { WhoYouHelpA, WhoYouHelpB } from "../sections/WhoYouHelp.jsx";
 
 // [Onboarding] "Field descriptors" – keep these aligned with your data-* labels.
 // You can expand them later as you add sections.
-export const SECTION_ORDER = ["hero", "extraPrizes", "winners"];
+export const SECTION_ORDER = ["hero", "extraPrizes", "winners", "WhoYouHelp"];
 export const THUMB_DESIGN_W = 1440;   // your section design width
 export const THUMB_MIN_W = 320;    // keep small cards readable
 export const THUMB_MAX_W = 900;    // optional safety cap
@@ -56,6 +56,13 @@ export const SECTIONS = {
     fixedPosition: "top",
   },
 
+  howYouHelp: {
+    title: "How You Help",
+    variants: [
+      { key: "A", label: "How You Help A" },
+      { key: "B", label: "How You Help B" },
+    ],
+  },
 
   hero: {
     title: "Hero",
@@ -99,15 +106,15 @@ export const SECTIONS = {
     ),
     skippable: false,
   },
-  feature: {
-    title: "Feature",
+  WhoYouHelp: {
+    title: "How You Help",
     variants: [
-      { key: "A", label: "Feature A" },
-      { key: "B", label: "Feature B" },
+      { key: "A", label: "How You Help A" },
+      { key: "B", label: "How You Help B" },
     ],
     thumbnail: (key = "A") => (
       <ThumbFrame>
-        {key === "B" ? <FeatureB preview /> : <FeatureA preview />}
+        {key === "B" ? <WhoYouHelpB preview /> : <WhoYouHelpA preview />}
       </ThumbFrame>
     ),
     skippable: true,

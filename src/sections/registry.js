@@ -5,6 +5,7 @@ import { WinnersA, WinnersB } from "./Winners.jsx";
 import { FeatureA, FeatureB } from "./Feature.jsx";
 import { NavbarA, NavbarB } from "./Navbar.jsx";
 import { FooterA, FooterB } from "./Footer.jsx";
+import { WhoYouHelpA, WhoYouHelpB } from "./WhoYouHelp.jsx";
 
 export const SECTIONS = {
   Navbar: {
@@ -46,5 +47,10 @@ export const SECTIONS = {
     label: "Feature",
     variants: [FeatureA, FeatureB],     // or [SponsorsA] if only one
     labels: ["Feature A", "Feature B"],     // optional
+  },
+  WhoYouHelp: {
+    label: "How You Help",
+    variants: [WhoYouHelpA, WhoYouHelpB],
+    labels: ["How You Help A", "How You Help B"],
   },
 };

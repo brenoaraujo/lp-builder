@@ -6,6 +6,7 @@ import { HeroA, HeroB } from "./sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "./sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "./sections/Winners.jsx";
 import { FeatureA, FeatureB } from "./sections/Feature.jsx";
+import { WhoYouHelpA, WhoYouHelpB } from "./sections/WhoYouHelp.jsx";
 import { NavbarA, NavbarB } from "./sections/Navbar.jsx";
 import { FooterA, FooterB } from "./sections/Footer.jsx";
 
@@ -455,6 +456,8 @@ function SortableBlock({
       emitVars(out, "EB-Colors", overrides.values || {});
     } else if (type === "winners") {
       emitVars(out, "Winners-Colors", overrides.values || {});
+    } else if (type === "WhoYouHelp") {
+      emitVars(out, "WhoYouHelp-Colors", overrides.values || {});
     }
     return Object.fromEntries(out);
   }, [overrides, type]);
@@ -631,6 +634,7 @@ function blocksFromOverrides(ovr = {}) {
   if (ovr.extraPrizes?.visible !== false) push("extraPrizes", ovr.extraPrizes?.variant || "A", ovr.extraPrizes);
   if (ovr.winners?.visible !== false) push("winners", ovr.winners?.variant || "A", ovr.winners);
   if (ovr.feature?.visible !== false) push("feature", ovr.winners?.variant || "A", ovr.feature);
+  if (ovr.WhoYouHelp?.visible !== false) push("WhoYouHelp", ovr.WhoYouHelp?.variant || "A", ovr.WhoYouHelp);
   return out.length ? out : [{
     id: crypto?.randomUUID?.() ?? `hero_${Date.now()}`,
     type: "hero", variant: 0, controls: {}, copy: {},
@@ -702,7 +706,7 @@ export function MainBuilder() {
   }, []);
 
   function blocksFromOverrides(ovr) {
-    const order = ["hero", "extraPrizes", "winners", "feature"]; // keep this consistent with your app
+    const order = ["hero", "extraPrizes", "winners", "WhoYouHelp"]; // keep this consistent with your app
     const toIndex = (v) => (v === "B" ? 1 : 0);       // "A" → 0, "B" → 1
 
     return order
@@ -1344,7 +1348,7 @@ export function MainBuilder() {
           </div>
 
           <div className="flex items-center gap-2">
-            <a href="#/onboarding" onClick={(e) => { try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); reset(); } catch { } }} className="text-xs underline text-muted-foreground" >
+            <a href="#/onboarding" onClick={(e) => { try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); localStorage.removeItem("theme.colors"); localStorage.removeItem("theme.fonts"); reset(); } catch { } }} className="text-xs underline text-muted-foreground" >
               Restart onboarding
             </a>
             {/* darkmode
@@ -1442,8 +1446,8 @@ export function MainBuilder() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setActiveBlockId("Navbar")}
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveBlockId("Navbar")}
+              onClick={() => { setActiveBlockId("Navbar"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setActiveBlockId("Navbar"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); } }}
               className={[
                 "relative transition",
                 activeBlockId === "Navbar"
@@ -1451,7 +1455,7 @@ export function MainBuilder() {
                   : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500",
               ].join(" ")}
             >
-              <AutoScaler designWidth={1440} targetWidth={800}>
+              <AutoScaler designWidth={1440} targetWidth={800} maxHeight={9999}>
                 <EditableSection
                   sectionId="Navbar"
                   label="Navbar"
@@ -1548,8 +1552,8 @@ export function MainBuilder() {
             <div
               role="button"
               tabIndex={0}
-              onClick={() => setActiveBlockId("Footer")}
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setActiveBlockId("Footer")}
+              onClick={() => { setActiveBlockId("Footer"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setActiveBlockId("Footer"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); } }}
               className={[
                 "relative transition",
                 activeBlockId === "Footer"
@@ -1601,8 +1605,11 @@ export function MainBuilder() {
                   <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "feature")}>
                     Feature
                   </Button>
+                  <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "WhoYouHelp")}>
+                    How You Help
+                  </Button>
                 </div>
-
+            
                 <DialogFooter className="mt-2">
                   <Button variant="ghost" onClick={() => setPicker({ open: false, index: null })}>Cancel</Button>
                 </DialogFooter>
@@ -1754,7 +1761,7 @@ function MainBuilderWithOverrides() {
         <a
           href="#/onboarding"
           onClick={(e) => {
-            try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); reset(); } catch { }
+            try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); localStorage.removeItem("theme.colors"); localStorage.removeItem("theme.fonts"); reset(); } catch { }
             // allow the href navigation to happen (no preventDefault)
           }}
           className="text-xs underline text-muted-foreground"

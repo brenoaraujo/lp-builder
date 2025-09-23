@@ -331,17 +331,25 @@ export function applyThemeSnapshot(snap, { persist = false } = {}) {
   const root = ROOT();
   const mode = readThemeMode();
   const colors = snap?.colors || {};
+  // Only respect base input roles; derive the rest for readability
+  const base = {
+    background: colors.background,
+    primary: colors.primary,
+    secondary: colors.secondary,
+    "alt-background": colors["alt-background"],
+    border: colors.border,
+  };
   const fonts  = snap?.fonts  || {};
 
   // colors
-  const vars = buildThemeVars(colors, mode);
+  const vars = buildThemeVars(base, mode);
   setCSSVars(root, "colors", vars);
 
   // fonts
   applyFonts(fonts || {}); // applyFonts already persists per-key if provided
 
   if (persist) {
-    try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch {}
+    try { localStorage.setItem("theme.colors", JSON.stringify(base)); } catch {}
     try { localStorage.setItem("theme.fonts",  JSON.stringify(fonts));  } catch {}
   }
 }

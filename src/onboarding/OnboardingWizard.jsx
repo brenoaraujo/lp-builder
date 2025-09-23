@@ -12,14 +12,14 @@ import EditorForOnboarding from "./EditorForOnboarding.jsx";
 import EditableSection from "../components/EditableSection.jsx";
 import { HeroA, HeroB } from "../sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "../sections/ExtraPrizes.jsx";
-import { WinnersA, WinnersB } from "../sections/Winners.jsx";
-// [KEEP] Feature (assumes ../sections/Feature.jsx exists)
+import { WinnersA, WinnersB } from "../sections/Winners.jsx";   
+import { WhoYouHelpA, WhoYouHelpB } from "../sections/WhoYouHelp.jsx";
 import { FeatureA, FeatureB } from "../sections/Feature.jsx";
 
 import AutoScaler from "../components/AutoScaler.jsx";
 
 // [KEEP] theme helpers
-import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readBaselineColors, applySavedTheme } from "../theme-utils.js";
+import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readBaselineColors, applySavedTheme, clearInlineColorVars } from "../theme-utils.js";
 
 // ---- shadcn/ui imports (adjust paths if needed in your setup) ----
 import { Button } from "@/components/ui/button";
@@ -232,12 +232,13 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
                     </div>
                 </div>
 
-                {/* Typography (unchanged UI, just uses handlePickFont) */}
+                
                 <div className="rounded-xl border bg-white p-5 shadow-sm">
+                    {/* Typography (unchanged UI, just uses handlePickFont) -- DON'T REMOVE THIS FEATURE
                     <div className="mb-4">
                         <div className="mb-4 text-md font-semibold">Typography</div>
                         <div className="grid gap-4 sm:grid-cols-2">
-                            {/* Body */}
+                            
                             <div className="space-y-2">
                                 <Select open={openBody} onOpenChange={setOpenBody} onValueChange={(v) => handlePickFont("primary", v)}>
                                     <SelectTrigger className="rounded-2xl border px-4 py-3 outline-none items-left justify-between" onClick={() => setOpenBody(true)}>
@@ -254,7 +255,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
                                 </Select>
                             </div>
 
-                            {/* Heading */}
+                            
                             <div className="space-y-2">
                                 <Select open={openHeading} onOpenChange={setOpenHeading} onValueChange={(v) => handlePickFont("headline", v)}>
                                     <SelectTrigger className="rounded-2xl border px-4 py-3 outline-none flex items-center justify-between" onClick={() => setOpenHeading(true)}>
@@ -271,7 +272,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
                                 </Select>
                             </div>
 
-                            {/* Numbers */}
+                            
                             <div className="space-y-2">
                                 <Select open={openNumbers} onOpenChange={setOpenNumbers} onValueChange={(v) => handlePickFont("numbers", v)}>
                                     <SelectTrigger className="rounded-2xl border px-4 py-3 outline-none flex items-center justify-between" onClick={() => setOpenNumbers(true)}>
@@ -288,9 +289,9 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
                                 </Select>
                             </div>
                         </div>
-                    </div>
+                    </div>*/}
 
-                    {/* Colors */}
+                    
                     <div className="mb-2">
                         <div className="mb-4 text-md font-semibold">Colors</div>
                         <div className="grid gap-6 sm:grid-cols-2">
@@ -351,7 +352,7 @@ function ComposedPreview({ overrides }) {
             <SectionPreview k="hero" state={overrides.hero} />
             <SectionPreview k="extraPrizes" state={overrides.extraPrizes} />
             <SectionPreview k="winners" state={overrides.winners} />
-            <SectionPreview k="feature" state={overrides.feature} />
+            <SectionPreview k="WhoYouHelp" state={overrides.WhoYouHelp} />
         </div>
     );
 }
@@ -362,6 +363,7 @@ function resolveByVariant(sectionKey, variant = "A") {
     if (sectionKey === "extraPrizes") return variant === "B" ? ExtraPrizesB : ExtraPrizesA;
     if (sectionKey === "winners") return variant === "B" ? WinnersB : WinnersA;
     if (sectionKey === "feature") return variant === "B" ? FeatureB : FeatureA;
+    if (sectionKey === "WhoYouHelp") return variant === "B" ? WhoYouHelpB : WhoYouHelpA;
     return null;
 }
 
@@ -397,8 +399,8 @@ const STEP_KEYS = [
     "extraPrizesEdit",// edit
     "winners",        // choose
     "winnersEdit",    // edit
-    "feature",        // choose
-    "featureEdit",    // edit
+    "WhoYouHelp",     // choose
+    "WhoYouHelpEdit", // edit
     "review",         // review
 ];
 
@@ -442,6 +444,15 @@ export default function OnboardingWizard() {
 
     // [KEEP] ensure defaults so previews don't show as blank
     useEffect(() => {
+        // Reset colors and fonts to defaults when onboarding starts
+        try { 
+            localStorage.removeItem("theme.colors"); 
+            localStorage.removeItem("theme.fonts"); 
+        } catch { }
+        
+        // nuke inline overrides so tokens.css values become visible again
+        clearInlineColorVars();
+        
         // show all sections by default on first mount
         SECTION_ORDER.forEach((k) => {
             if (overridesBySection[k]?.visible === undefined) setVisible(k, true);
@@ -635,21 +646,21 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
-                    {stepKey === "feature" && (
+                    {stepKey === "WhoYouHelp" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Choose Feature Layout</h2>
+                                <h2 className="text-4xl font-medium">Choose How You Help Layout</h2>
                                 <p className="text-base text-slate-500">Add custom content to your page</p>
                             </div>
-                            <VariantCarousel sectionKey="feature" onPicked={() => advance(1)} />
+                            <VariantCarousel sectionKey="WhoYouHelp" onPicked={() => advance(1)} />
                             <Button
                                 variant="ghost"
                                 onClick={() => {
-                                    setVisible("feature", false); // hide this section
+                                    setVisible("WhoYouHelp", false); // hide this section
                                     advance(2); // skip its edit step as well
                                 }}
                             >
@@ -658,25 +669,25 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
-                    {stepKey === "featureEdit" && (
+                    {stepKey === "WhoYouHelpEdit" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Edit Feature Components</h2>
+                                <h2 className="text-4xl font-medium">Edit How You Help Components</h2>
                                 <p className="text-base text-slate-500">
                                     Customize your section components by removing and change components copy
                                 </p>
                             </div>
                             {/* [FIX] was using winners overrides by mistake */}
                             <EditorForOnboarding
-                                sectionKey="feature"
-                                variantKey={overridesBySection.feature?.variant || "A"}
-                                overrides={overridesBySection.feature}
-                                onTogglePart={(id, v) => setDisplay("feature", id, v)}
-                                onCopyChange={(id, t) => setCopy("feature", id, t)}
+                                sectionKey="WhoYouHelp"
+                                variantKey={overridesBySection.WhoYouHelp?.variant || "A"}
+                                overrides={overridesBySection.WhoYouHelp}
+                                onTogglePart={(id, v) => setDisplay("WhoYouHelp", id, v)}
+                                onCopyChange={(id, t) => setCopy("WhoYouHelp", id, t)}
                                 onSaveNext={() =>
                                     setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                 }

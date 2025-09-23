@@ -31,13 +31,12 @@ export default function AutoScaler({
 
   return (
     <div
-      className={className}
+      className={`${className} bg-Colors-background`}
       style={{
         width: targetWidth,
         height: scaledHeight ?? "auto",
         overflow: "hidden",
         borderRadius: 0,
-        background: "white",
       }}
     >
       <div
