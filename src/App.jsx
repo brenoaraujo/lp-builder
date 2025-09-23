@@ -1118,10 +1118,23 @@ export function MainBuilder() {
         body: JSON.stringify({ approvalLink: url, snapshot, approvalMeta }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { console.error("handoff 400:", data); return; }
+      if (!res.ok) {
+        console.error("handoff error:", data);
+        setToastMsg(
+          data?.error
+            ? `Handoff failed: ${data.error}${data.missing ? ` (${data.missing.join(", ")})` : ""}`
+            : "Handoff failed. Check server logs/env vars."
+        );
+        clearTimeout(window.__share_toast_timer);
+        window.__share_toast_timer = setTimeout(() => setToastMsg(null), 3200);
+        return;
+      }
       setApproveOpen(false);
     } catch (err) {
       console.error(err);
+      setToastMsg("Handoff failed due to a network or server error.");
+      clearTimeout(window.__share_toast_timer);
+      window.__share_toast_timer = setTimeout(() => setToastMsg(null), 3200);
     }
   };
 

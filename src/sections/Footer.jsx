@@ -30,8 +30,7 @@ function FooterPrimitive({ data }) {
 
   return (
     <div
-      data-section="Footer"
-      
+      data-section="Footer"      
       className="w-[1440px] bg-Colors-background inline-flex flex-col justify-start items-center gap-4 font-primary"
     >
       <div className="w-full max-w-[1280px] flex flex-col justify-start items-start gap-6">
