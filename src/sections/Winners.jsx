@@ -40,7 +40,7 @@ export function WinnersA() {
                   data-portrait="No"
                   data-ratio="5:4"
                   className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
-                  style={{ backgroundImage: "url(/src/assets/images/winner1.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                  style={{ backgroundImage: "url(/images/winner1.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                 />
               </div>
               <div className="w-full p-1 flex justify-start items-center gap-2">
@@ -48,7 +48,7 @@ export function WinnersA() {
                   data-portrait="No"
                   data-ratio="5:4"
                   className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
-                  style={{ backgroundImage: "url(/src/assets/images/winner2.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                  style={{ backgroundImage: "url(/images/winner2.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                 />
               </div>
               <div className="w-full p-1 flex justify-start items-center gap-2">
@@ -56,7 +56,7 @@ export function WinnersA() {
                   data-portrait="No"
                   data-ratio="5:4"
                   className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
-                  style={{ backgroundImage: "url(/src/assets/images/winner3.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                  style={{ backgroundImage: "url(/images/winner3.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                 />
               </div>
             </div>

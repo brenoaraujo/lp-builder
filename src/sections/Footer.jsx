@@ -51,28 +51,28 @@ function FooterPrimitive({ data }) {
             </div>
             {/* Payment icons */}
             <div className="w-8 h-6 flex items-center justify-center">
-              <img src="/src/assets/icons/visa.svg" alt="Visa" className="h-full w-auto" />
+              <img src="/images/icons/visa.svg" alt="Visa" className="h-full w-auto" />
             </div>
             <div className="w-8 h-6 flex items-center justify-center">
-              <img src="/src/assets/icons/visa-debit.svg" alt="Visa Debit" className="h-full w-auto" />
+              <img src="/images/icons/visa-debit.svg" alt="Visa Debit" className="h-full w-auto" />
             </div>
             <div className="w-8 h-6 flex items-center justify-center">
-              <img src="/src/assets/icons/master.svg" alt="Mastercard" className="h-full w-auto" />
+              <img src="/images/icons/master.svg" alt="Mastercard" className="h-full w-auto" />
             </div>
             <div className="w-8 h-6 flex items-center justify-center">
-              <img src="/src/assets/icons/master-debit.svg" alt="Mastercard Debit" className="h-full w-auto" />
+              <img src="/images/icons/master-debit.svg" alt="Mastercard Debit" className="h-full w-auto" />
             </div>
             <div className="w-8 h-6 flex items-center justify-center">
-              <img src="/src/assets/icons/apple-pay.svg" alt="Apple Pay" className="h-full w-auto" />
+              <img src="/images/icons/apple-pay.svg" alt="Apple Pay" className="h-full w-auto" />
             </div>
             <div className="w-8 h-6 flex items-center justify-center">
-              <img src="/src/assets/icons/amex.svg" alt="American Express" className="h-full w-auto" />
+              <img src="/images/icons/amex.svg" alt="American Express" className="h-full w-auto" />
             </div>
             <div className="w-8 h-6 flex items-center justify-center">
-              <img src="/src/assets/icons/discover.svg" alt="Discover" className="h-full w-auto" />
+              <img src="/images/icons/discover.svg" alt="Discover" className="h-full w-auto" />
             </div>      
             <div className="w-8 h-6 flex items-center justify-center">
-              <img src="/src/assets/icons/maestro.svg" alt="Maestro" className="h-full w-auto" />
+              <img src="/images/icons/maestro.svg" alt="Maestro" className="h-full w-auto" />
             </div>
           </div>
         </div>

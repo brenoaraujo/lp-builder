@@ -92,7 +92,7 @@ export function  WhoYouHelpA({ preview = false }) {
                         data-display="yes"
                         data-label=" HowYouHelp Image"
                         className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary h-[420px]"
-                        style={{ backgroundImage: "url(/src/assets/images/who-you-help.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                        style={{ backgroundImage: "url(/images/who-you-help.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                     >
                       
                     </div>
@@ -122,7 +122,7 @@ export function  WhoYouHelpB({ preview = false }) {
                         data-display="yes"
                         data-label=" HowYouHelp Image"
                         className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary  h-[420px]"
-                        style={{ backgroundImage: "url(/src/assets/images/who-you-help.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                        style={{ backgroundImage: "url(/images/who-you-help.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                     >
                       
                     </div>

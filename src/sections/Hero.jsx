@@ -86,7 +86,7 @@ export function HeroA({ preview = false }) {
             data-portrait="No"
             data-ratio="5:4"
             className="w-[620px] h-[583px]  rounded-lg overflow-hidden "
-            style={{ backgroundImage: "url(/src/assets/images/img-hero.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+            style={{ backgroundImage: "url(/images/img-hero.png)", backgroundSize: "cover", backgroundPosition: "center" }}
           />
         </div>
 
@@ -178,7 +178,7 @@ export function HeroA({ preview = false }) {
 /* --------------------------------- Hero B --------------------------------- */
 
 export function HeroB({ preview = false }) {
-  const imagePath = useImageVariant("/src/assets/images/img-hero-full-light.png", "hero");
+  const imagePath = useImageVariant("/images/img-hero-full-light.png", "hero");
   const backgroundImage = `url(${imagePath})`;
 
   return (

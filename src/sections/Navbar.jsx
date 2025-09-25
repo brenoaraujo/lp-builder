@@ -9,7 +9,7 @@ import { useImageVariant } from "../hooks/useImageVariant.js";
 // Shared primitive used by both variants
 function NavPrimitive({ data }) {
   const {
-    logoSrc = "/src/assets/images/ascend-light.svg",
+    logoSrc = "/images/ascend-light.svg",
     items = ["Lottery", "Prizes", "Winners"],
     cta = { label: "BUY TICKETS", href: "#buy" },
   } = data || {};
