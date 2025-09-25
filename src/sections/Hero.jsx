@@ -1,4 +1,6 @@
+import React from "react";
 import { ArrowRight, Plus, Minus, ShoppingCart } from "lucide-react";
+import { useImageVariant } from "../hooks/useImageVariant.js";
 
 /* --------------------------------- shared --------------------------------- */
 
@@ -13,8 +15,8 @@ const COUNTDOWN = [
 
 export function HeroA() {
   return (
-    <section className="p-6 bg-Hero-Colors-background">
-      <div className="w-[1440px] mx-auto py-24 bg-Hero-Colors-background flex flex-col items-center gap-12 overflow-hidden">
+    <section data-section="hero" className="p-6 bg-Colors-background">
+      <div className="w-[1440px] mx-auto py-24 bg-Colors-background flex flex-col items-center gap-12 overflow-hidden">
         {/* Top row */}
         <div className="w-full max-w-[1280px] grid grid-cols-2 items-center gap-16">
           {/* Left column */}
@@ -26,7 +28,7 @@ export function HeroA() {
                 data-copy-id="hero-price-points-headline"
                 data-label="Headline"
                 data-maxchars="60"
-                className="text-Hero-Colors-foreground font-headline text-4xl text-left font-bold leading-[48px]"
+                className="text-Colors-foreground font-headline text-4xl text-left font-bold leading-[48px]"
               >
                 A simple but powerful headline that sells!
               </h1>
@@ -35,7 +37,7 @@ export function HeroA() {
                 <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4">
                   Current estimated payout
                 </span>
-                <span className="text-Hero-Colors-foreground text-7xl font-bold font-numbers text-left">
+                <span className="text-Colors-foreground text-7xl font-bold font-numbers text-left">
                   $1,346,000
                 </span>
               </div>
@@ -47,7 +49,7 @@ export function HeroA() {
               data-style="no-box"
               data-display="true"
               data-label="Countdown"
-              className="py-3 bg-Hero-Colors-background rounded-md flex flex-col gap-2"
+              className="py-3 bg-Colors-background rounded-md flex flex-col gap-2"
             >
               <p className="text-Colors-muted-foreground font-primary text-sm leading-tight">
                 Grand Prize Deadline: Mar 14, 6pm
@@ -55,7 +57,7 @@ export function HeroA() {
               <div className="flex items-center gap-2">
                 {COUNTDOWN.map((t, i) => (
                   <div key={i} className="w-14 flex flex-col items-center">
-                    <div className="text-Hero-Colors-foreground text-2xl font-bold leading-snug">
+                    <div className="text-Colors-foreground text-2xl font-bold leading-snug">
                       {t.v}
                     </div>
                     <div className="text-Colors-muted-foreground text-xs leading-tight">
@@ -83,7 +85,8 @@ export function HeroA() {
           <div
             data-portrait="No"
             data-ratio="5:4"
-            className="w-[560px] h-96 rounded-lg overflow-hidden bg-Hero-Colors-secondary"
+            className="w-[620px] h-[583px]  rounded-lg overflow-hidden "
+            style={{ backgroundImage: "url(/src/assets/images/img-hero.png)", backgroundSize: "cover", backgroundPosition: "center" }}
           />
         </div>
 
@@ -175,30 +178,33 @@ export function HeroA() {
 /* --------------------------------- Hero B --------------------------------- */
 
 export function HeroB() {
+  const imagePath = useImageVariant("/src/assets/images/img-hero-full-light.png", "hero");
+  const backgroundImage = `url(${imagePath})`;
+
   return (
-    <section className="p-6 bg-Hero-Colors-background h-full">
-      <div className="w-[1440px] py-24  inline-flex flex-col justify-start items-center gap-12 overflow-hidden ">
-        <div className="w-full h-full max-w-[1280px] inline-flex justify-start items-center gap-16" >
-          <div className="w-full inline-flex flex-col justify-start items-center gap-11">
-            <div className="self-stretch flex flex-col justify-start items-center gap-6">
+    <section data-section="hero" className="p-6 bg-Colors-background h-full" style={{ backgroundImage, backgroundSize: "contain", backgroundPosition: "top center",  backgroundRepeat: "no-repeat" }}>
+      <div className="w-[1440px] py-24  inline-flex flex-col justify-start items-center gap-4 overflow-hidden mt-120 ">
+        <div className="w-full h-full max-w-[1280px] inline-flex justify-start items-center gap-6" >
+          <div className="w-full inline-flex flex-col justify-start items-center ">
+            <div className="self-stretch flex flex-col justify-start items-center gap-2">
               <div className="self-stretch flex flex-col justify-start items-center gap-2">
                 <div
                   data-copy="true"
                   data-copy-id="hero-headline"
                   data-label="Headline"
                   data-maxchars="60"
-                  className="self-stretch text-center justify-center text-Hero-Colors-foreground text-4xl font-bold font-headline leading-[48px]"
+                  className="self-stretch text-center justify-center text-Colors-foreground text-4xl font-bold font-headline leading-[48px]"
                 >
                   A simple but powerful headline that sells!
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col justify-center items-center" data-display="yes" data-label="Jackpot">
+            <div className="flex flex-col justify-center items-center" data-display="no" data-label="Jackpot">
               <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal">
                 Current estimated payout
               </div>
-              <div className="justify-start text-Hero-Colors-foreground text-7xl font-bold font-numbers ">
+              <div className="justify-start text-Colors-foreground text-7xl font-bold font-numbers ">
                 $1,346,000
               </div>
             </div>
@@ -209,7 +215,7 @@ export function HeroB() {
               data-style="no-box"
               data-display="true"
               data-label="Countdown"
-              className="py-3 bg-Hero-Colors-background rounded-md flex flex-col justify-start items-start gap-2"
+              className="py-3 bg-Colors-background rounded-md flex flex-col justify-start items-start gap-2"
             >
               <div className="justify-center text-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
                 Grand Prize Deadline: Mar 14, 6pm
@@ -217,7 +223,7 @@ export function HeroB() {
               <div className="inline-flex justify-start items-center gap-2">
                 {COUNTDOWN.map(({ v, l }, i) => (
                   <div key={i} className="w-14 inline-flex flex-col justify-center items-center">
-                    <div className="self-stretch h-7 justify-center text-Hero-Colors-foreground text-2xl font-bold font-primary leading-snug">
+                    <div className="self-stretch h-7 justify-center text-Colors-foreground text-2xl font-bold font-primary leading-snug">
                       {v}
                     </div>
                     <div className="self-stretch h-5 justify-center text-Colors-muted-foreground text-xs font-normal font-primary leading-tight">

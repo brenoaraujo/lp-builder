@@ -2,6 +2,7 @@
   /* ========== GLOBAL Colors (always present) ========== */
   /* Backgrounds */
   .bg-Colors-background { background-color: var(--colors-background); }
+  .bg-Colors-muted-background { background-color: var(--colors-muted-background); }
   .bg-Colors-alt-background { background-color: var(--colors-alt-background); }
   .bg-Colors-primary { background-color: var(--colors-primary); }
   .bg-Colors-secondary { background-color: var(--colors-secondary); }

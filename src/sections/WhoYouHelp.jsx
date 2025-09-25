@@ -2,6 +2,7 @@
 export function  WhoYouHelpA({ preview = false }) {
     return (
         <section
+            data-section="WhoYouHelp"
             data-description="true"
             data-mobile="No"
             data-secondary-action="true"
@@ -103,6 +104,7 @@ export function  WhoYouHelpA({ preview = false }) {
 export function  WhoYouHelpB({ preview = false }) {
     return (
         <section
+            data-section="WhoYouHelp"
             data-description="true"
             data-mobile="No"
             data-secondary-action="true"

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
-import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readTokenDefaults, readThemeMode, resetThemeToBaseline } from "../theme-utils.js";
+import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readTokenDefaults, readThemeMode, resetThemeToBaseline, applyGlobalThemeToSectionsWithoutOverrides, updateSectionsWithPartialOverrides } from "../theme-utils.js";
 
 /* Small color input row */
 function ColorRole({ label, value, onChange }) {
@@ -36,7 +36,7 @@ const FONT_OPTIONS = [
   { label: "Oswald", value: "Oswald", gf: { family: "Oswald", axis: "wght@400;700" } },
 ];
 
-export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange }) {
+export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange, sectionOverrides = {} }) {
   // Load saved or token defaults
   const initialColors = useMemo(() => {
     try {
@@ -74,7 +74,22 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
     const vars = buildThemeVars(colors, mode);
     setCSSVars(document.documentElement, "colors", vars);
     setCSSVars(document.body, "colors", vars);
-  }, [open, colors]);
+    
+    // Apply global theme to sections without overrides
+    applyGlobalThemeToSectionsWithoutOverrides(colors, sectionOverrides);
+  }, [open, colors, sectionOverrides]);
+
+  // Update sections with partial overrides when colors change (but not when modal opens)
+  const [previousColors, setPreviousColors] = useState(null);
+  useEffect(() => {
+    if (!open) return;
+    
+    // Only update when colors actually change, not when modal opens
+    if (previousColors && JSON.stringify(previousColors) !== JSON.stringify(colors)) {
+      updateSectionsWithPartialOverrides(colors, sectionOverrides);
+    }
+    setPreviousColors(colors);
+  }, [colors, sectionOverrides, open, previousColors]);
 
   // Escape closes
   useEffect(() => {

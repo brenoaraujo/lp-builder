@@ -1,4 +1,5 @@
 import React from "react";
+import { ChevronDown } from "lucide-react";
 
 function FooterPrimitive({ data }) {
   const {
@@ -35,7 +36,7 @@ function FooterPrimitive({ data }) {
     >
       <div className="w-full max-w-[1280px] flex flex-col justify-start items-start gap-6">
         <div className="self-stretch h-0"/>
-        <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] border-Colors-border" />
+        <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] bg-Colors-muted-background" />
 
         <div className="self-stretch inline-flex justify-between items-center" data-display="yes" data-label="Sell by Phone">
           <div
@@ -124,12 +125,13 @@ function FooterPrimitive({ data }) {
               </div>
             </div>
             <div data-description="false" data-label="false" data-state="Default" className="w-32 flex flex-col justify-start items-start gap-2" >
-              <div className="self-stretch h-10 px-4 py-2 bg-Colors-background rounded-md outline outline-1 outline-offset-[-1px] border-Colors-border inline-flex justify-start items-center gap-2 overflow-hidden">
+              <div className="self-stretch h-10 px-4 py-2 bg-Colors-background rounded-md outline outline-1 outline-offset-[-1px] bg-Colors-muted-background inline-flex justify-start items-center gap-2 overflow-hidden">
                 <div className="flex-1 justify-start text-Colors-foreground text-sm font-medium leading-tight"  >
                   {language}
+                  
                 </div>
                 <div className="w-4 h-4 relative opacity-50 overflow-hidden">
-                  <div className="w-1.5 h-2.5 left-[4.67px] top-[2.67px] absolute outline outline-[1.33px] outline-offset-[-0.67px] outline-Colors-foreground" />
+                  <ChevronDown />
                 </div>
               </div>
             </div>
@@ -152,8 +154,8 @@ function FooterPrimitive({ data }) {
           </div>
         </div>
 
-        <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] border-Colors-border"></div>
-        <div className="self-stretch py-4 inline-flex justify-between items-center">
+        <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] bg-Colors-muted-background"></div>
+        <div className="self-stretch py-4 inline-flex justify-end items-right">
           
           
           <div className="inline-flex flex-col justify-start items-end gap-1">
@@ -176,7 +178,7 @@ export function FooterA({ data }) {
 
 export function FooterB({ data }) {
   return (
-    <div className="border-t border-Colors-border">
+    <div className="border-t bg-Colors-muted-background">
       <FooterPrimitive data={data} />
     </div>
   );

@@ -4,16 +4,18 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { useImageVariant } from "../hooks/useImageVariant.js";
 
 // Shared primitive used by both variants
 function NavPrimitive({ data }) {
   const {
-    logoSrc = "https://placehold.co/150x56",
+    logoSrc = "/src/assets/images/ascend-light.svg",
     items = ["Lottery", "Prizes", "Winners"],
     cta = { label: "BUY TICKETS", href: "#buy" },
   } = data || {};
 
-  
+  // Use the image variant hook for automatic light/dark logo switching
+  const logoPath = useImageVariant(logoSrc, "Navbar");
 
   return (
     <div
@@ -23,7 +25,7 @@ function NavPrimitive({ data }) {
     >
       <div className="w-full max-w-[1280px] inline-flex justify-between items-center">
         {/* Logo */}
-        <img className="w-36 h-14 rounded-lg" src={logoSrc} alt="Logo" />
+        <img className="w-36 h-14 rounded-lg" src={logoPath} alt="Logo" />
 
         {/* Menu */}
         <nav className="flex justify-start items-center gap-1">

@@ -1,13 +1,14 @@
 export function ExtraPrizesA() {
   return (
     <div
+      data-section="extraPrizes"
       data-mobile="No"
       data-show-action-button="true"
       data-show-counter="true"
       data-show-section-label="true"
       data-show-subtext="true"
       data-type="3"
-      className="w-full py-32 bg-EB-Colors-background inline-flex flex-col justify-start h-auto items-center gap-16 overflow-hidden"
+      className="w-full py-32 bg-Colors-background inline-flex flex-col justify-start h-auto items-center gap-16 overflow-hidden"
     >
       <div className="w-full flex flex-col justify-start items-center gap-12">
         <div className="w-full max-w-[806px] flex flex-col justify-start items-center gap-8">
@@ -16,14 +17,14 @@ export function ExtraPrizesA() {
               data-display="yes"
               data-copy="yes"
               data-label="Section Label"
-              className="justify-start text-EB-Colors-muted-foreground text-base font-semibold font-primary"
+              className="justify-start text-Colors-muted-foreground text-base font-semibold font-primary"
             >
               Section label
             </div>
             <div
               data-copy="yes"
               data-label="Headline"
-              className="self-stretch text-center justify-start text-EB-Colors-foreground text-4xl font-bold font-headline leading-10"
+              className="self-stretch text-center justify-start text-Colors-foreground text-4xl font-bold font-headline leading-10"
             >
               Extra Prizes
             </div>
@@ -31,7 +32,7 @@ export function ExtraPrizesA() {
               data-display="yes"
               data-copy="yes"
               data-label="Description"
-              className="self-stretch text-center justify-start text-EB-Colors-muted-foreground text-base font-normal font-primary leading-normal"
+              className="self-stretch text-center justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal"
             >
               Add a concise value statement that captures reader interest and previews content value. Focus on benefits while keeping it under two lines. Align with your blog categories.
             </div>
@@ -44,7 +45,7 @@ export function ExtraPrizesA() {
             data-style="no-box"
             className="py-3 rounded-md flex flex-col justify-start items-start gap-2"
           >
-            <div className="justify-center text-EB-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
+            <div className="justify-center text-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
               Grand Prize Deadline: Mar 14, 6pm
             </div>
             <div className="inline-flex justify-start items-center gap-2">
@@ -55,10 +56,10 @@ export function ExtraPrizesA() {
                 { v: "55", l: "sec" },
               ].map((t) => (
                 <div key={t.l} className="w-14 inline-flex flex-col justify-center items-center">
-                  <div className="self-stretch h-7 justify-center text-EB-Colors-foreground text-2xl font-bold font-primary leading-snug">
+                  <div className="self-stretch h-7 justify-center text-Colors-foreground text-2xl font-bold font-primary leading-snug">
                     {t.v}
                   </div>
-                  <div className="self-stretch h-5 justify-center text-EB-Colors-muted-foreground text-xs font-normal font-primary leading-tight">
+                  <div className="self-stretch h-5 justify-center text-Colors-muted-foreground text-xs font-normal font-primary leading-tight">
                     {t.l}
                   </div>
                 </div>
@@ -79,9 +80,9 @@ export function ExtraPrizesA() {
               data-size="default"
               data-state="Default"
               data-variant="Default"
-              className="h-10 px-4 py-2 bg-EB-Colors-primary rounded-lg flex justify-center items-center gap-2"
+              className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2"
             >
-              <div className="justify-center text-EB-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
+              <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
                 BUY NOW
               </div>
             </button>
@@ -99,15 +100,15 @@ export function ExtraPrizesA() {
               data-show-description="false"
               data-show-images="false"
               data-show-winners="true"
-              className="w-96 max-w-96 bg-EB-Colors-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-start items-start overflow-hidden"
+              className="w-96 max-w-96 bg-Colors-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-start items-start overflow-hidden"
             >
               <div className="self-stretch h-36 min-h-36 px-6 bg-EB-Colors-secondary inline-flex justify-end items-center gap-6">
                 <div className="flex-1 py-6 inline-flex flex-col justify-start items-start gap-4">
                   <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                    <div className="self-stretch justify-start text-EB-Colors-secondary-foreground text-xs font-bold font-primary uppercase">
+                    <div className="self-stretch justify-start text-Colors-secondary-foreground text-xs font-bold font-primary uppercase">
                       4 Winners
                     </div>
-                    <div className="self-stretch max-h-16 justify-start text-EB-Colors-secondary-foreground text-xl font-semibold font-primary line-clamp-2">
+                    <div className="self-stretch max-h-16 justify-start text-Colors-secondary-foreground text-xl font-semibold font-primary line-clamp-2">
                       {i === 1
                         ? "$5,000 cash prize"
                         : i === 2
@@ -121,11 +122,11 @@ export function ExtraPrizesA() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-EB-Colors-alt-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-center items-center gap-1">
-                  <div className="w-20 text-center justify-start text-EB-Colors-alt-foreground text-xs font-normal font-primary">
+                <div className="p-4 bg-Colors-alt-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-center items-center gap-1">
+                  <div className="w-20 text-center justify-start text-Colors-alt-foreground text-xs font-normal font-primary">
                     Deadline
                   </div>
-                  <div className="w-20 text-center justify-center text-EB-Colors-alt-foreground text-lg font-bold font-primary leading-tight">
+                  <div className="w-20 text-center justify-center text-Colors-alt-foreground text-lg font-bold font-primary leading-tight">
                     15
                     <br />
                     JAN
@@ -143,13 +144,14 @@ export function ExtraPrizesA() {
 export function ExtraPrizesB() {
   return (
     <div
+      data-section="extraPrizes"
       data-mobile="No"
       data-show-action-button="true"
       data-show-counter="true"
       data-show-section-label="true"
       data-show-subtext="true"
       data-type="3"
-      className="w-full py-32 bg-EB-Colors-background inline-flex flex-col justify-start h-auto items-center gap-16 overflow-hidden"
+      className="w-full py-32 bg-Colors-background inline-flex flex-col justify-start h-auto items-center gap-16 overflow-hidden"
     >
       <div className="w-full max-w-[1280px] flex flex-col justify-start items-center gap-12">
         <div className="self-stretch inline-flex justify-start items-center gap-28">
@@ -159,14 +161,14 @@ export function ExtraPrizesB() {
                 data-display="yes"
                 data-copy="yes"
                 data-label="Section Label"
-                className="justify-start text-EB-Colors-muted-foreground text-base font-semibold font-primary"
+                className="justify-start text-Colors-muted-foreground text-base font-semibold font-primary"
               >
                 Section label
               </div>
               <div
                 data-copy="yes"
                 data-label="Headline"
-                className="self-stretch justify-start text-EB-Colors-foreground text-4xl font-bold font-primary leading-10"
+                className="self-stretch justify-start text-Colors-foreground text-4xl font-bold font-primary leading-10"
               >
                 Extra Prizes
               </div>
@@ -174,7 +176,7 @@ export function ExtraPrizesB() {
                 data-display="yes"
                 data-copy="yes"
                 data-label="Descritpion"
-                className="self-stretch justify-start text-EB-Colors-muted-foreground text-base font-normal font-primary leading-normal"
+                className="self-stretch justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal"
               >
                 Add a concise value statement that captures reader interest and previews content value. Focus on benefits while keeping it under two lines. Align with your blog categories.
               </div>
@@ -187,7 +189,7 @@ export function ExtraPrizesB() {
               data-style="no-box"
               className="py-3 rounded-md flex flex-col justify-start items-start gap-2"
             >
-              <div className="justify-center text-EB-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
+              <div className="justify-center text-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
                 Grand Prize Deadline: Mar 14, 6pm
               </div>
               <div className="inline-flex justify-start items-center gap-2">
@@ -198,10 +200,10 @@ export function ExtraPrizesB() {
                   { v: "55", l: "sec" },
                 ].map((t) => (
                   <div key={t.l} className="w-14 inline-flex flex-col justify-center items-center">
-                    <div className="self-stretch h-7 justify-center text-EB-Colors-foreground text-2xl font-bold font-primary leading-snug">
+                    <div className="self-stretch h-7 justify-center text-Colors-foreground text-2xl font-bold font-primary leading-snug">
                       {t.v}
                     </div>
-                    <div className="self-stretch h-5 justify-center text-EB-Colors-muted-foreground text-xs font-normal font-primary leading-tight">
+                    <div className="self-stretch h-5 justify-center text-Colors-muted-foreground text-xs font-normal font-primary leading-tight">
                       {t.l}
                     </div>
                   </div>
@@ -223,9 +225,9 @@ export function ExtraPrizesB() {
                 data-size="default"
                 data-state="Default"
                 data-variant="Default"
-                className="h-10 px-4 py-2 bg-EB-Colors-primary rounded-lg flex justify-center items-center gap-2"
+                className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2"
               >
-                <div className="justify-center text-EB-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
+                <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
                   BUY NOW
                 </div>
               </button>
@@ -235,7 +237,8 @@ export function ExtraPrizesB() {
           <div
             data-portrait="No"
             data-ratio="5:4"
-            className="w-[507px] h-96 rounded-lg inline-flex flex-col justify-start items-start overflow-hidden bg-PP-Colors-secondary relative"
+            className="w-[654px] h-[600px]  rounded-lg inline-flex flex-col justify-start items-start overflow-hidden relative"
+            style={{ backgroundImage: "url(/src/assets/images/img-extra.png)", backgroundSize: "cover", backgroundPosition: "center" }}
           />
         </div>
 
@@ -250,15 +253,15 @@ export function ExtraPrizesB() {
               data-show-description="false"
               data-show-images="false"
               data-show-winners="true"
-              className="bg-EB-Colors-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-start items-start overflow-hidden"
+              className="bg-Colors-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-start items-start overflow-hidden"
             >
               <div className="self-stretch h-36 min-h-36 px-6 bg-EB-Colors-secondary inline-flex justify-between items-center">
                 <div className="flex-1 py-6 inline-flex flex-col justify-start items-start gap-4">
                   <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                    <div className="self-stretch justify-start text-EB-Colors-secondary-foreground text-xs font-bold font-primary uppercase">
+                    <div className="self-stretch justify-start text-Colors-secondary-foreground text-xs font-bold font-primary uppercase">
                       4 Winners
                     </div>
-                    <div className="self-stretch max-h-16 justify-start text-EB-Colors-secondary-foreground text-xl font-semibold font-primary line-clamp-2">
+                    <div className="self-stretch max-h-16 justify-start text-Colors-secondary-foreground text-xl font-semibold font-primary line-clamp-2">
                       {i === 1
                         ? "$5,000 cash prize"
                         : i === 2
@@ -272,11 +275,11 @@ export function ExtraPrizesB() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-EB-Colors-alt-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-center items-center gap-1">
-                  <div className="w-20 text-center justify-start text-EB-Colors-alt-foreground text-xs font-normal font-primary">
+                <div className="p-4 bg-Colors-alt-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-center items-center gap-1">
+                  <div className="w-20 text-center justify-start text-Colors-alt-foreground text-xs font-normal font-primary">
                     Deadline
                   </div>
-                  <div className="w-20 text-center justify-center text-EB-Colors-alt-foreground text-lg font-bold font-primary leading-tight">
+                  <div className="w-20 text-center justify-center text-Colors-alt-foreground text-lg font-bold font-primary leading-tight">
                     15
                     <br />
                     JAN

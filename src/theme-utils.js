@@ -43,6 +43,22 @@ const toRgb = (c) => {
   return { r: v[0], g: v[1], b: v[2] };
 };
 
+/**
+ * Get the appropriate image variant (light/dark) based on background color
+ * @param {string} baseImagePath - The base image path (should end with -light.png, -light.svg, etc.)
+ * @param {string} backgroundColor - The background color to determine variant
+ * @returns {string} - The full image path with appropriate variant
+ */
+export function getImageVariant(baseImagePath, backgroundColor) {
+  if (!backgroundColor) return baseImagePath;
+  
+  const isDarkBg = isDark(backgroundColor);
+  const variant = isDarkBg ? 'dark' : 'light';
+  
+  // Replace the variant in the path - support both PNG and SVG
+  return baseImagePath.replace(/-light\.(png|svg|jpg|jpeg|webp)$/i, `-${variant}.$1`);
+}
+
 function rgbaString(input, a = 1) {
   const rgb = typeof input === "string" ? toRgb(input) : (input || { r: 0, g: 0, b: 0 });
   const alpha = Math.max(0, Math.min(1, Number(a)));
@@ -84,6 +100,15 @@ export function setCSSVars(el, prefix, obj) {
   Object.entries(obj).forEach(([k, v]) => {
     if (v == null || v === "") return;
     el.style.setProperty(`--${prefix}-${k}`, String(v));
+  });
+}
+
+// Set CSS variables with !important for section overrides
+export function setCSSVarsImportant(el, prefix, obj) {
+  if (!el || !obj) return;
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v == null || v === "") return;
+    el.style.setProperty(`--${prefix}-${k}`, String(v), 'important');
   });
 }
 
@@ -360,4 +385,99 @@ export function encodeState(obj) {
 }
 export function decodeState(str) {
   try { return JSON.parse(decodeURIComponent(escape(atob(str)))); } catch { return null; }
+}
+
+// ---------- section color overrides ----------
+/**
+ * Apply section-specific color overrides to a section element
+ * Uses buildThemeVars to automatically calculate foreground colors
+ */
+export function applySectionColorOverrides(sectionElement, overrides) {
+  if (!sectionElement || !overrides?.enabled || !overrides.values) return;
+  
+  // Get current theme mode
+  const mode = readThemeMode();
+  
+  // Build theme vars with section overrides (same logic as global theme)
+  const sectionThemeVars = buildThemeVars(overrides.values, mode);
+  
+  // Apply the calculated CSS variables to the section with !important to override global theme
+  setCSSVarsImportant(sectionElement, "colors", sectionThemeVars);
+}
+
+/**
+ * Remove section-specific color overrides from a section element
+ */
+export function clearSectionColorOverrides(sectionElement) {
+  if (!sectionElement) return;
+  
+  // Clear all color CSS variables from the section element
+  const colorKeys = [
+    "background", "foreground", "primary", "primary-foreground",
+    "secondary", "secondary-foreground", "alt-background", "alt-foreground",
+    "border", "muted", "muted-foreground", "accent", "accent-foreground",
+    "destructive", "destructive-foreground", "success", "success-foreground",
+    "warning", "warning-foreground"
+  ];
+  
+  colorKeys.forEach(key => {
+    sectionElement.style.removeProperty(`--colors-${key}`);
+  });
+}
+
+/**
+ * Apply global theme to sections that don't have overrides
+ * This ensures global theme changes affect sections without overrides
+ * Sections with overrides are left alone to preserve their calculated colors
+ */
+export function applyGlobalThemeToSectionsWithoutOverrides(globalColors, sectionOverrides = {}) {
+  const mode = readThemeMode();
+  const globalVars = buildThemeVars(globalColors, mode);
+  
+  // Get all section elements
+  const sectionElements = document.querySelectorAll('[data-section]');
+  
+  sectionElements.forEach(sectionElement => {
+    const sectionType = sectionElement.getAttribute('data-section');
+    const sectionOverride = sectionOverrides[sectionType];
+    
+    // Only apply global theme to sections with NO overrides
+    if (!sectionOverride?.values || Object.keys(sectionOverride.values).length === 0) {
+      setCSSVars(sectionElement, "colors", globalVars);
+    }
+    // Sections with overrides are left alone - they keep their calculated colors
+  });
+}
+
+/**
+ * Update sections with partial overrides when global theme changes
+ * This merges global theme with section overrides for sections that have partial overrides
+ */
+export function updateSectionsWithPartialOverrides(globalColors, sectionOverrides = {}) {
+  const mode = readThemeMode();
+  
+  // Get all section elements
+  const sectionElements = document.querySelectorAll('[data-section]');
+  
+  sectionElements.forEach(sectionElement => {
+    const sectionType = sectionElement.getAttribute('data-section');
+    const sectionOverride = sectionOverrides[sectionType];
+    
+    // Only update sections with partial overrides
+    if (sectionOverride?.values && Object.keys(sectionOverride.values).length > 0) {
+      let mergedColors = {
+        ...globalColors,
+        ...sectionOverride.values
+      };
+      
+      // Only calculate foreground if background is overridden but foreground isn't
+      if (sectionOverride.values.background && !sectionOverride.values.foreground) {
+        const calculated = buildThemeVars({ background: sectionOverride.values.background }, mode);
+        mergedColors.foreground = calculated.foreground;
+      }
+      
+      const mergedVars = buildThemeVars(mergedColors, mode);
+      setCSSVarsImportant(sectionElement, "colors", mergedVars);
+    }
+  });
 }

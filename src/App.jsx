@@ -984,6 +984,7 @@ export function MainBuilder() {
     history.replaceState(null, "", `#${payload}`);
   }, [blocks, globalTheme, hydrated, approvedMode]);
 
+
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", themeMode);
   }, [themeMode]);
@@ -1093,6 +1094,8 @@ export function MainBuilder() {
         "secondary-foreground": "#71717a",
       },
     });
+    
+    
     const payload = encodeState({ blocks: [], globalTheme: { colors: {} } });
     history.replaceState(null, "", `#${payload}`);
     setToastMsg("Reset to defaults");
@@ -1623,7 +1626,13 @@ export function MainBuilder() {
         open={themeOpen}
         onClose={() => setThemeOpen(false)}
         onColorsChange={persistColors}
-        onFontsChange={persistFonts} />
+        onFontsChange={persistFonts}
+        sectionOverrides={blocks.reduce((acc, block) => {
+          if (block.overrides?.values && Object.keys(block.overrides.values).length > 0) {
+            acc[block.type] = block.overrides;
+          }
+          return acc;
+        }, {})} />
 
       {/* Variant dock */}
       {blocks.find((b) => b.id === (null /* dock id unused here */)) && (

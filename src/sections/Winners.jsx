@@ -2,7 +2,7 @@ import { ArrowRight, ArrowLeft } from "lucide-react";
 
 export function WinnersA() {
   return (
-    <div className="w-[1440px] py-24 bg-Winners-Colors-background inline-flex flex-col justify-start items-center gap-6 overflow-hidden">
+    <div data-section="winners" className="w-[1440px] py-24 bg-Colors-background inline-flex flex-col justify-start items-center gap-6 overflow-hidden">
       <div className="w-full max-w-[1280px] px-6 flex flex-col justify-start items-center gap-16">
         <div className="self-stretch flex flex-col justify-start items-center gap-16">
           <div className="w-full max-w-[676px] flex flex-col justify-start items-center gap-5">
@@ -18,7 +18,7 @@ export function WinnersA() {
             <div
               data-copy="true"
               data-label="Headline"
-              className="self-stretch text-center justify-start text-Winners-Colors-foreground text-4xl font-bold font-primary leading-10"
+              className="self-stretch text-center justify-start text-Colors-foreground text-4xl font-bold font-primary leading-10"
             >
               Congratulations to our recent winners
             </div>
@@ -48,7 +48,7 @@ export function WinnersA() {
                   data-portrait="No"
                   data-ratio="5:4"
                   className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
-                  style={{ backgroundImage: "url(/src/assets/images/winner4.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                  style={{ backgroundImage: "url(/src/assets/images/winner2.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                 />
               </div>
               <div className="w-full p-1 flex justify-start items-center gap-2">
@@ -66,7 +66,7 @@ export function WinnersA() {
               data-orientation="Horizontal"
               data-state="Default"
               data-variant="Previous"
-              className="w-8 h-8 p-2.5 right-[-48px] top-[50%] absolute bg-Winners-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
+              className="w-8 h-8 p-2.5 right-[-48px] top-[50%] absolute bg-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
             >
               <ArrowLeft className="w-4 h-4 text-Winners-Colors-muted-foreground" />
             </div>
@@ -76,7 +76,7 @@ export function WinnersA() {
               data-orientation="Horizontal"
               data-state="Default"
               data-variant="Next"
-              className="w-8 h-8 p-2.5 left-[1132px] top-[50%] absolute bg-Winners-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
+              className="w-8 h-8 p-2.5 left-[1132px] top-[50%] absolute bg-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
             >
               <ArrowRight className="w-4 h-4 text-Winners-Colors-muted-foreground" />
             </div>
@@ -94,7 +94,7 @@ export function WinnersA() {
                 data-state="Default"
                 className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
               >
-                <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                   Draw Date
                 </div>
               </div>
@@ -111,7 +111,7 @@ export function WinnersA() {
                   data-variant="Default"
                   className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
                 >
-                  <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                  <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                     {d}
                   </div>
                 </div>
@@ -126,7 +126,7 @@ export function WinnersA() {
                 data-state="Default"
                 className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
               >
-                <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                   Event
                 </div>
               </div>
@@ -149,7 +149,7 @@ export function WinnersA() {
                   data-variant="Default"
                   className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
                 >
-                  <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                  <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                     {ev}
                   </div>
                 </div>
@@ -164,7 +164,7 @@ export function WinnersA() {
                 data-state="Default"
                 className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
               >
-                <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                   Winning Number
                 </div>
               </div>
@@ -181,7 +181,7 @@ export function WinnersA() {
                   data-variant="Default"
                   className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
                 >
-                  <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                  <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                     {n}
                   </div>
                 </div>
@@ -196,7 +196,7 @@ export function WinnersA() {
                 data-state="Default"
                 className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
               >
-                <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                   Name
                 </div>
               </div>
@@ -213,7 +213,7 @@ export function WinnersA() {
                   data-variant="Default"
                   className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
                 >
-                  <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                  <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                     {name}
                   </div>
                 </div>
@@ -228,7 +228,7 @@ export function WinnersA() {
                 data-state="Default"
                 className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
               >
-                <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                   Location
                 </div>
               </div>
@@ -245,7 +245,7 @@ export function WinnersA() {
                   data-variant="Default"
                   className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
                 >
-                  <div className="flex-1 justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                  <div className="flex-1 justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                     {loc}
                   </div>
                 </div>
@@ -260,7 +260,7 @@ export function WinnersA() {
                 data-state="Default"
                 className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
               >
-                <div className="flex-1 text-right justify-cener text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                <div className="flex-1 text-right justify-cener text-Colors-foreground text-sm font-normal font-primary leading-tight">
                   Prize
                 </div>
               </div>
@@ -277,7 +277,7 @@ export function WinnersA() {
                   data-variant="Default"
                   className="self-stretch flex-1 min-w-20 p-4 border-b border-Colors-border inline-flex justify-start items-center gap-2.5"
                 >
-                  <div className="flex-1 text-right justify-center text-Winners-Colors-foreground text-sm font-normal font-primary leading-tight">
+                  <div className="flex-1 text-right justify-center text-Colors-foreground text-sm font-normal font-primary leading-tight">
                     {amt}
                   </div>
                 </div>
@@ -301,7 +301,7 @@ export function WinnersA() {
               </div>
 
               <div className="flex justify-center items-center gap-2.5">
-                <div className="justify-center text-Winners-Colors-foreground text-sm font-medium font-primary leading-tight">1-7 of 120</div>
+                <div className="justify-center text-Colors-foreground text-sm font-medium font-primary leading-tight">1-7 of 120</div>
               </div>
 
               <div
@@ -327,7 +327,7 @@ export function WinnersA() {
 
 export function WinnersB() {
   return (
-    <div className="w-[1440px] py-24 bg-Winners-Colors-background inline-flex flex-col justify-start items-center gap-6 overflow-hidden">
+    <div data-section="winners" className="w-[1440px] py-24 bg-Colors-background inline-flex flex-col justify-start items-center gap-6 overflow-hidden">
       <div className="w-full max-w-[1280px] px-6 flex flex-col justify-center items-start gap-16">
         <div className="self-stretch flex flex-col justify-start items-center gap-16">
           <div className="w-full max-w-[676px] flex flex-col justify-start items-center gap-5">
@@ -343,7 +343,7 @@ export function WinnersB() {
             <div
               data-copy="true"
               data-label="Headline"
-              className="self-stretch text-center justify-start text-Winners-Colors-foreground text-4xl font-bold font-primary leading-10"
+              className="self-stretch text-center justify-start text-Colors-foreground text-4xl font-bold font-primary leading-10"
             >
               Congratulations to our recent winners
             </div>
