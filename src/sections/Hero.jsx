@@ -34,7 +34,7 @@ export function HeroA({ preview = false }) {
               </h1>
 
               <div className="flex flex-col" data-display="yes" data-label="Jackpot">
-                <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4">
+                <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4" data-copy data-label="Jackpot Headline">
                   Current estimated payout
                 </span>
                 <span className="text-Colors-foreground text-7xl font-bold font-numbers text-left">
@@ -202,7 +202,7 @@ export function HeroB({ preview = false }) {
 
             {!preview && (
               <div className="flex flex-col justify-center items-center" data-display="no" data-label="Jackpot">
-                <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal">
+                <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal" data-copy data-label="Jackpot Headline">
                   Current estimated payout
                 </div>
                 <div className="justify-start text-Colors-foreground text-7xl font-bold font-numbers ">
