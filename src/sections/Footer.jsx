@@ -77,7 +77,7 @@ function FooterPrimitive({ data }) {
           </div>
         </div>
 
-        <div className="self-stretch outline outline-1 border-zinc-900 flex flex-col justify-start items-start" data-display="yes" data-label="BC Rules">
+        <div className="self-stretch outline outline-1 border-zinc-900 flex flex-col justify-start items-start" data-display="no" data-label="BC Rules">
           <div className="self-stretch p-2.5 bg-white inline-flex justify-between items-center overflow-hidden">
             <div className="justify-start text-black text-sm font-normal leading-relaxed" >
               {oddsText}
