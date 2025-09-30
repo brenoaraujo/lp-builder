@@ -19,7 +19,7 @@ export function ExtraPrizesA() {
               data-label="Section Label"
               className="justify-start text-Colors-muted-foreground text-base font-semibold font-primary"
             >
-              Section label
+              More reasons to play!
             </div>
             <div
               data-copy="yes"
@@ -34,7 +34,7 @@ export function ExtraPrizesA() {
               data-label="Description"
               className="self-stretch text-center justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal"
             >
-              Add a concise value statement that captures reader interest and previews content value. Focus on benefits while keeping it under two lines. Align with your blog categories.
+              More chances to win! Enter early for a chance to win one of our amazing extra prizes.
             </div>
           </div>
           {/* Countdown 
@@ -91,7 +91,18 @@ export function ExtraPrizesA() {
         </div>
 
         <div className="w-[1280px] inline-flex justify-center items-start gap-6 flex-wrap content-start">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
+          {[0, 1, 2, 3, 4, 5].map((i) => {
+            const deadlines = [
+              { day: "15", month: "JAN" },
+              { day: "22", month: "JAN" },
+              { day: "29", month: "JAN" },
+              { day: "5", month: "FEB" },
+              { day: "12", month: "FEB" },
+              { day: "19", month: "FEB" }
+            ];
+            const deadline = deadlines[i];
+            
+            return (
             <div
               key={i}
               data-deadline="box"
@@ -112,12 +123,12 @@ export function ExtraPrizesA() {
                       {i === 1
                         ? "$5,000 cash prize"
                         : i === 2
-                          ? "Relax & recharge: Two all-inclusive stays at Castelvania Spa"
+                          ? "Two all-inclusive stays"
                           : i === 3
                             ? "6 months of free gas"
                             : i === 4
                               ? "Seasonal groceries covered "
-                              : "Two round-trip tickets to a spring vacation destination of your choice"}
+                              : "$20,000 cash prize"}
                     </div>
                   </div>
                 </div>
@@ -127,14 +138,15 @@ export function ExtraPrizesA() {
                     Deadline
                   </div>
                   <div className="w-20 text-center justify-center text-Colors-alt-foreground text-lg font-bold font-primary leading-tight">
-                    15
+                    {deadline.day}
                     <br />
-                    JAN
+                    {deadline.month}
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -163,7 +175,7 @@ export function ExtraPrizesB() {
                 data-label="Section Label"
                 className="justify-start text-Colors-muted-foreground text-base font-semibold font-primary"
               >
-                Section label
+                More reasons to play!
               </div>
               <div
                 data-copy="yes"
@@ -178,7 +190,7 @@ export function ExtraPrizesB() {
                 data-label="Descritpion"
                 className="self-stretch justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal"
               >
-                Add a concise value statement that captures reader interest and previews content value. Focus on benefits while keeping it under two lines. Align with your blog categories.
+                More chances to win! Enter early for a chance to win one of our amazing extra prizes.
               </div>
             </div>
             {/* Countdown
@@ -244,7 +256,18 @@ export function ExtraPrizesB() {
 
         {/* Grid of cards */}
         <div className="w-full grid grid-cols-3 gap-6 content-start">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
+          {[0, 1, 2, 3, 4, 5].map((i) => {
+            const deadlines = [
+              { day: "15", month: "JAN" },
+              { day: "22", month: "JAN" },
+              { day: "29", month: "JAN" },
+              { day: "5", month: "FEB" },
+              { day: "12", month: "FEB" },
+              { day: "19", month: "FEB" }
+            ];
+            const deadline = deadlines[i];
+            
+            return (
             <div
               key={i}
               data-deadline="box"
@@ -265,12 +288,12 @@ export function ExtraPrizesB() {
                       {i === 1
                         ? "$5,000 cash prize"
                         : i === 2
-                          ? "Relax & recharge: Two all-inclusive stays at Castelvania Spa"
+                          ? "Two all-inclusive stays"
                           : i === 3
                             ? "6 months of free gas"
                             : i === 4
                               ? "Seasonal groceries covered "
-                              : "Two round-trip tickets to a spring vacation destination of your choice"}
+                              : "$20,000 cash prize"}
                     </div>
                   </div>
                 </div>
@@ -280,14 +303,15 @@ export function ExtraPrizesB() {
                     Deadline
                   </div>
                   <div className="w-20 text-center justify-center text-Colors-alt-foreground text-lg font-bold font-primary leading-tight">
-                    15
+                    {deadline.day}
                     <br />
-                    JAN
+                    {deadline.month}
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
       </div>

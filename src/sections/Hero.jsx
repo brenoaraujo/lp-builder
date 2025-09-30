@@ -30,12 +30,12 @@ export function HeroA({ preview = false }) {
                 data-maxchars="60"
                 className="text-Colors-foreground font-headline text-4xl text-left font-bold leading-[48px]"
               >
-                A simple but powerful headline that sells!
+                Be the change and enter for a chance to win!
               </h1>
 
               <div className="flex flex-col" data-display="yes" data-label="Jackpot">
                 <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4" data-copy data-label="Jackpot Headline">
-                  Current estimated payout
+                  Winner's Estimated Take Home Prize
                 </span>
                 <span className="text-Colors-foreground text-7xl font-bold font-numbers text-left">
                   $1,346,000
@@ -195,7 +195,7 @@ export function HeroB({ preview = false }) {
                   data-maxchars="60"
                   className="self-stretch text-center justify-center text-Colors-foreground text-4xl font-bold font-headline leading-[48px]"
                 >
-                  A simple but powerful headline that sells!
+                  Be the change and enter for a chance to win!
                 </div>
               </div>
             </div>
@@ -203,7 +203,7 @@ export function HeroB({ preview = false }) {
             {!preview && (
               <div className="flex flex-col justify-center items-center" data-display="no" data-label="Jackpot">
                 <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal" data-copy data-label="Jackpot Headline">
-                  Current estimated payout
+                  Winner's Estimated Take Home Prize
                 </div>
                 <div className="justify-start text-Colors-foreground text-7xl font-bold font-numbers ">
                   $1,346,000

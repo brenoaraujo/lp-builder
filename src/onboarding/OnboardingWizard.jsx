@@ -554,7 +554,7 @@ export default function OnboardingWizard() {
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Edit Hero Sections</h2>
+                                <h2 className="text-4xl font-medium">Edit Hero Section</h2>
                                 <p className="text-base text-slate-500">
                                 Customize your hero section by enabling desired components and adjusting copy.
                                 </p>
@@ -600,7 +600,7 @@ export default function OnboardingWizard() {
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Edit Extra Prizes Sections</h2>
+                                <h2 className="text-4xl font-medium">Edit Extra Prizes Section</h2>
                                 <p className="text-base text-slate-500">
                                 Customize your extra prizes section by enabling desired components and adjusting copy.
                                 </p>
