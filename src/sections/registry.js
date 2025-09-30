@@ -44,9 +44,9 @@ export const SECTIONS = {
     labels: ["Winners A", "Winners B"],
   },
   feature: {
-    label: "Feature",
-    variants: [FeatureA, FeatureB],     // or [SponsorsA] if only one
-    labels: ["Feature A", "Feature B"],     // optional
+    label: "Extra Content",
+    variants: [FeatureA, FeatureB],
+    labels: ["Extra Content A", "Extra Content B"],
   },
   WhoYouHelp: {
     label: "How You Help",

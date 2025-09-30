@@ -37,12 +37,12 @@ function FooterPrimitive({ data }) {
         <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] bg-Colors-muted-background" />
 
         <div className="self-stretch inline-flex justify-between items-center" data-display="yes" data-label="Sell by Phone">
-          <div
+          {/*<div
             className="text-center justify-start text-Colors-foreground text-base font-bold leading-tight"
              
           >
             {phoneText}
-          </div>
+          </div>*/}
           <div className="flex justify-start items-center gap-2" >
             <div className="text-center justify-start text-Colors-foreground text-sm font-normal leading-none" >
               We accept

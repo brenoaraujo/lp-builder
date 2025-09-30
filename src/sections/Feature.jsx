@@ -60,7 +60,7 @@ export function FeatureA() {
                             className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
                         >
                             <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
-                                Buy Now
+                                Learn More
                             </div>
                         </div>
 
@@ -174,7 +174,7 @@ export function FeatureB() {
                             className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
                         >
                             <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
-                                Buy Now
+                            Learn More
                             </div>
                         </div>
 

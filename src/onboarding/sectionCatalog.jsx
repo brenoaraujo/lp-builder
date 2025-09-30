@@ -122,10 +122,10 @@ export const SECTIONS = {
   },
 
   feature: {
-    title: "Featured",
+    title: "Extra Content",
     variants: [
-      { key: "A", label: "Featured A" },
-      { key: "B", label: "Featured B" },
+      { key: "A", label: "Extra Content A" },
+      { key: "B", label: "Extra Content B" },
     ],
     thumbnail: (key = "A") => (
       <ThumbFrame>

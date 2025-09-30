@@ -228,7 +228,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
                             <ArrowLeft className="mr-1 h-4 w-4" /> Back
                         </Button>
                         <h2 className="text-4xl font-medium">Design</h2>
-                        <p className="text-base text-slate-500">Select colors and fonts</p>
+                        <p className="text-base text-slate-500">Adjust colors to your brand. </p>
                     </div>
                 </div>
 
@@ -347,12 +347,17 @@ function SectionPreview({ k, state }) {
 }
 
 function ComposedPreview({ overrides }) {
+    // Get all extra content section keys
+    const extraContentKeys = Object.keys(overrides).filter(key => key.startsWith('extraContent_'));
+    
     return (
         <div className="mx-auto">
             <SectionPreview k="hero" state={overrides.hero} />
             <SectionPreview k="extraPrizes" state={overrides.extraPrizes} />
             <SectionPreview k="winners" state={overrides.winners} />
-            <SectionPreview k="feature" state={overrides.feature} />
+            {extraContentKeys.map(key => (
+                <SectionPreview key={key} k={key} state={overrides[key]} />
+            ))}
             <SectionPreview k="WhoYouHelp" state={overrides.WhoYouHelp} />
         </div>
     );
@@ -363,7 +368,7 @@ function resolveByVariant(sectionKey, variant = "A") {
     if (sectionKey === "hero") return variant === "B" ? HeroB : HeroA;
     if (sectionKey === "extraPrizes") return variant === "B" ? ExtraPrizesB : ExtraPrizesA;
     if (sectionKey === "winners") return variant === "B" ? WinnersB : WinnersA;
-    if (sectionKey === "feature") return variant === "B" ? FeatureB : FeatureA;
+    if (sectionKey === "feature" || sectionKey.startsWith("extraContent_")) return variant === "B" ? FeatureB : FeatureA;
     if (sectionKey === "WhoYouHelp") return variant === "B" ? WhoYouHelpB : WhoYouHelpA;
     return null;
 }
@@ -377,7 +382,7 @@ function StepHeader({ currentIndex }) {
     return (
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b">
             <div className="mx-auto max-w-[1100px] py-3 flex items-center gap-3 justify-between box-border">
-                <div className="text-xl font-bold">LP BUILDER</div>
+                <div className="text-xl font-bold">Landing Page Builder</div>
                 <div className="flex items-center gap-2">
                     <div className="w-48">
                         <Progress value={pct} />
@@ -439,9 +444,12 @@ export default function OnboardingWizard() {
         setVariant,
         setDisplay,
         setCopy,
+        addExtraContentSection,
+        getExtraContentSections,
     } = useBuilderOverrides();
 
     const [stepIndex, setStepIndex] = useState(0);
+    const [currentExtraContentKey, setCurrentExtraContentKey] = useState(null);
     const stepKey = STEP_KEYS[stepIndex];
 
     const advance = (steps = 1) =>
@@ -464,7 +472,6 @@ export default function OnboardingWizard() {
         });
         
         // hide optional sections by default
-        if (overridesBySection.feature?.visible === undefined) setVisible("feature", false);
         if (overridesBySection.WhoYouHelp?.visible === undefined) setVisible("WhoYouHelp", false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -496,25 +503,24 @@ export default function OnboardingWizard() {
                             <div className="space-y-4">
                                 <h1 className="text-3xl font-bold">Welcome! Let’s set up your page.</h1>
                                 <p className="text-muted-foreground">
-                                    We’ll pick a Hero layout, then turn sections on/off and tweak copy.
-                                    Your live builder updates instantly and will be ready when you finish.
+                                By walking through this document you'll be able to choose which components to include on your site, customize text, images, colours and more!
                                 </p>
                                 <div className="flex gap-3">
                                     <Button onClick={next}>
                                         Start
                                         <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
-                                    <Button variant="ghost" onClick={finish}>Skip for now</Button>
+                                   {/*  <Button variant="ghost" onClick={finish}>Skip for now</Button> */}
                                 </div>
                             </div>
                             <Card>
                                 <CardHeader><CardTitle>What you’ll do</CardTitle></CardHeader>
                                 <CardContent className="text-sm text-muted-foreground space-y-2">
-                                    <div>• Choose Hero A or B</div>
-                                    <div>• Toggle Extra Prizes & Winners</div>
-                                    <div>• Choose to add Featured section</div>
-                                    <div>• Edit headline, CTAs, and labels</div>
-                                    <div>• Review and finish</div>
+                                    <div>• Provide charity information</div>
+                                    <div>• Select site components</div>
+                                    <div>• Customize language</div>
+                                    <div>• Upload images and documents</div>
+                                    <div>• Customize site colours</div>
                                 </CardContent>
                             </Card>
                         </div>
@@ -529,7 +535,7 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Choose Hero Layout</h2>
                                 <p className="text-base text-slate-500">
-                                    Select how your hero section will looks like
+                                Select your preferred hero format
                                 </p>
                             </div>
                             <VariantCarousel
@@ -548,9 +554,9 @@ export default function OnboardingWizard() {
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Edit Hero components</h2>
+                                <h2 className="text-4xl font-medium">Edit Hero Sections</h2>
                                 <p className="text-base text-slate-500">
-                                    Customize your hero by removing and change components copy
+                                Customize your hero section by enabling desired components and adjusting copy.
                                 </p>
                             </div>
                             <div className="h-full min-h-0">
@@ -577,7 +583,7 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Choose Extra Prizes Layout</h2>
                                 <p className="text-base text-slate-500">
-                                    Select how your Extra Prizes section will looks like
+                                The extra prizes section will highlight early bird and consolation prize details.
                                 </p>
                             </div>
                             <VariantCarousel
@@ -594,9 +600,9 @@ export default function OnboardingWizard() {
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Edit Extra Prizes Components</h2>
+                                <h2 className="text-4xl font-medium">Edit Extra Prizes Sections</h2>
                                 <p className="text-base text-slate-500">
-                                    Customize your Extra Prizes by removing and change components copy
+                                Customize your extra prizes section by enabling desired components and adjusting copy.
                                 </p>
                             </div>
                             <EditorForOnboarding
@@ -621,7 +627,7 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Choose Winners Layout</h2>
                                 <p className="text-base text-slate-500">
-                                    Select how your Winners section will looks like
+                                Select your preferred winners format.
                                 </p>
                             </div>
                             <VariantCarousel
@@ -638,9 +644,9 @@ export default function OnboardingWizard() {
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Edit Winners Components</h2>
+                                <h2 className="text-4xl font-medium">Edit Winners Section</h2>
                                 <p className="text-base text-slate-500">
-                                    Customize your Winners components by removing and change components copy
+                                Customize your winners section by enabling desired components and adjusting copy.
                                 </p>
                             </div>
                             <EditorForOnboarding
@@ -663,9 +669,9 @@ export default function OnboardingWizard() {
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Would you like to add a Featured section?</h2>
+                                <h2 className="text-4xl font-medium">Would you like to add an extra content sections?</h2>
                                 <p className="text-base text-slate-500">
-                                    A Featured section can be used to add custom information to your site, here are some use cases:
+                                Extra content sections allow you to further personalize your site, her are some exampled of how extra content sections can be used:
                                 </p>
                             </div>
                             
@@ -701,45 +707,46 @@ export default function OnboardingWizard() {
                             <div className="flex gap-4">
                                 <Button 
                                     onClick={() => {
-                                        // User wants to add featured section, make it visible and proceed to feature step
-                                        setVisible("feature", true);
+                                        // User wants to add extra content section, create the first one
+                                        const newSectionKey = addExtraContentSection();
+                                        // Store the current section key for the next steps
+                                        setCurrentExtraContentKey(newSectionKey);
                                         advance(1);
                                     }}
                                     className="flex-1"
                                 >
-                                    Yes, add Featured section
+                                    Yes, add Extra Content section
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                                 <Button 
                                     variant="outline"
                                     onClick={() => {
-                                        // User doesn't want featured section, skip to review
-                                        setVisible("feature", false); // hide feature section
+                                        // User doesn't want extra content section, skip to review
                                         setStepIndex(STEP_KEYS.indexOf("review")); // jump to review
                                     }}
                                     className="flex-1"
                                 >
-                                    No, skip Featured section
+                                    No, skip Extra Content section
                                 </Button>
                             </div>
                         </div>
                     )}
 
-                    {stepKey === "feature" && (
+                    {stepKey === "feature" && currentExtraContentKey && (
                         <div className="space-y-12">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Choose Featured Layout</h2>
-                                <p className="text-base text-slate-500">Add custom content to your page</p>
+                                <h2 className="text-4xl font-medium">Choose Extra Content Layout</h2>
+                                <p className="text-base text-slate-500">Select your preferred extra content format.</p>
                             </div>
-                            <VariantCarousel sectionKey="feature" onPicked={() => advance(1)} />
+                            <VariantCarousel sectionKey={currentExtraContentKey} onPicked={() => advance(1)} />
                             <Button
                                 variant="ghost"
                                 onClick={() => {
-                                    setVisible("feature", false); // hide this section
+                                    setVisible(currentExtraContentKey, false); // hide this section
                                     advance(2); // skip its edit step as well
                                 }}
                             >
@@ -748,24 +755,24 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
-                    {stepKey === "featureEdit" && (
+                    {stepKey === "featureEdit" && currentExtraContentKey && (
                         <div className="space-y-12">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Edit Featured Components</h2>
+                                <h2 className="text-4xl font-medium">Edit Extra Content Section</h2>
                                 <p className="text-base text-slate-500">
-                                    Customize your section components by removing and change components copy
+                                    Customize your extra content section by enabling desired components and adjusting copy.
                                 </p>
                             </div>
                             <EditorForOnboarding
-                                sectionKey="feature"
-                                variantKey={overridesBySection.feature?.variant || "A"}
-                                overrides={overridesBySection.feature}
-                                onTogglePart={(id, v) => setDisplay("feature", id, v)}
-                                onCopyChange={(id, t) => setCopy("feature", id, t)}
+                                sectionKey={currentExtraContentKey}
+                                variantKey={overridesBySection[currentExtraContentKey]?.variant || "A"}
+                                overrides={overridesBySection[currentExtraContentKey]}
+                                onTogglePart={(id, v) => setDisplay(currentExtraContentKey, id, v)}
+                                onCopyChange={(id, t) => setCopy(currentExtraContentKey, id, t)}
                                 onSaveNext={() =>
                                     setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                 }
@@ -789,19 +796,21 @@ export default function OnboardingWizard() {
                             <div className="grid gap-6 md:grid-cols-2">
                                 <Card className="p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
                                     <div className="space-y-3 text-center">
-                                        <div className="text-lg font-semibold">Featured Section</div>
+                                        <div className="text-lg font-semibold">Extra Content Section</div>
                                         <p className="text-sm text-slate-600">
-                                            Add another featured section to highlight additional content, features, or information.
+                                            Add another extra content section to highlight additional content, features, or information.
                                         </p>
                                         <Button 
                                             variant="outline" 
                                             className="w-full"
                                             onClick={() => {
-                                                // Go back to feature selection step
+                                                // Create a new extra content section and go to its selection
+                                                const newSectionKey = addExtraContentSection();
+                                                setCurrentExtraContentKey(newSectionKey);
                                                 setStepIndex(STEP_KEYS.indexOf("feature"));
                                             }}
                                         >
-                                            Add Another Featured Section
+                                            Add Another Extra Content Section
                                         </Button>
                                     </div>
                                 </Card>
@@ -905,8 +914,15 @@ export default function OnboardingWizard() {
 
 function VariantCarousel({ sectionKey, onPicked }) {
     const { overridesBySection, setVariant } = useBuilderOverrides();
-    const def =
-        SECTIONS[sectionKey] || { variants: [], thumbnail: () => null, title: sectionKey };
+    
+    // For dynamic extra content sections, use the feature section definition
+    let def;
+    if (sectionKey.startsWith('extraContent_')) {
+        def = SECTIONS.feature || { variants: [], thumbnail: () => null, title: "Extra Content" };
+    } else {
+        def = SECTIONS[sectionKey] || { variants: [], thumbnail: () => null, title: sectionKey };
+    }
+    
     const state = overridesBySection?.[sectionKey] || {};
     const variants = Array.isArray(def.variants) ? def.variants : [];
     const active = state.variant ?? null;
@@ -935,7 +951,7 @@ function VariantCarousel({ sectionKey, onPicked }) {
                     <CardHeader className="py-3">
                         <CardTitle className="text-sm border-b py-2">{v.label}</CardTitle>
                     </CardHeader>
-                    <CardContent className="py-3 text-center">
+                    <CardContent className="py-3 ">
                         {typeof def.thumbnail === "function"
                             ? def.thumbnail(v.key, state)
                             : v.render

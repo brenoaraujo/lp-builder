@@ -29,7 +29,7 @@ function NavPrimitive({ data }) {
 
         {/* Menu */}
         <nav className="flex justify-start items-center gap-1">
-          
+          {/* navbar items 
             <div  className="flex justify-start items-center gap-4">
               <Button variant="ghost" size="sm" className="h-10 px-4 py-2 bg-transparent rounded-md text-Colors-foreground" data-maxchars="40" data-copy data-display="yes"   data-label="Item 01" >Lottery</Button>
               <Button variant="ghost" size="sm" className="h-10 px-4 py-2 bg-transparent rounded-md text-Colors-foreground" data-maxchars="40" data-copy data-display="yes"      data-label="Item 02" >Partners</Button>
@@ -39,7 +39,7 @@ function NavPrimitive({ data }) {
               
               
             </div>
-          
+          */}
         </nav>
 
         {/* CTA */}

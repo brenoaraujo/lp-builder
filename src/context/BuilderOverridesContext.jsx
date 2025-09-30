@@ -38,6 +38,31 @@ export function BuilderOverridesProvider({ children, initial }) {
       setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), variant } })),
     setVisible: (key, visible) =>
       setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), visible } })),
+    addExtraContentSection: () => {
+      const existingKeys = Object.keys(overridesBySection).filter(key => key.startsWith('extraContent_'));
+      const nextIndex = existingKeys.length + 1;
+      const newKey = `extraContent_${nextIndex}`;
+      setOverridesBySection(prev => ({
+        ...prev,
+        [newKey]: { visible: true, variant: 'A', copy: {}, display: {} }
+      }));
+      return newKey;
+    },
+    removeExtraContentSection: (key) => {
+      setOverridesBySection(prev => {
+        const { [key]: removed, ...rest } = prev;
+        return rest;
+      });
+    },
+    getExtraContentSections: () => {
+      return Object.keys(overridesBySection)
+        .filter(key => key.startsWith('extraContent_'))
+        .sort((a, b) => {
+          const aIndex = parseInt(a.split('_')[1]);
+          const bIndex = parseInt(b.split('_')[1]);
+          return aIndex - bIndex;
+        });
+    },
     reset: () => setOverridesBySection({}),
   }), [overridesBySection]);
 

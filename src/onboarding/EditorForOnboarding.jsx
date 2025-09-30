@@ -78,8 +78,15 @@ export default function EditorForOnboarding({
   const approvedMode = false;
   const closePanel = () => { };
 
-  const Variants = SECTIONS_REG[sectionKey]?.variants || [];
-  const Comp = Variants[virtualBlock.variant] || (() => null);
+  // For dynamic extra content sections, use the feature section variants
+  let Variants, Comp;
+  if (sectionKey.startsWith('extraContent_')) {
+    Variants = SECTIONS_REG.feature?.variants || [];
+    Comp = Variants[virtualBlock.variant] || (() => null);
+  } else {
+    Variants = SECTIONS_REG[sectionKey]?.variants || [];
+    Comp = Variants[virtualBlock.variant] || (() => null);
+  }
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)] gap-6">

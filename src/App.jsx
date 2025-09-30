@@ -417,7 +417,13 @@ function SortableBlock({
   } = useSortable({ id, disabled: readOnly });
   const style = { transform: CSS.Transform.toString(transform), transition };
 
-  const entry = SECTIONS[type];
+  // For dynamic extra content sections, use the feature section definition
+  let entry;
+  if (type.startsWith('extraContent_')) {
+    entry = SECTIONS.feature || null;
+  } else {
+    entry = SECTIONS[type];
+  }
   if (!entry) return null;
 
   const variants = entry.variants || [];
@@ -458,6 +464,8 @@ function SortableBlock({
       emitVars(out, "Winners-Colors", overrides.values || {});
     } else if (type === "WhoYouHelp") {
       emitVars(out, "WhoYouHelp-Colors", overrides.values || {});
+    } else if (type.startsWith('extraContent_')) {
+      emitVars(out, "Feature-Colors", overrides.values || {});
     }
     return Object.fromEntries(out);
   }, [overrides, type]);
@@ -633,7 +641,14 @@ function blocksFromOverrides(ovr = {}) {
   if (ovr.hero?.visible !== false) push("hero", ovr.hero?.variant || "A", ovr.hero);
   if (ovr.extraPrizes?.visible !== false) push("extraPrizes", ovr.extraPrizes?.variant || "A", ovr.extraPrizes);
   if (ovr.winners?.visible !== false) push("winners", ovr.winners?.variant || "A", ovr.winners);
-  if (ovr.feature?.visible !== false) push("feature", ovr.feature?.variant || "A", ovr.feature);
+  
+  // Handle dynamic extra content sections
+  Object.keys(ovr).forEach(key => {
+    if (key.startsWith('extraContent_') && ovr[key]?.visible !== false) {
+      push(key, ovr[key]?.variant || "A", ovr[key]);
+    }
+  });
+  
   if (ovr.WhoYouHelp?.visible !== false) push("WhoYouHelp", ovr.WhoYouHelp?.variant || "A", ovr.WhoYouHelp);
   return out.length ? out : [{
     id: crypto?.randomUUID?.() ?? `hero_${Date.now()}`,
@@ -709,19 +724,39 @@ export function MainBuilder() {
     const order = ["hero", "extraPrizes", "winners", "WhoYouHelp"]; // keep this consistent with your app
     const toIndex = (v) => (v === "B" ? 1 : 0);       // "A" → 0, "B" → 1
 
-    return order
-      .filter((k) => (ovr?.[k]?.visible !== false)) // default visible unless explicitly false
-      .map((k) => {
+    const blocks = [];
+    
+    // First, add sections in the standard order
+    order.forEach((k) => {
+      if (ovr?.[k]?.visible !== false) {
         const s = ovr[k] || {};
-        return {
+        blocks.push({
           id: crypto?.randomUUID?.() ?? `b_${k}_${Date.now()}`,
           type: k,
           variant: toIndex(s.variant || "A"),
           controls: s.display || {},
           copy: s.copy || {},
           overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
-        };
-      });
+        });
+      }
+    });
+    
+    // Then, add all extra content sections
+    Object.keys(ovr).forEach((k) => {
+      if (k.startsWith('extraContent_') && ovr[k]?.visible !== false) {
+        const s = ovr[k] || {};
+        blocks.push({
+          id: crypto?.randomUUID?.() ?? `b_${k}_${Date.now()}`,
+          type: k,
+          variant: toIndex(s.variant || "A"),
+          controls: s.display || {},
+          copy: s.copy || {},
+          overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
+        });
+      }
+    });
+    
+    return blocks;
   }
 
 
@@ -826,8 +861,10 @@ export function MainBuilder() {
     // persist so refresh picks it up
     try { localStorage.setItem("theme.colors", JSON.stringify(next)); } catch { }
 
-    // keep React state in sync (so UI shows the new swatches immediately)
-    setGlobalTheme((t) => ({ ...(t || {}), colors: next }));
+    // keep React state in sync (defer to avoid setState during render)
+    setTimeout(() => {
+      setGlobalTheme((t) => ({ ...(t || {}), colors: next }));
+    }, 0);
   }, [globalTheme]);
 
   const persistFonts = useCallback((map) => {
@@ -1002,18 +1039,7 @@ export function MainBuilder() {
     }
 
     // 1) Build the exact payload you already decode on load
-    const payload = encodeState({
-      blocks: blocks.map(b => ({
-        id: b.id,
-        type: b.type,
-        variant: Number.isInteger(b.variant) ? b.variant : 0,
-        controls: b.controls || {},
-        copy: b.copy || {},
-        overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
-      })),
-      // share only the roles you actually use
-      globalTheme: { colors: onlyBaseColors(globalTheme?.colors || {}) },
-    });
+    const payload = encodeState(packSnapshot({ blocks, globalTheme }));
 
     const url = `${location.origin}${location.pathname}#${payload}`;
 
@@ -1341,7 +1367,7 @@ export function MainBuilder() {
       <header className="sticky top-0 z-40 bg-gray-50 backdrop-blur" style={{ ["--header-h"]: "56px" }}>
         <div className="mx-auto w-full flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-base font-semibold tracking-tight text-gray-900">LP Builder — Multiple Blocks</h1>
+            <h1 className="text-base font-semibold tracking-tight text-gray-900">Landing Page Builder</h1>
             {approvedMode && (
               <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-2 py-1 border border-emerald-200">
                 Approved on {new Date(approvedMeta.approvedAt).toLocaleString()}
@@ -1605,9 +1631,6 @@ export function MainBuilder() {
                   <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "winners")}>
                     Winners
                   </Button>
-                  <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "feature")}>
-                    Feature
-                  </Button>
                   <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "WhoYouHelp")}>
                     How You Help
                   </Button>
@@ -1750,45 +1773,6 @@ export function AppRouterShell() {
 export default AppRouterShell;
 
 
-function MainBuilderWithOverrides() {
-  const { overridesBySection } = useBuilderOverrides();      // <-- use context!
-
-
-  const hero = overridesBySection.hero || {};
-  const extra = overridesBySection.extraPrizes || {};
-  const winners = overridesBySection.winners || {};
-  const feature = overridesBySection.feature || {};
-  const whoYouHelp = overridesBySection.WhoYouHelp || {};
-
-  const HeroComponent = hero?.variant === "B" ? HeroB : HeroA;
-  const ExtraPrizesComponent = extra?.variant === "B" ? ExtraPrizesB : ExtraPrizesA;
-  const WinnersComponent = winners?.variant === "B" ? WinnersB : WinnersA;
-  const FeatureComponent = feature?.variant === "B" ? FeatureB : FeatureA;
-  const WhoYouHelpComponent = whoYouHelp?.variant === "B" ? WhoYouHelpB : WhoYouHelpA;
-
-  return (
-    <div data-app-root>
-      <div className="p-2">
-        <a
-          href="#/onboarding"
-          onClick={(e) => {
-            try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); localStorage.removeItem("theme.colors"); localStorage.removeItem("theme.fonts"); reset(); } catch { }
-            // allow the href navigation to happen (no preventDefault)
-          }}
-          className="text-xs underline text-muted-foreground"
-        >
-          Restart onboarding
-        </a>
-      </div>
-
-      {hero.visible !== false && <HeroComponent overrides={hero} />}
-      {extra.visible !== false && <ExtraPrizesComponent overrides={extra} />}
-      {winners.visible !== false && <WinnersComponent overrides={winners} />}
-      {feature.visible !== false && <FeatureComponent overrides={feature} />}
-      {whoYouHelp.visible !== false && <WhoYouHelpComponent overrides={whoYouHelp} />}
-    </div>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /* Hooks                                                              */
