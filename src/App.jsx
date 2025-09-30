@@ -633,7 +633,7 @@ function blocksFromOverrides(ovr = {}) {
   if (ovr.hero?.visible !== false) push("hero", ovr.hero?.variant || "A", ovr.hero);
   if (ovr.extraPrizes?.visible !== false) push("extraPrizes", ovr.extraPrizes?.variant || "A", ovr.extraPrizes);
   if (ovr.winners?.visible !== false) push("winners", ovr.winners?.variant || "A", ovr.winners);
-  if (ovr.feature?.visible !== false) push("feature", ovr.winners?.variant || "A", ovr.feature);
+  if (ovr.feature?.visible !== false) push("feature", ovr.feature?.variant || "A", ovr.feature);
   if (ovr.WhoYouHelp?.visible !== false) push("WhoYouHelp", ovr.WhoYouHelp?.variant || "A", ovr.WhoYouHelp);
   return out.length ? out : [{
     id: crypto?.randomUUID?.() ?? `hero_${Date.now()}`,
@@ -1758,11 +1758,13 @@ function MainBuilderWithOverrides() {
   const extra = overridesBySection.extraPrizes || {};
   const winners = overridesBySection.winners || {};
   const feature = overridesBySection.feature || {};
+  const whoYouHelp = overridesBySection.WhoYouHelp || {};
 
   const HeroComponent = hero?.variant === "B" ? HeroB : HeroA;
   const ExtraPrizesComponent = extra?.variant === "B" ? ExtraPrizesB : ExtraPrizesA;
   const WinnersComponent = winners?.variant === "B" ? WinnersB : WinnersA;
   const FeatureComponent = feature?.variant === "B" ? FeatureB : FeatureA;
+  const WhoYouHelpComponent = whoYouHelp?.variant === "B" ? WhoYouHelpB : WhoYouHelpA;
 
   return (
     <div data-app-root>
@@ -1782,6 +1784,8 @@ function MainBuilderWithOverrides() {
       {hero.visible !== false && <HeroComponent overrides={hero} />}
       {extra.visible !== false && <ExtraPrizesComponent overrides={extra} />}
       {winners.visible !== false && <WinnersComponent overrides={winners} />}
+      {feature.visible !== false && <FeatureComponent overrides={feature} />}
+      {whoYouHelp.visible !== false && <WhoYouHelpComponent overrides={whoYouHelp} />}
     </div>
   );
 }

@@ -352,6 +352,7 @@ function ComposedPreview({ overrides }) {
             <SectionPreview k="hero" state={overrides.hero} />
             <SectionPreview k="extraPrizes" state={overrides.extraPrizes} />
             <SectionPreview k="winners" state={overrides.winners} />
+            <SectionPreview k="feature" state={overrides.feature} />
             <SectionPreview k="WhoYouHelp" state={overrides.WhoYouHelp} />
         </div>
     );
@@ -399,8 +400,12 @@ const STEP_KEYS = [
     "extraPrizesEdit",// edit
     "winners",        // choose
     "winnersEdit",    // edit
-    "WhoYouHelp",     // choose
-    "WhoYouHelpEdit", // edit
+    "extraContentConfirmation", // new confirmation step
+    "feature",        // choose
+    "featureEdit",    // edit
+    "addMoreSections", // option to add more sections
+    "WhoYouHelp",     // choose (optional)
+    "WhoYouHelpEdit", // edit (optional)
     "review",         // review
 ];
 
@@ -453,10 +458,14 @@ export default function OnboardingWizard() {
         // nuke inline overrides so tokens.css values become visible again
         clearInlineColorVars();
         
-        // show all sections by default on first mount
-        SECTION_ORDER.forEach((k) => {
+        // show core sections by default on first mount
+        ["hero", "extraPrizes", "winners"].forEach((k) => {
             if (overridesBySection[k]?.visible === undefined) setVisible(k, true);
         });
+        
+        // hide optional sections by default
+        if (overridesBySection.feature?.visible === undefined) setVisible("feature", false);
+        if (overridesBySection.WhoYouHelp?.visible === undefined) setVisible("WhoYouHelp", false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -503,6 +512,7 @@ export default function OnboardingWizard() {
                                 <CardContent className="text-sm text-muted-foreground space-y-2">
                                     <div>• Choose Hero A or B</div>
                                     <div>• Toggle Extra Prizes & Winners</div>
+                                    <div>• Choose to add Featured section</div>
                                     <div>• Edit headline, CTAs, and labels</div>
                                     <div>• Review and finish</div>
                                 </CardContent>
@@ -646,6 +656,192 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
+                    {stepKey === "extraContentConfirmation" && (
+                        <div className="space-y-12">
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
+                                    <ArrowLeft className="mr-1 h-4 w-4" />
+                                    Back
+                                </Button>
+                                <h2 className="text-4xl font-medium">Would you like to add a Featured section?</h2>
+                                <p className="text-base text-slate-500">
+                                    A Featured section can be used to add custom information to your site, here are some use cases:
+                                </p>
+                            </div>
+                            
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                <Card className="p-6">
+                                    <div className="space-y-3">
+                                        <div className="text-lg font-semibold">How You Help</div>
+                                        <p className="text-sm text-slate-600">
+                                        Highlight information about the benefitting charity or how the raffle proceeds will be utilized
+                                        </p>
+                                    </div>
+                                </Card>
+                                
+                                <Card className="p-6">
+                                    <div className="space-y-3">
+                                        <div className="text-lg font-semibold">Raffle Sponsors</div>
+                                        <p className="text-sm text-slate-600">
+                                        Highlight raffle sponsors
+                                        </p>
+                                    </div>
+                                </Card>
+                                
+                                <Card className="p-6">
+                                    <div className="space-y-3">
+                                        <div className="text-lg font-semibold">Extra Raffle Information</div>
+                                        <p className="text-sm text-slate-600">
+                                        Communicate more information about the raffle such as details about features like memberships
+                                        </p>
+                                    </div>
+                                </Card>
+                            </div>
+                            
+                            <div className="flex gap-4">
+                                <Button 
+                                    onClick={() => {
+                                        // User wants to add featured section, make it visible and proceed to feature step
+                                        setVisible("feature", true);
+                                        advance(1);
+                                    }}
+                                    className="flex-1"
+                                >
+                                    Yes, add Featured section
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                                <Button 
+                                    variant="outline"
+                                    onClick={() => {
+                                        // User doesn't want featured section, skip to review
+                                        setVisible("feature", false); // hide feature section
+                                        setStepIndex(STEP_KEYS.indexOf("review")); // jump to review
+                                    }}
+                                    className="flex-1"
+                                >
+                                    No, skip Featured section
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {stepKey === "feature" && (
+                        <div className="space-y-12">
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
+                                    <ArrowLeft className="mr-1 h-4 w-4" />
+                                    Back
+                                </Button>
+                                <h2 className="text-4xl font-medium">Choose Featured Layout</h2>
+                                <p className="text-base text-slate-500">Add custom content to your page</p>
+                            </div>
+                            <VariantCarousel sectionKey="feature" onPicked={() => advance(1)} />
+                            <Button
+                                variant="ghost"
+                                onClick={() => {
+                                    setVisible("feature", false); // hide this section
+                                    advance(2); // skip its edit step as well
+                                }}
+                            >
+                                Skip this section
+                            </Button>
+                        </div>
+                    )}
+
+                    {stepKey === "featureEdit" && (
+                        <div className="space-y-12">
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
+                                    <ArrowLeft className="mr-1 h-4 w-4" />
+                                    Back
+                                </Button>
+                                <h2 className="text-4xl font-medium">Edit Featured Components</h2>
+                                <p className="text-base text-slate-500">
+                                    Customize your section components by removing and change components copy
+                                </p>
+                            </div>
+                            <EditorForOnboarding
+                                sectionKey="feature"
+                                variantKey={overridesBySection.feature?.variant || "A"}
+                                overrides={overridesBySection.feature}
+                                onTogglePart={(id, v) => setDisplay("feature", id, v)}
+                                onCopyChange={(id, t) => setCopy("feature", id, t)}
+                                onSaveNext={() =>
+                                    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
+                                }
+                            />
+                        </div>
+                    )}
+
+                    {stepKey === "addMoreSections" && (
+                        <div className="space-y-12">
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
+                                    <ArrowLeft className="mr-1 h-4 w-4" />
+                                    Back
+                                </Button>
+                                <h2 className="text-4xl font-medium">Add more sections?</h2>
+                                <p className="text-base text-slate-500">
+                                    You can add additional content sections to make your page even more engaging
+                                </p>
+                            </div>
+                            
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <Card className="p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
+                                    <div className="space-y-3 text-center">
+                                        <div className="text-lg font-semibold">Featured Section</div>
+                                        <p className="text-sm text-slate-600">
+                                            Add another featured section to highlight additional content, features, or information.
+                                        </p>
+                                        <Button 
+                                            variant="outline" 
+                                            className="w-full"
+                                            onClick={() => {
+                                                // Go back to feature selection step
+                                                setStepIndex(STEP_KEYS.indexOf("feature"));
+                                            }}
+                                        >
+                                            Add Another Featured Section
+                                        </Button>
+                                    </div>
+                                </Card>
+                                
+                                <Card className="p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
+                                    <div className="space-y-3 text-center">
+                                        <div className="text-lg font-semibold">How You Help Section</div>
+                                        <p className="text-sm text-slate-600">
+                                            Highlight information about the benefitting charity or how the raffle proceeds will be utilized.
+                                        </p>
+                                        <Button 
+                                            variant="outline" 
+                                            className="w-full"
+                                            onClick={() => {
+                                                // Add WhoYouHelp section and go to its selection
+                                                setVisible("WhoYouHelp", true);
+                                                setStepIndex(STEP_KEYS.indexOf("WhoYouHelp"));
+                                            }}
+                                        >
+                                            Add How You Help Section
+                                        </Button>
+                                    </div>
+                                </Card>
+                            </div>
+                            
+                            <div className="flex gap-4">
+                                <Button 
+                                    variant="outline"
+                                    onClick={() => {
+                                        // User is done adding sections, go to review
+                                        setStepIndex(STEP_KEYS.indexOf("review"));
+                                    }}
+                                    className="flex-1"
+                                >
+                                    I'm done, go to review
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
                     {stepKey === "WhoYouHelp" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
@@ -681,7 +877,6 @@ export default function OnboardingWizard() {
                                     Customize your section components by removing and change components copy
                                 </p>
                             </div>
-                            {/* [FIX] was using winners overrides by mistake */}
                             <EditorForOnboarding
                                 sectionKey="WhoYouHelp"
                                 variantKey={overridesBySection.WhoYouHelp?.variant || "A"}
