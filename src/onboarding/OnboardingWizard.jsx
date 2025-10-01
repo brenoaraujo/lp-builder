@@ -12,7 +12,7 @@ import EditorForOnboarding from "./EditorForOnboarding.jsx";
 import EditableSection from "../components/EditableSection.jsx";
 import { HeroA, HeroB } from "../sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "../sections/ExtraPrizes.jsx";
-import { WinnersA, WinnersB } from "../sections/Winners.jsx";   
+import { WinnersA, WinnersB } from "../sections/Winners.jsx";
 import { WhoYouHelpA, WhoYouHelpB } from "../sections/WhoYouHelp.jsx";
 import { FeatureA, FeatureB } from "../sections/Feature.jsx";
 
@@ -233,7 +233,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
                     </div>
                 </div>
 
-                
+
                 <div className="rounded-xl border bg-white p-5 shadow-sm">
                     {/* Typography (unchanged UI, just uses handlePickFont) -- DON'T REMOVE THIS FEATURE
                     <div className="mb-4">
@@ -292,7 +292,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
                         </div>
                     </div>*/}
 
-                    
+
                     <div className="mb-2">
                         <div className="mb-4 text-md font-semibold">Colors</div>
                         <div className="grid gap-6 sm:grid-cols-2">
@@ -350,7 +350,7 @@ function SectionPreview({ k, state }) {
 function ComposedPreview({ overrides }) {
     // Get all extra content section keys
     const extraContentKeys = Object.keys(overrides).filter(key => key.startsWith('extraContent_'));
-    
+
     return (
         <div className="mx-auto">
             <SectionPreview k="hero" state={overrides.hero} />
@@ -473,27 +473,32 @@ export default function OnboardingWizard() {
             setSearchResults([]);
             return;
         }
-        
+
         setIsSearching(true);
         try {
             console.log('Searching Brandfetch for:', query);
-            
+
             // Try Brandfetch API with correct format
+            const apiKey = import.meta.env.VITE_BRANDFETCH_API_KEY;
+            if (!apiKey) {
+                throw new Error('Brandfetch API key not configured');
+            }
+
             const response = await fetch(`https://api.brandfetch.io/v2/search/${encodeURIComponent(query)}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': 'Bearer BPpPQFtnKE9MXwkbc8cvF7G3EzpasSp/FH6NVyfX2bk=',
+                    'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json',
                 }
             });
-            
+
             console.log('Response status:', response.status);
             console.log('Response headers:', response.headers);
-            
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('API Response:', data);
-                
+
                 // Handle different possible response structures
                 let brands = [];
                 if (data.brands) {
@@ -505,7 +510,7 @@ export default function OnboardingWizard() {
                 } else if (data.data) {
                     brands = data.data;
                 }
-                
+
                 setSearchResults(brands);
             } else {
                 const errorText = await response.text();
@@ -514,7 +519,7 @@ export default function OnboardingWizard() {
             }
         } catch (error) {
             console.error('Brandfetch API Error:', error);
-            
+
             // Enhanced fallback for development/production
             const mockResults = [
                 {
@@ -533,17 +538,17 @@ export default function OnboardingWizard() {
     const [searchTimeout, setSearchTimeout] = useState(null);
     const handleSearchInput = (value) => {
         setSearchQuery(value);
-        
+
         // Clear existing timeout
         if (searchTimeout) {
             clearTimeout(searchTimeout);
         }
-        
+
         // Set new timeout for search
         const timeout = setTimeout(() => {
             searchBrandfetch(value);
         }, 500); // 500ms delay
-        
+
         setSearchTimeout(timeout);
     };
 
@@ -570,19 +575,19 @@ export default function OnboardingWizard() {
     // [KEEP] ensure defaults so previews don't show as blank
     useEffect(() => {
         // Reset colors and fonts to defaults when onboarding starts
-        try { 
-            localStorage.removeItem("theme.colors"); 
-            localStorage.removeItem("theme.fonts"); 
+        try {
+            localStorage.removeItem("theme.colors");
+            localStorage.removeItem("theme.fonts");
         } catch { }
-        
+
         // nuke inline overrides so tokens.css values become visible again
         clearInlineColorVars();
-        
+
         // show core sections by default on first mount
         ["hero", "extraPrizes", "winners"].forEach((k) => {
             if (overridesBySection[k]?.visible === undefined) setVisible(k, true);
         });
-        
+
         // hide optional sections by default
         if (overridesBySection.WhoYouHelp?.visible === undefined) setVisible("WhoYouHelp", false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -615,14 +620,14 @@ export default function OnboardingWizard() {
                             <div className="space-y-4">
                                 <h1 className="text-3xl font-bold">Welcome! Let’s set up your page.</h1>
                                 <p className="text-muted-foreground">
-                                By walking through this document you'll be able to choose which components to include on your site, customize text, images, colours and more!
+                                    By walking through this document you'll be able to choose which components to include on your site, customize text, images, colours and more!
                                 </p>
                                 <div className="flex gap-3">
                                     <Button onClick={next}>
                                         Start
                                         <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
-                                   {/*  <Button variant="ghost" onClick={finish}>Skip for now</Button> */}
+                                    {/*  <Button variant="ghost" onClick={finish}>Skip for now</Button> */}
                                 </div>
                             </div>
                             <Card>
@@ -650,9 +655,25 @@ export default function OnboardingWizard() {
                                     Search for your charity or enter details manually
                                 </p>
                             </div>
-                            
+
                             <div className="grid md:grid-cols-2 gap-8">
                                 <div className="space-y-6">
+                                    {/* Submitter Name - Always visible */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="submitterName">Your Name</Label>
+                                        <div className="relative">
+                                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                id="submitterName"
+                                                placeholder="Enter your full name"
+                                                value={charityInfo.submitterName}
+                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, submitterName: e.target.value }))}
+                                                className="pl-10"
+                                            />
+                                        </div>
+                                    </div>
+
+
                                     {/* Charity Name Search Field */}
                                     <div className="space-y-2">
                                         <Label htmlFor="charitySearch">Charity Name</Label>
@@ -683,8 +704,8 @@ export default function OnboardingWizard() {
                                         <div className="relative">
                                             <div className="absolute top-0 left-0 right-0 z-10 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                                 {searchResults.map((brand, index) => (
-                                                    <div 
-                                                        key={index} 
+                                                    <div
+                                                        key={index}
                                                         className="cursor-pointer hover:bg-gray-50 transition-colors p-3 border-b last:border-b-0"
                                                         onClick={() => selectBrand(brand)}
                                                     >
@@ -692,8 +713,8 @@ export default function OnboardingWizard() {
                                                             {/* Logo with fallback to favicon */}
                                                             <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center">
                                                                 {brand.logo ? (
-                                                                    <img 
-                                                                        src={brand.logo} 
+                                                                    <img
+                                                                        src={brand.logo}
                                                                         alt={`${brand.name} logo`}
                                                                         className="h-8 w-8 object-contain rounded"
                                                                         onError={(e) => {
@@ -704,14 +725,14 @@ export default function OnboardingWizard() {
                                                                                 e.target.src = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=32`;
                                                                             } else {
                                                                                 e.target.style.display = 'none';
-                                                                            e.target.nextSibling.style.display = 'block';
+                                                                                e.target.nextSibling.style.display = 'block';
                                                                             }
                                                                         }}
                                                                     />
                                                                 ) : null}
                                                                 {/* Fallback favicon */}
                                                                 {brand.domain && (
-                                                                    <img 
+                                                                    <img
                                                                         src={`https://www.google.com/s2/favicons?domain=${brand.domain.replace(/^https?:\/\//, '').replace(/^www\./, '')}&sz=32`}
                                                                         alt={`${brand.name} favicon`}
                                                                         className="h-6 w-6 object-contain"
@@ -723,7 +744,7 @@ export default function OnboardingWizard() {
                                                                     />
                                                                 )}
                                                                 {/* Fallback icon */}
-                                                                <div 
+                                                                <div
                                                                     className="h-6 w-6 bg-gray-200 rounded flex items-center justify-center"
                                                                     style={{ display: 'none' }}
                                                                 >
@@ -755,7 +776,7 @@ export default function OnboardingWizard() {
                                                     onChange={(e) => setCharityInfo(prev => ({ ...prev, charityLogo: e.target.value }))}
                                                 />
                                             </div>
-                                            
+
                                             <div className="space-y-2">
                                                 <Label htmlFor="charitySite">Charity Website</Label>
                                                 <Input
@@ -767,24 +788,11 @@ export default function OnboardingWizard() {
                                             </div>
                                         </div>
                                     )}
-                                    
-                                    {/* Submitter Name - Always visible */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="submitterName">Your Name</Label>
-                                        <div className="relative">
-                                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                id="submitterName"
-                                                placeholder="Enter your full name"
-                                                value={charityInfo.submitterName}
-                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, submitterName: e.target.value }))}
-                                                className="pl-10"
-                                            />
-                                        </div>
-                                    </div>
-                                    
+
+
+
                                     <div className="flex gap-3">
-                                        <Button 
+                                        <Button
                                             onClick={next}
                                             disabled={!charityInfo.charityName || !charityInfo.submitterName}
                                         >
@@ -793,7 +801,7 @@ export default function OnboardingWizard() {
                                         </Button>
                                     </div>
                                 </div>
-                                
+
                                 <div className="space-y-4">
                                     <Card>
                                         <CardHeader>
@@ -803,9 +811,9 @@ export default function OnboardingWizard() {
                                             {(charityInfo.charityLogo || charityInfo.charitySite) && (
                                                 <div className="flex justify-center">
                                                     {charityInfo.charityLogo ? (
-                                                        <img 
-                                                            src={charityInfo.charityLogo} 
-                                                            alt="Charity Logo" 
+                                                        <img
+                                                            src={charityInfo.charityLogo}
+                                                            alt="Charity Logo"
                                                             className="h-16 w-auto object-contain"
                                                             onError={(e) => {
                                                                 // Fallback to favicon if logo fails
@@ -821,9 +829,9 @@ export default function OnboardingWizard() {
                                                     ) : null}
                                                     {/* Fallback favicon */}
                                                     {charityInfo.charitySite && (
-                                                        <img 
+                                                        <img
                                                             src={`https://www.google.com/s2/favicons?domain=${charityInfo.charitySite.replace(/^https?:\/\//, '').replace(/^www\./, '')}&sz=64`}
-                                                            alt="Charity Favicon" 
+                                                            alt="Charity Favicon"
                                                             className="h-16 w-16 object-contain"
                                                             style={{ display: charityInfo.charityLogo ? 'none' : 'block' }}
                                                             onError={(e) => {
@@ -833,7 +841,7 @@ export default function OnboardingWizard() {
                                                         />
                                                     )}
                                                     {/* Fallback icon */}
-                                                    <div 
+                                                    <div
                                                         className="h-16 w-16 bg-gray-200 rounded flex items-center justify-center"
                                                         style={{ display: 'none' }}
                                                     >
@@ -871,7 +879,7 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Choose Hero Layout</h2>
                                 <p className="text-base text-slate-500">
-                                Select your preferred hero format
+                                    Select your preferred hero format
                                 </p>
                             </div>
                             <VariantCarousel
@@ -892,7 +900,7 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Edit Hero Section</h2>
                                 <p className="text-base text-slate-500">
-                                Customize your hero section by enabling desired components and adjusting copy.
+                                    Customize your hero section by enabling desired components and adjusting copy.
                                 </p>
                             </div>
                             <div className="h-full min-h-0">
@@ -919,7 +927,7 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Choose Extra Prizes Layout</h2>
                                 <p className="text-base text-slate-500">
-                                The extra prizes section will highlight early bird and consolation prize details.
+                                    The extra prizes section will highlight early bird and consolation prize details.
                                 </p>
                             </div>
                             <VariantCarousel
@@ -938,7 +946,7 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Edit Extra Prizes Section</h2>
                                 <p className="text-base text-slate-500">
-                                Customize your extra prizes section by enabling desired components and adjusting copy.
+                                    Customize your extra prizes section by enabling desired components and adjusting copy.
                                 </p>
                             </div>
                             <EditorForOnboarding
@@ -963,7 +971,7 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Choose Winners Layout</h2>
                                 <p className="text-base text-slate-500">
-                                Select your preferred winners format.
+                                    Select your preferred winners format.
                                 </p>
                             </div>
                             <VariantCarousel
@@ -982,7 +990,7 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Edit Winners Section</h2>
                                 <p className="text-base text-slate-500">
-                                Customize your winners section by enabling desired components and adjusting copy.
+                                    Customize your winners section by enabling desired components and adjusting copy.
                                 </p>
                             </div>
                             <EditorForOnboarding
@@ -1007,41 +1015,41 @@ export default function OnboardingWizard() {
                                 </Button>
                                 <h2 className="text-4xl font-medium">Would you like to add an extra content sections?</h2>
                                 <p className="text-base text-slate-500">
-                                Extra content sections allow you to further personalize your site, her are some exampled of how extra content sections can be used:
+                                    Extra content sections allow you to further personalize your site, her are some exampled of how extra content sections can be used:
                                 </p>
                             </div>
-                            
+
                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                                 <Card className="p-6">
                                     <div className="space-y-3">
                                         <div className="text-lg font-semibold">How You Help</div>
                                         <p className="text-sm text-slate-600">
-                                        Highlight information about the benefitting charity or how the raffle proceeds will be utilized
+                                            Highlight information about the benefitting charity or how the raffle proceeds will be utilized
                                         </p>
                                     </div>
                                 </Card>
-                                
+
                                 <Card className="p-6">
                                     <div className="space-y-3">
                                         <div className="text-lg font-semibold">Raffle Sponsors</div>
                                         <p className="text-sm text-slate-600">
-                                        Highlight raffle sponsors
+                                            Highlight raffle sponsors
                                         </p>
                                     </div>
                                 </Card>
-                                
+
                                 <Card className="p-6">
                                     <div className="space-y-3">
                                         <div className="text-lg font-semibold">Extra Raffle Information</div>
                                         <p className="text-sm text-slate-600">
-                                        Communicate more information about the raffle such as details about features like memberships
+                                            Communicate more information about the raffle such as details about features like memberships
                                         </p>
                                     </div>
                                 </Card>
                             </div>
-                            
+
                             <div className="flex gap-4">
-                                <Button 
+                                <Button
                                     onClick={() => {
                                         // User wants to add extra content section, create the first one
                                         const newSectionKey = addExtraContentSection();
@@ -1054,7 +1062,7 @@ export default function OnboardingWizard() {
                                     Yes, add Extra Content section
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
-                                <Button 
+                                <Button
                                     variant="outline"
                                     onClick={() => {
                                         // User doesn't want extra content section, skip to review
@@ -1128,7 +1136,7 @@ export default function OnboardingWizard() {
                                     You can add additional content sections to make your page even more engaging
                                 </p>
                             </div>
-                            
+
                             <div className="grid gap-6 md:grid-cols-2">
                                 <Card className="p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
                                     <div className="space-y-3 text-center">
@@ -1136,8 +1144,8 @@ export default function OnboardingWizard() {
                                         <p className="text-sm text-slate-600">
                                             Add another extra content section to highlight additional content, features, or information.
                                         </p>
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             className="w-full"
                                             onClick={() => {
                                                 // Create a new extra content section and go to its selection
@@ -1150,15 +1158,15 @@ export default function OnboardingWizard() {
                                         </Button>
                                     </div>
                                 </Card>
-                                
+
                                 <Card className="p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
                                     <div className="space-y-3 text-center">
                                         <div className="text-lg font-semibold">How You Help Section</div>
                                         <p className="text-sm text-slate-600">
                                             Highlight information about the benefitting charity or how the raffle proceeds will be utilized.
                                         </p>
-                                        <Button 
-                                            variant="outline" 
+                                        <Button
+                                            variant="outline"
                                             className="w-full"
                                             onClick={() => {
                                                 // Add WhoYouHelp section and go to its selection
@@ -1171,9 +1179,9 @@ export default function OnboardingWizard() {
                                     </div>
                                 </Card>
                             </div>
-                            
+
                             <div className="flex gap-4">
-                                <Button 
+                                <Button
                                     variant="outline"
                                     onClick={() => {
                                         // User is done adding sections, go to review
@@ -1250,7 +1258,7 @@ export default function OnboardingWizard() {
 
 function VariantCarousel({ sectionKey, onPicked }) {
     const { overridesBySection, setVariant } = useBuilderOverrides();
-    
+
     // For dynamic extra content sections, use the feature section definition
     let def;
     if (sectionKey.startsWith('extraContent_')) {
@@ -1258,7 +1266,7 @@ function VariantCarousel({ sectionKey, onPicked }) {
     } else {
         def = SECTIONS[sectionKey] || { variants: [], thumbnail: () => null, title: sectionKey };
     }
-    
+
     const state = overridesBySection?.[sectionKey] || {};
     const variants = Array.isArray(def.variants) ? def.variants : [];
     const active = state.variant ?? null;
