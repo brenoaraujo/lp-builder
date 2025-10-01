@@ -676,22 +676,12 @@ export default function OnboardingWizard() {
                                                 </div>
                                             )}
                                         </div>
-                                        {/* Debug button - remove in production */}
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            onClick={() => searchBrandfetch('test')}
-                                            className="text-xs"
-                                        >
-                                            Test API
-                                        </Button>
                                     </div>
 
-                                    {/* Search Results */}
+                                    {/* Search Results Dropdown */}
                                     {searchResults.length > 0 && (
-                                        <div className="space-y-2">
-                                            <Label>Search Results</Label>
-                                            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md">
+                                        <div className="relative">
+                                            <div className="absolute top-0 left-0 right-0 z-10 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                                 {searchResults.map((brand, index) => (
                                                     <div 
                                                         key={index} 
@@ -699,20 +689,51 @@ export default function OnboardingWizard() {
                                                         onClick={() => selectBrand(brand)}
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            {brand.logo && (
-                                                                <img 
-                                                                    src={brand.logo} 
-                                                                    alt={`${brand.name} logo`}
-                                                                    className="h-8 w-8 object-contain rounded"
-                                                                    onError={(e) => {
-                                                                        e.target.style.display = 'none';
-                                                                    }}
-                                                                />
-                                                            )}
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="font-medium truncate">{brand.name}</p>
+                                                            {/* Logo with fallback to favicon */}
+                                                            <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center">
+                                                                {brand.logo ? (
+                                                                    <img 
+                                                                        src={brand.logo} 
+                                                                        alt={`${brand.name} logo`}
+                                                                        className="h-8 w-8 object-contain rounded"
+                                                                        onError={(e) => {
+                                                                            // Fallback to favicon if logo fails
+                                                                            const domain = brand.domain || brand.website;
+                                                                            if (domain) {
+                                                                                const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/^www\./, '');
+                                                                                e.target.src = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=32`;
+                                                                            } else {
+                                                                                e.target.style.display = 'none';
+                                                                            e.target.nextSibling.style.display = 'block';
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                ) : null}
+                                                                {/* Fallback favicon */}
                                                                 {brand.domain && (
-                                                                    <p className="text-sm text-muted-foreground truncate">{brand.domain}</p>
+                                                                    <img 
+                                                                        src={`https://www.google.com/s2/favicons?domain=${brand.domain.replace(/^https?:\/\//, '').replace(/^www\./, '')}&sz=32`}
+                                                                        alt={`${brand.name} favicon`}
+                                                                        className="h-6 w-6 object-contain"
+                                                                        style={{ display: brand.logo ? 'none' : 'block' }}
+                                                                        onError={(e) => {
+                                                                            e.target.style.display = 'none';
+                                                                            e.target.nextSibling.style.display = 'block';
+                                                                        }}
+                                                                    />
+                                                                )}
+                                                                {/* Fallback icon */}
+                                                                <div 
+                                                                    className="h-6 w-6 bg-gray-200 rounded flex items-center justify-center"
+                                                                    style={{ display: 'none' }}
+                                                                >
+                                                                    <Building2 className="h-4 w-4 text-gray-500" />
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium truncate text-gray-900">{brand.name}</p>
+                                                                {brand.domain && (
+                                                                    <p className="text-sm text-gray-500 truncate">{brand.domain}</p>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -779,16 +800,45 @@ export default function OnboardingWizard() {
                                             <CardTitle>Preview</CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
-                                            {charityInfo.charityLogo && (
+                                            {(charityInfo.charityLogo || charityInfo.charitySite) && (
                                                 <div className="flex justify-center">
-                                                    <img 
-                                                        src={charityInfo.charityLogo} 
-                                                        alt="Charity Logo" 
-                                                        className="h-16 w-auto object-contain"
-                                                        onError={(e) => {
-                                                            e.target.style.display = 'none';
-                                                        }}
-                                                    />
+                                                    {charityInfo.charityLogo ? (
+                                                        <img 
+                                                            src={charityInfo.charityLogo} 
+                                                            alt="Charity Logo" 
+                                                            className="h-16 w-auto object-contain"
+                                                            onError={(e) => {
+                                                                // Fallback to favicon if logo fails
+                                                                if (charityInfo.charitySite) {
+                                                                    const cleanDomain = charityInfo.charitySite.replace(/^https?:\/\//, '').replace(/^www\./, '');
+                                                                    e.target.src = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=64`;
+                                                                } else {
+                                                                    e.target.style.display = 'none';
+                                                                    e.target.nextSibling.style.display = 'block';
+                                                                }
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    {/* Fallback favicon */}
+                                                    {charityInfo.charitySite && (
+                                                        <img 
+                                                            src={`https://www.google.com/s2/favicons?domain=${charityInfo.charitySite.replace(/^https?:\/\//, '').replace(/^www\./, '')}&sz=64`}
+                                                            alt="Charity Favicon" 
+                                                            className="h-16 w-16 object-contain"
+                                                            style={{ display: charityInfo.charityLogo ? 'none' : 'block' }}
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                e.target.nextSibling.style.display = 'block';
+                                                            }}
+                                                        />
+                                                    )}
+                                                    {/* Fallback icon */}
+                                                    <div 
+                                                        className="h-16 w-16 bg-gray-200 rounded flex items-center justify-center"
+                                                        style={{ display: 'none' }}
+                                                    >
+                                                        <Building2 className="h-8 w-8 text-gray-500" />
+                                                    </div>
                                                 </div>
                                             )}
                                             <div className="text-center space-y-2">
