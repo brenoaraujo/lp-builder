@@ -1369,7 +1369,8 @@ export function MainBuilder() {
       <header className="sticky top-0 z-40 bg-gray-50 backdrop-blur" style={{ ["--header-h"]: "56px" }}>
         <div className="mx-auto w-full flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-base font-semibold tracking-tight text-gray-900">Landing Page Builder</h1>
+          <img src="https://cdn.brandfetch.io/idOQ3T8fjd/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1689300855088" alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
+          <div className="text-sm sm:text-lg font-semibold truncate">Landing Page Builder</div>
             {approvedMode && (
               <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-2 py-1 border border-emerald-200">
                 Approved on {new Date(approvedMeta.approvedAt).toLocaleString()}

@@ -382,7 +382,7 @@ function StepHeader({ currentIndex }) {
     const pct = Math.round((currentIndex / (STEP_KEYS.length - 1)) * 100);
     return (
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b">
-            <div className="mx-auto max-w-[1100px] py-3 px-4 flex items-center gap-2 sm:gap-3 justify-between box-border">
+            <div className="mx-auto max-w-[1100px] py-3 flex items-center gap-2 sm:gap-3 justify-between box-border">
                 <div className="flex items-center gap-1 sm:gap-2 min-w-0">
                     <img src="https://cdn.brandfetch.io/idOQ3T8fjd/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1689300855088" alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
                     <div className="text-sm sm:text-lg font-semibold truncate">Landing Page Builder</div>
