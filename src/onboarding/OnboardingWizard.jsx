@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/select";
 
 //--Icons --
-import { ArrowRight, ArrowLeft, Search, Building2, Globe, User } from "lucide-react";
+import { ArrowRight, ArrowLeft, Search, Building2, Globe, User, HandHeart, Users, Rocket } from "lucide-react";
 
 /* =========================================================================
    Small utilities (colors + fonts)
@@ -666,7 +666,7 @@ export default function OnboardingWizard() {
                                     <div className="space-y-2">
                                         <Label htmlFor="submitterName" className="text-muted-foreground">Your Name</Label>
                                         <div className="relative">
-                                           
+
                                             <Input
                                                 id="submitterName"
                                                 placeholder="Enter your full name"
@@ -682,7 +682,7 @@ export default function OnboardingWizard() {
                                     <div className="space-y-2">
                                         <Label htmlFor="charitySearch" className="text-muted-foreground">Charity Name</Label>
                                         <div className="relative ">
-                                            
+
                                             <Input
                                                 id="charitySearch"
                                                 placeholder="Search for your charity or enter name manually"
@@ -808,9 +808,9 @@ export default function OnboardingWizard() {
                                 {/* Charity preview*/}
                                 <div className="space-y-4">
                                     <div className="space-y-4 bg-white p-6 rounded-lg border border-gray-200 ">
-                                        
-                                            <div className="text-xs font-light text-center text-muted-foreground">PREVIEW</div>
-                                        
+
+                                        <div className="text-xs font-light text-center text-muted-foreground">PREVIEW</div>
+
                                         <div className="space-y-4">
                                             {(charityInfo.charityLogo || charityInfo.charitySite) && (
                                                 <div className="flex justify-center">
@@ -1011,45 +1011,64 @@ export default function OnboardingWizard() {
                     )}
 
                     {stepKey === "extraContentConfirmation" && (
-                        <div className="space-y-12">
+                        <div className="space-y-12 ">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Would you like to add an extra content sections?</h2>
+                                <h2 className="text-4xl font-medium">Would you like to add extra content to your page?</h2>
                                 <p className="text-base text-slate-500">
-                                    Extra content sections allow you to further personalize your site, her are some exampled of how extra content sections can be used:
+                                    Extra content sections allow you to further personalize your site, here are some examples of how extra content sections can be used:
                                 </p>
                             </div>
 
-                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                                <Card className="p-6">
-                                    <div className="space-y-3">
-                                        <div className="text-lg font-semibold">How You Help</div>
-                                        <p className="text-sm text-slate-600">
-                                            Highlight information about the benefitting charity or how the raffle proceeds will be utilized
-                                        </p>
+                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 rounded-lg border border-gray-200 bg-white shadow-md p-12">
+                                <div className="p-6">
+                                    <div className="space-y-4 text-center">
+                                        <div className="flex justify-center">
+                                            <HandHeart className="w-8 h-8" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="text-lg font-semibold">How You Help</div>
+                                            <p className="text-sm text-slate-600">
+                                                Explain how proceeds will support the charity or cause.
+                                            </p>
+                                        </div>
                                     </div>
-                                </Card>
+                                </div>
 
-                                <Card className="p-6">
-                                    <div className="space-y-3">
-                                        <div className="text-lg font-semibold">Raffle Sponsors</div>
-                                        <p className="text-sm text-slate-600">
-                                            Highlight raffle sponsors
-                                        </p>
-                                    </div>
-                                </Card>
+                                <div className="p-6">
+                                    <div className="space-y-4 text-center">
+                                        <div className="flex justify-center">
 
-                                <Card className="p-6">
-                                    <div className="space-y-3">
-                                        <div className="text-lg font-semibold">Extra Raffle Information</div>
-                                        <p className="text-sm text-slate-600">
-                                            Communicate more information about the raffle such as details about features like memberships
-                                        </p>
+                                            <Users className="w-8 h-8" />
+
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="text-lg font-semibold">Raffle Sponsors</div>
+                                            <p className="text-sm text-slate-600">
+                                                Showcase the sponsors who make your raffle possible.
+                                            </p>
+                                        </div>
                                     </div>
-                                </Card>
+                                </div>
+
+                                <div className="p-6">
+                                    <div className="space-y-4 text-center">
+                                        <div className="flex justify-center">
+
+                                            <Rocket className="w-8 h-8" />
+
+                                        </div>
+                                        <div className="space-y-1">
+                                            <div className="text-lg font-semibold">More Raffle Details</div>
+                                            <p className="text-sm text-slate-600">
+                                                Add information such as memberships, features, or other key details.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="flex gap-4">
@@ -1061,10 +1080,10 @@ export default function OnboardingWizard() {
                                         setCurrentExtraContentKey(newSectionKey);
                                         advance(1);
                                     }}
-                                    className="flex-1"
+                                    className=" p-6"
                                 >
-                                    Yes, add Extra Content section
-                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                    Yes, add extra content
+
                                 </Button>
                                 <Button
                                     variant="outline"
@@ -1072,9 +1091,9 @@ export default function OnboardingWizard() {
                                         // User doesn't want extra content section, skip to review
                                         setStepIndex(STEP_KEYS.indexOf("review")); // jump to review
                                     }}
-                                    className="flex-1"
+                                    className=" p-6"
                                 >
-                                    No, skip Extra Content section
+                                    No, skip this step
                                 </Button>
                             </div>
                         </div>
@@ -1092,11 +1111,12 @@ export default function OnboardingWizard() {
                             </div>
                             <VariantCarousel sectionKey={currentExtraContentKey} onPicked={() => advance(1)} />
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 onClick={() => {
                                     setVisible(currentExtraContentKey, false); // hide this section
                                     advance(2); // skip its edit step as well
                                 }}
+                                className=" p-6"
                             >
                                 Skip this section
                             </Button>
@@ -1129,28 +1149,28 @@ export default function OnboardingWizard() {
                     )}
 
                     {stepKey === "addMoreSections" && (
-                        <div className="space-y-12">
+                        <div className="space-y-12 ">
                             <div className="space-y-1">
                                 <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
                                     <ArrowLeft className="mr-1 h-4 w-4" />
                                     Back
                                 </Button>
-                                <h2 className="text-4xl font-medium">Add more sections?</h2>
-                                <p className="text-base text-slate-500">
-                                    You can add additional content sections to make your page even more engaging
-                                </p>
+
                             </div>
 
-                            <div className="grid gap-6 md:grid-cols-2">
-                                <Card className="p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
-                                    <div className="space-y-3 text-center">
-                                        <div className="text-lg font-semibold">Extra Content Section</div>
-                                        <p className="text-sm text-slate-600">
-                                            Add another extra content section to highlight additional content, features, or information.
+                            <div className="flex flex-col items-center justify-center">
+                                <div className="max-w-[720px] rounded-lg border border-gray-200 bg-white shadow-md p-12 text-center items-center justify-center">
+                                    <div className="space-y-1 pb-10">
+                                        <h2 className="text-3xl font-medium">Add more sections?</h2>
+                                        <p className="text-base text-slate-500">
+                                            You can add additional content sections to make your page even more engaging
                                         </p>
+                                    </div>
+                                    <div className="flex gap-4 justify-center items-center flex-col">
+
                                         <Button
-                                            variant="outline"
-                                            className="w-full"
+                                            variant="default"
+                                            className=" p-6 flex-row"
                                             onClick={() => {
                                                 // Create a new extra content section and go to its selection
                                                 const newSectionKey = addExtraContentSection();
@@ -1158,44 +1178,23 @@ export default function OnboardingWizard() {
                                                 setStepIndex(STEP_KEYS.indexOf("feature"));
                                             }}
                                         >
-                                            Add Another Extra Content Section
+                                            Add Extra Content
                                         </Button>
-                                    </div>
-                                </Card>
-
-                                <Card className="p-6 border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors">
-                                    <div className="space-y-3 text-center">
-                                        <div className="text-lg font-semibold">How You Help Section</div>
-                                        <p className="text-sm text-slate-600">
-                                            Highlight information about the benefitting charity or how the raffle proceeds will be utilized.
-                                        </p>
                                         <Button
                                             variant="outline"
-                                            className="w-full"
                                             onClick={() => {
-                                                // Add WhoYouHelp section and go to its selection
-                                                setVisible("WhoYouHelp", true);
-                                                setStepIndex(STEP_KEYS.indexOf("WhoYouHelp"));
+                                                // User is done adding sections, go to review
+                                                setStepIndex(STEP_KEYS.indexOf("review"));
                                             }}
+                                            className="p-6"
                                         >
-                                            Add How You Help Section
+                                            Skip, go to review
                                         </Button>
                                     </div>
-                                </Card>
+
+                                </div>
                             </div>
 
-                            <div className="flex gap-4">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        // User is done adding sections, go to review
-                                        setStepIndex(STEP_KEYS.indexOf("review"));
-                                    }}
-                                    className="flex-1"
-                                >
-                                    I'm done, go to review
-                                </Button>
-                            </div>
                         </div>
                     )}
 
