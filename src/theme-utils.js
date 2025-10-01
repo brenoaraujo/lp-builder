@@ -461,10 +461,20 @@ export function updateSectionsWithPartialOverrides(globalColors, sectionOverride
   
   sectionElements.forEach(sectionElement => {
     const sectionType = sectionElement.getAttribute('data-section');
-    const sectionOverride = sectionOverrides[sectionType];
     
-    // Only update sections with partial overrides
-    if (sectionOverride?.values && Object.keys(sectionOverride.values).length > 0) {
+    // Find the corresponding override - handle extraContent sections
+    let sectionOverride = sectionOverrides[sectionType];
+    if (!sectionOverride && sectionType === 'feature') {
+      // For feature sections, check if any extraContent sections have overrides
+      const extraContentKeys = Object.keys(sectionOverrides).filter(key => key.startsWith('extraContent_'));
+      if (extraContentKeys.length > 0) {
+        // Use the first extraContent override (they should all be the same for feature sections)
+        sectionOverride = sectionOverrides[extraContentKeys[0]];
+      }
+    }
+    
+    // Only update sections with partial overrides that are enabled
+    if (sectionOverride?.enabled && sectionOverride?.values && Object.keys(sectionOverride.values).length > 0) {
       let mergedColors = {
         ...globalColors,
         ...sectionOverride.values

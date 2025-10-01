@@ -2,6 +2,7 @@
 export function FeatureA() {
     return (
         <section
+            data-section="feature"
             data-description="true"
             data-mobile="No"
             data-secondary-action="true"
@@ -104,6 +105,7 @@ export function FeatureA() {
 export function FeatureB() {
     return (
         <section
+            data-section="feature"
             data-description="true"
             data-mobile="No"
             data-secondary-action="true"

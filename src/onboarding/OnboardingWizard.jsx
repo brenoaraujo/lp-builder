@@ -25,6 +25,7 @@ import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readBaselineCol
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -38,7 +39,7 @@ import {
 } from "@/components/ui/select";
 
 //--Icons --
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import { ArrowRight, ArrowLeft, Search, Building2, Globe, User } from "lucide-react";
 
 /* =========================================================================
    Small utilities (colors + fonts)
@@ -399,6 +400,7 @@ function StepHeader({ currentIndex }) {
 // [KEEP] Step keys + helpers
 const STEP_KEYS = [
     "welcome",
+    "charityInfo",    // charity information collection
     "hero",           // choose
     "heroEdit",       // edit
     "extraPrizes",    // choose
@@ -450,10 +452,96 @@ export default function OnboardingWizard() {
 
     const [stepIndex, setStepIndex] = useState(0);
     const [currentExtraContentKey, setCurrentExtraContentKey] = useState(null);
+    const [charityInfo, setCharityInfo] = useState({
+        charityName: "",
+        charityLogo: "",
+        charitySite: "",
+        submitterName: ""
+    });
+    const [searchQuery, setSearchQuery] = useState("");
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [showAdditionalFields, setShowAdditionalFields] = useState(false);
     const stepKey = STEP_KEYS[stepIndex];
 
     const advance = (steps = 1) =>
         setStepIndex((i) => Math.min(i + steps, STEP_KEYS.length - 1));
+
+    // Brandfetch search function with CORS handling
+    const searchBrandfetch = async (query) => {
+        if (!query.trim()) {
+            setSearchResults([]);
+            return;
+        }
+        
+        setIsSearching(true);
+        try {
+            // Try Brandfetch API (works in production)
+            const response = await fetch(`https://api.brandfetch.io/v2/search/${encodeURIComponent(query)}`, {
+                headers: {
+                    'Authorization': 'BPpPQFtnKE9MXwkbc8cvF7G3EzpasSp/FH6NVyfX2bk=',
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                setSearchResults(data.brands || []);
+            } else {
+                throw new Error('API request failed');
+            }
+        } catch (error) {
+            console.log('Brandfetch API not available (likely CORS in development), using fallback');
+            // Fallback for development/localhost - simulate search results
+            const mockResults = [
+                {
+                    name: query,
+                    domain: `https://${query.toLowerCase().replace(/\s+/g, '')}.org`,
+                    logo: `https://logo.clearbit.com/${query.toLowerCase().replace(/\s+/g, '')}.org`
+                }
+            ];
+            setSearchResults(mockResults);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    // Debounced search function
+    const [searchTimeout, setSearchTimeout] = useState(null);
+    const handleSearchInput = (value) => {
+        setSearchQuery(value);
+        
+        // Clear existing timeout
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        // Set new timeout for search
+        const timeout = setTimeout(() => {
+            searchBrandfetch(value);
+        }, 500); // 500ms delay
+        
+        setSearchTimeout(timeout);
+    };
+
+    const selectBrand = (brand) => {
+        setCharityInfo({
+            charityName: brand.name,
+            charityLogo: brand.logo,
+            charitySite: brand.domain,
+            submitterName: charityInfo.submitterName
+        });
+        setSearchResults([]);
+        setSearchQuery(brand.name);
+        setShowAdditionalFields(true); // Show additional fields when brand is selected
+    };
+
+    const handleEnterKey = () => {
+        if (searchQuery.trim()) {
+            setCharityInfo(prev => ({ ...prev, charityName: searchQuery }));
+            setSearchResults([]);
+            setShowAdditionalFields(true); // Show additional fields when user presses enter
+        }
+    };
 
     // [KEEP] ensure defaults so previews don't show as blank
     useEffect(() => {
@@ -523,6 +611,171 @@ export default function OnboardingWizard() {
                                     <div>• Customize site colours</div>
                                 </CardContent>
                             </Card>
+                        </div>
+                    )}
+
+                    {stepKey === "charityInfo" && (
+                        <div className="space-y-12">
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
+                                    <ArrowLeft className="mr-1 h-4 w-4" />
+                                    Back
+                                </Button>
+                                <h2 className="text-4xl font-medium">Charity Information</h2>
+                                <p className="text-base text-slate-500">
+                                    Search for your charity or enter details manually
+                                </p>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    {/* Charity Name Search Field */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="charitySearch">Charity Name</Label>
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                id="charitySearch"
+                                                placeholder="Search for your charity or enter name manually"
+                                                value={searchQuery}
+                                                onChange={(e) => handleSearchInput(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        handleEnterKey();
+                                                    }
+                                                }}
+                                                className="pl-10"
+                                            />
+                                            {isSearching && (
+                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Search Results */}
+                                    {searchResults.length > 0 && (
+                                        <div className="space-y-2">
+                                            <Label>Search Results</Label>
+                                            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md">
+                                                {searchResults.map((brand, index) => (
+                                                    <div 
+                                                        key={index} 
+                                                        className="cursor-pointer hover:bg-gray-50 transition-colors p-3 border-b last:border-b-0"
+                                                        onClick={() => selectBrand(brand)}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            {brand.logo && (
+                                                                <img 
+                                                                    src={brand.logo} 
+                                                                    alt={`${brand.name} logo`}
+                                                                    className="h-8 w-8 object-contain rounded"
+                                                                    onError={(e) => {
+                                                                        e.target.style.display = 'none';
+                                                                    }}
+                                                                />
+                                                            )}
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-medium truncate">{brand.name}</p>
+                                                                {brand.domain && (
+                                                                    <p className="text-sm text-muted-foreground truncate">{brand.domain}</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Additional Fields - Only shown after selection or enter */}
+                                    {showAdditionalFields && (
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="charityLogo">Charity Logo URL</Label>
+                                                <Input
+                                                    id="charityLogo"
+                                                    placeholder="https://example.com/logo.png"
+                                                    value={charityInfo.charityLogo}
+                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, charityLogo: e.target.value }))}
+                                                />
+                                            </div>
+                                            
+                                            <div className="space-y-2">
+                                                <Label htmlFor="charitySite">Charity Website</Label>
+                                                <Input
+                                                    id="charitySite"
+                                                    placeholder="https://yourcharity.org"
+                                                    value={charityInfo.charitySite}
+                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, charitySite: e.target.value }))}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {/* Submitter Name - Always visible */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="submitterName">Your Name</Label>
+                                        <div className="relative">
+                                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                id="submitterName"
+                                                placeholder="Enter your full name"
+                                                value={charityInfo.submitterName}
+                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, submitterName: e.target.value }))}
+                                                className="pl-10"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex gap-3">
+                                        <Button 
+                                            onClick={next}
+                                            disabled={!charityInfo.charityName || !charityInfo.submitterName}
+                                        >
+                                            Continue
+                                            <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Preview</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            {charityInfo.charityLogo && (
+                                                <div className="flex justify-center">
+                                                    <img 
+                                                        src={charityInfo.charityLogo} 
+                                                        alt="Charity Logo" 
+                                                        className="h-16 w-auto object-contain"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="text-center space-y-2">
+                                                <h3 className="font-semibold">
+                                                    {charityInfo.charityName || "Your Charity Name"}
+                                                </h3>
+                                                {charityInfo.charitySite && (
+                                                    <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                                                        <Globe className="h-3 w-3" />
+                                                        <span>{charityInfo.charitySite}</span>
+                                                    </div>
+                                                )}
+                                                <p className="text-xs text-muted-foreground">
+                                                    Submitted by: {charityInfo.submitterName || "Your Name"}
+                                                </p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
                         </div>
                     )}
 

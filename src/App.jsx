@@ -16,9 +16,10 @@ import OnboardingWizard from "./onboarding/OnboardingWizard.jsx";
 import EditorForOnboarding from "./onboarding/EditorForOnboarding.jsx";
 import { SECTIONS } from "./sections/registry.js";
 import EditorSidebar from "./components/EditorSidebar.jsx";
+import { useBuilderOverrides } from "./context/BuilderOverridesContext.jsx";
 
 // Theme + utilities
-import { applySavedTheme, applyThemeSnapshot, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults, readThemeMode, loadGoogleFont, applyFonts } from "./theme-utils.js"
+import { applySavedTheme, applyThemeSnapshot, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults, readThemeMode, loadGoogleFont, applyFonts, setCSSVarsImportant } from "./theme-utils.js"
 import { snapshotThemeNow } from "./theme-utils.js";
 import ThemeAside from "@/components/ThemeAside.jsx";
 
@@ -54,8 +55,6 @@ import { toast } from "sonner";
 import * as AutoScalerMod from "@/components/AutoScaler";
 import * as EditableSectionMod from "@/components/EditableSection";
 
-import { useBuilderOverrides }
-  from "./context/BuilderOverridesContext.jsx";
 import { SECTION_ORDER } from "./onboarding/sectionCatalog.jsx";
 
 
@@ -197,8 +196,8 @@ function unpackSnapshot(obj) {
 // Simple hash-route hook
 function useHashRoute() {
   const get = () => location.hash.replace(/^#/, "");
-  const [route, setRoute] = React.useState(get);
-  React.useEffect(() => {
+  const [route, setRoute] = useState(get);
+  useEffect(() => {
     const onHash = () => setRoute(get());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
@@ -437,43 +436,44 @@ function SortableBlock({
 
   const listParts = Array.isArray(parts) ? parts : parts && typeof parts === "object" ? Object.values(parts) : [];
 
-  // Build CSS vars when overrides are enabled
-  const emitVars = (entries, prefix, values) => {
-    if (!values) return;
-    const keys = [
-      "background", "foreground", "muted-foreground", "alt-background", "alt-foreground",
-      "primary", "primary-foreground", "border", "secondary", "secondary-foreground",
-    ];
-    const variants = [prefix, prefix.toLowerCase()];
-    for (const pfx of variants) for (const k of keys) {
-      const v = values[k]; if (!v) continue; entries.push([`--${pfx}-${k}`, v]);
-    }
-  };
+  // Apply section color overrides using the same approach as ThemeAside
+  useEffect(() => {
+    if (!overrides?.enabled || !overrides.values) return;
+    
+    // For extraContent sections, use "feature" as the data-section attribute
+    const sectionType = type.startsWith('extraContent_') ? 'feature' : type;
+    const sectionElement = document.querySelector(`[data-section="${sectionType}"]`);
+    if (!sectionElement) return;
 
-  const overrideStyle = useMemo(() => {
-    if (!overrides?.enabled) return undefined;
-    const out = [];
-    if (type === "hero") {
-      emitVars(out, "Hero-Colors", overrides.values || {});
-      emitVars(out, "PP-Colors", overrides.valuesPP || {});
-    } else if (type === "pricing") {
-      emitVars(out, "PP-Colors", overrides.values || {});
-    } else if (type === "extraPrizes") {
-      emitVars(out, "EB-Colors", overrides.values || {});
-    } else if (type === "winners") {
-      emitVars(out, "Winners-Colors", overrides.values || {});
-    } else if (type === "WhoYouHelp") {
-      emitVars(out, "WhoYouHelp-Colors", overrides.values || {});
-    } else if (type.startsWith('extraContent_')) {
-      emitVars(out, "Feature-Colors", overrides.values || {});
-    }
-    return Object.fromEntries(out);
+    // Get current global theme colors
+    const globalColors = readTokenDefaults();
+    const mode = readThemeMode();
+    
+    // Merge global colors with overrides (only the changed colors)
+    const mergedColors = {
+      ...globalColors,
+      ...overrides.values
+    };
+    
+    // Build theme variables with proper foreground calculation
+    const themeVars = buildThemeVars(mergedColors, mode);
+    
+    // Apply with !important to override global theme
+    setCSSVarsImportant(sectionElement, "colors", themeVars);
+    
+    // Cleanup function to remove overrides when component unmounts
+    return () => {
+      // Remove the !important overrides to fall back to global theme
+      Object.keys(themeVars).forEach(key => {
+        sectionElement.style.removeProperty(`--colors-${key}`);
+      });
+    };
   }, [overrides, type]);
 
   return (
     <div
       ref={setNodeRef}
-      style={{ ...style, ...overrideStyle }}
+      style={style}
       className={[
         "relative bg-white  transition overflow-visible",
         selected ? "z-10 outline outline-2 outline-blue-500 ring-0"
@@ -506,11 +506,10 @@ function SortableBlock({
       {/* Canvas content */}
       <div
         ref={contentRef}
-        style={overrideStyle}
         onClick={(e) => { e.stopPropagation(); onSelect?.(id); window.dispatchEvent(new Event("lp:section-selected")); }}
       >
         <AutoScaler designWidth={1440} targetWidth={targetWidth} maxHeight={9999}>
-          <div data-scope={type} style={overrideStyle}>
+          <div data-scope={type}>
             <EditableSection
               discoverKey={`${id}:${type}:${safeIndex}`}
               controls={controls}
@@ -663,6 +662,7 @@ function blocksFromOverrides(ovr = {}) {
 /* ------------------------------------------------------------------ */
 
 export function MainBuilder() {
+  const { overridesBySection, setSection } = useBuilderOverrides();
 
   const HAS_SNAPSHOT = useMemo(() => {
     const raw = location.hash.startsWith("#") ? location.hash.slice(1) : "";
@@ -1322,10 +1322,12 @@ export function MainBuilder() {
   // Derived view state
   let activeBlock = blocks.find((b) => b.id === activeBlockId) || null;
   if (!activeBlock && activeBlockId === "Navbar") {
-    activeBlock = { id: "Navbar", type: "Navbar", variant: NAVBAR_VARIANT, controls: navbarControls, copy: navbarCopy, overrides: { enabled: false, values: {}, valuesPP: {} } };
+    const navbarOverrides = overridesBySection.Navbar?.theme || { enabled: false, values: {}, valuesPP: {} };
+    activeBlock = { id: "Navbar", type: "Navbar", variant: NAVBAR_VARIANT, controls: navbarControls, copy: navbarCopy, overrides: navbarOverrides };
   }
   if (!activeBlock && activeBlockId === "Footer") {
-    activeBlock = { id: "Footer", type: "Footer", variant: FOOTER_VARIANT, controls: footerControls, copy: footerCopy, overrides: { enabled: false, values: {}, valuesPP: {} } };
+    const footerOverrides = overridesBySection.Footer?.theme || { enabled: false, values: {}, valuesPP: {} };
+    activeBlock = { id: "Footer", type: "Footer", variant: FOOTER_VARIANT, controls: footerControls, copy: footerCopy, overrides: footerOverrides };
   }
   const firstBlockId = blocks[0]?.id ?? null;
   const openEditorOnFirst = () => firstBlockId && setActiveBlockId(firstBlockId);
@@ -1465,6 +1467,8 @@ export function MainBuilder() {
             variantForId={variantForId}
             setBlocks={setBlocks}
             blocks={blocks}
+            setNavbarOverrides={(overrides) => setSection("Navbar", { theme: overrides })}
+            setFooterOverrides={(overrides) => setSection("Footer", { theme: overrides })}
             mode="builder"
           />
         )}
@@ -1650,12 +1654,24 @@ export function MainBuilder() {
         onClose={() => setThemeOpen(false)}
         onColorsChange={persistColors}
         onFontsChange={persistFonts}
-        sectionOverrides={blocks.reduce((acc, block) => {
-          if (block.overrides?.values && Object.keys(block.overrides.values).length > 0) {
-            acc[block.type] = block.overrides;
+        sectionOverrides={(() => {
+          const acc = blocks.reduce((acc, block) => {
+            if (block.overrides?.values && Object.keys(block.overrides.values).length > 0) {
+              acc[block.type] = block.overrides;
+            }
+            return acc;
+          }, {});
+          
+          // Add Navbar and Footer overrides from BuilderOverridesContext
+          if (overridesBySection.Navbar?.theme?.values && Object.keys(overridesBySection.Navbar.theme.values).length > 0) {
+            acc.Navbar = overridesBySection.Navbar.theme;
           }
+          if (overridesBySection.Footer?.theme?.values && Object.keys(overridesBySection.Footer.theme.values).length > 0) {
+            acc.Footer = overridesBySection.Footer.theme;
+          }
+          
           return acc;
-        }, {})} />
+        })()} />
 
       {/* Variant dock */}
       {blocks.find((b) => b.id === (null /* dock id unused here */)) && (
@@ -1756,7 +1772,7 @@ export function AppRouterShell() {
   const isSnapshot = !!hash && !hash.startsWith("/");
 
   // If a share/snapshot URL is present, mark onboarding completed and go straight to the builder.
-  React.useEffect(() => {
+  useEffect(() => {
     if (isSnapshot) {
       try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
     }

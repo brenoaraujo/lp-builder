@@ -10,7 +10,7 @@ export function WinnersA() {
               data-display="true"
               data-copy="true"
               data-label="Section Label"
-              className="text-center justify-start text-Winners-Colors-muted-foreground text-base font-semibold font-primary leading-normal"
+              className="text-center justify-start text-Colors-muted-foreground text-base font-semibold font-primary leading-normal"
             >
               Win Big
             </div>
@@ -27,7 +27,7 @@ export function WinnersA() {
               data-display="true"
               data-copy="true"
               data-label="Description"
-              className="self-stretch text-center justify-start text-Winners-Colors-muted-foreground text-base font-normal font-primary leading-normal"
+              className="self-stretch text-center justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal"
             >
               Winning a prize is thrilling, but the real win is knowing your contribution makes a difference. It’s a win-win—an exciting reward for you and vital support for a great cause!
             </div>
@@ -39,7 +39,7 @@ export function WinnersA() {
                 <div
                   data-portrait="No"
                   data-ratio="5:4"
-                  className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
+                  className="w-[354px] h-[266px] rounded-lg overflow-hidden text-Colors-secondary"
                   style={{ backgroundImage: "url(/images/winner1.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                 />
               </div>
@@ -47,7 +47,7 @@ export function WinnersA() {
                 <div
                   data-portrait="No"
                   data-ratio="5:4"
-                  className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
+                  className="w-[354px] h-[266px] rounded-lg overflow-hidden text-Colors-secondary"
                   style={{ backgroundImage: "url(/images/winner2.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                 />
               </div>
@@ -55,7 +55,7 @@ export function WinnersA() {
                 <div
                   data-portrait="No"
                   data-ratio="5:4"
-                  className="w-[354px] h-[266px] rounded-lg overflow-hidden bg-Winners-Colors-secondary"
+                  className="w-[354px] h-[266px] rounded-lg overflow-hidden text-Colors-secondary"
                   style={{ backgroundImage: "url(/images/winner3.png)", backgroundSize: "cover", backgroundPosition: "center" }}
                 />
               </div>
@@ -68,7 +68,7 @@ export function WinnersA() {
               data-variant="Previous"
               className="w-8 h-8 p-2.5 right-[-48px] top-[50%] absolute bg-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
             >
-              <ArrowLeft className="w-4 h-4 text-Winners-Colors-muted-foreground" />
+              <ArrowLeft className="w-4 h-4 text-Colors-muted-foreground" />
             </div>
 
             {/* Next */}
@@ -78,7 +78,7 @@ export function WinnersA() {
               data-variant="Next"
               className="w-8 h-8 p-2.5 left-[1132px] top-[50%] absolute bg-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
             >
-              <ArrowRight className="w-4 h-4 text-Winners-Colors-muted-foreground" />
+              <ArrowRight className="w-4 h-4 text-Colors-muted-foreground" />
             </div>
           </div>
         </div>
@@ -98,7 +98,7 @@ export function WinnersA() {
                   Draw Date
                 </div>
               </div>
-              {["Feb 14 2025", "Feb 14 2025", "Feb 14 2025", "Feb 14 2025", "Feb 14 2025"].map((d, i) => (
+              {["Dec 15 2024", "Nov 28 2024", "Oct 12 2024", "Sep 5 2024", "Aug 18 2024"].map((d, i) => (
                 <div
                   key={i}
                   data-bold-text="No"
@@ -296,7 +296,7 @@ export function WinnersA() {
                 data-variant="Outline"
                 className="w-28 h-10 px-4 py-2 bg-base-background rounded-md outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2"
               >
-                <ArrowLeft className="w-4 h-4 text-Winners-Colors-muted-foreground" />
+                <ArrowLeft className="w-4 h-4 text-Colors-muted-foreground" />
                 <div className="justify-center text-base-foreground text-sm font-medium font-primary leading-tight">Previous</div>
               </div>
 
@@ -313,9 +313,129 @@ export function WinnersA() {
                 className="w-28 h-10 px-4 py-2 bg-base-background rounded-md outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2"
               >
                 <div className="justify-center text-base-foreground text-sm font-medium font-primary leading-tight">Next</div>
-                <ArrowRight className="w-4 h-4 text-Winners-Colors-muted-foreground" />
+                <ArrowRight className="w-4 h-4 text-Colors-muted-foreground" />
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Winner card data
+const winnersData = [
+  {
+    id: 1,
+    eventType: "Early Bird",
+    date: "Jun 30 2024",
+    eventName: "June 50/50 Draw",
+    prize: "$4,250.00",
+    ticketNumber: "A-356485",
+    winnerName: "Sarah M. • from Toronto  "
+  },
+  {
+    id: 2,
+    eventType: "Early Bird",
+    date: "Jul 15 2024",
+    eventName: "Summer Raffle",
+    prize: "$3,750.00",
+    ticketNumber: "A-356485",
+    winnerName: "Michael K. • from Ottawa  "
+  },
+  {
+    id: 3,
+    eventType: "Early Bird",
+    date: "Jun 15 2024",
+    eventName: "June 50/50 Draw",
+    prize: "$4,850.00",
+    ticketNumber: "A-356485",
+    winnerName: "Jennifer L. • from Hamilton  "
+  },
+  {
+    id: 4,
+    eventType: "Early Bird",
+    date: "Aug 2 2024",
+    eventName: "Summer Raffle",
+    prize: "$3,200.00",
+    ticketNumber: "A-356485",
+    winnerName: "David R. • from London  "
+  },
+  {
+    id: 5,
+    eventType: "June 50/50",
+    date: "Jun 8 2024",
+    eventName: "June 50/50 Draw",
+    prize: "$4,600.00",
+    ticketNumber: "A-356485",
+    winnerName: "Lisa P. • from Windsor  "
+  },
+  {
+    id: 6,
+    eventType: "Early Bird",
+    date: "Jul 22 2024",
+    eventName: "Summer Raffle",
+    prize: "$3,900.00",
+    ticketNumber: "A-356485",
+    winnerName: "Robert C. • from Kitchener  "
+  },
+  {
+    id: 7,
+    eventType: "Early Bird",
+    date: "Jun 1 2024",
+    eventName: "June 50/50 Draw",
+    prize: "$4,100.00",
+    ticketNumber: "A-356485",
+    winnerName: "Amanda T. • from Mississauga  "
+  },
+  {
+    id: 8,
+    eventType: "Early Bird",
+    date: "Jul 8 2024",
+    eventName: "Summer Raffle",
+    prize: "$3,500.00",
+    ticketNumber: "A-356485",
+    winnerName: "Christopher B. • from Brampton  "
+  },
+  {
+    id: 9,
+    eventType: "Early Bird",
+    date: "May 25 2024",
+    eventName: "June 50/50 Draw",
+    prize: "$4,700.00",
+    ticketNumber: "A-356485",
+    winnerName: "Michelle W. • from Markham  "
+  }
+];
+
+// Winner Card Component
+function WinnerCard({ winner, className = "" }) {
+  return (
+    <div 
+      data-show-image="false" 
+      data-show-quote="false" 
+      className={`w-96 self-stretch max-w-96 bg-Colors-alt-background rounded-lg inline-flex flex-col justify-start items-center ${className}`}
+    >
+      <div className="self-stretch p-6 flex flex-col justify-start items-center gap-4">
+        <div className="self-stretch flex flex-col justify-start items-center gap-3">
+          <div className="self-stretch inline-flex justify-between items-center">
+            <div className="text-center self-stretch justify-center text-Colors-alt-foreground text-sm font-normal font-primary w-full">
+              {winner.eventType} • {winner.date}
+            </div>
+          </div>
+          <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+            {winner.eventName}
+          </div>
+        </div>
+        <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-3xl font-black font-primary">
+          {winner.prize}
+        </div>
+        <div className="self-stretch flex flex-col justify-start items-start gap-1">
+          <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-base font-bold font-primary">
+            {winner.ticketNumber}
+          </div>
+          <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+            {winner.winnerName}
           </div>
         </div>
       </div>
@@ -335,7 +455,7 @@ export function WinnersB() {
               data-display="true"
               data-copy="true"
               data-label="Section Label"
-              className="text-center justify-start text-Winners-Colors-muted-foreground text-base font-semibold font-primary leading-normal"
+              className="text-center justify-start text-Colors-muted-foreground text-base font-semibold font-primary leading-normal"
             >
               Win Big
             </div>
@@ -352,7 +472,7 @@ export function WinnersB() {
               data-display="true"
               data-copy="true"
               data-label="Description"
-              className="self-stretch text-center justify-start text-Winners-Colors-muted-foreground text-base font-normal font-primary leading-normal"
+              className="self-stretch text-center justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal"
             >
               Winning a prize is thrilling, but the real win is knowing your contribution makes a difference. It’s a win-win—an exciting reward for you and vital support for a great cause!
             </div>
@@ -362,81 +482,81 @@ export function WinnersB() {
           <div className="w-full max-w-[1200px] flex flex-col justify-start items-start gap-6 overflow-hidden">
             <div className="inline-flex justify-start items-start gap-6">
               {/* Card 1 */}
-              <div data-show-image="false" data-show-quote="false" className="w-96 self-stretch max-w-96 bg-Winners-Colors-alt-background rounded-lg inline-flex flex-col justify-start items-center">
+              <div data-show-image="false" data-show-quote="false" className="w-96 self-stretch max-w-96 bg-Colors-alt-background rounded-lg inline-flex flex-col justify-start items-center">
                 <div className="self-stretch p-6 flex flex-col justify-start items-center gap-4">
                   <div className="self-stretch flex flex-col justify-start items-center gap-3">
                     <div className="self-stretch inline-flex justify-between items-center">
-                      <div className="text-center self-stretch justify-center text-Winners-Colors-alt-foreground text-sm font-normal font-primary w-full">
-                        Early Bird • Feb 14 2025
+                      <div className="text-center self-stretch justify-center text-Colors-alt-foreground text-sm font-normal font-primary w-full">
+                      Early Bird • Jun 30 2024
                       </div>
                     </div>
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                      June 50/50 Draw
                     </div>
                   </div>
-                  <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-3xl font-black font-primary">
-                    $100,004.00
+                  <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-3xl font-black font-primary">
+                    $4,250.00
                   </div>
                   <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-base font-bold font-primary">
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-base font-bold font-primary">
                       A-356485
                     </div>
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                      Amanda T. from Lombardy
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                      Sarah M. • from Toronto  
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Card 2 */}
-              <div data-show-image="false" data-show-quote="false" className="w-96 self-stretch max-w-96 bg-Winners-Colors-alt-background rounded-lg inline-flex flex-col justify-between items-center">
+              <div data-show-image="false" data-show-quote="false" className="w-96 self-stretch max-w-96 bg-Colors-alt-background rounded-lg inline-flex flex-col justify-between items-center">
                 <div className="self-stretch h-52 p-6 flex flex-col justify-center items-center gap-4">
                   <div className="self-stretch flex flex-col justify-start items-center gap-3">
                     <div className="self-stretch inline-flex justify-between items-center">
-                      <div className="text-center justify-center text-Winners-Colors-alt-foreground text-sm font-normal font-primary w-full">
-                        Early Bird • Feb 14 2025
+                      <div className="text-center justify-center text-Colors-alt-foreground text-sm font-normal font-primary w-full">
+                      Early Bird • Jul 15 2024
                       </div>
                     </div>
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                      Event Title
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                      Summer Raffle
                     </div>
                   </div>
-                  <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-3xl font-black font-primary">
-                    $100,004.00
+                  <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-3xl font-black font-primary">
+                    $3,750.00
                   </div>
                   <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-base font-bold font-primary">
-                      A-356485
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-base font-bold font-primary">
+                      A-7785463
                     </div>
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                      Amanda T. from Lombardy
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                      Michael K. • from Ottawa  
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Card 3 */}
-              <div data-show-image="false" data-show-quote="false" className="w-96 self-stretch max-w-96 bg-Winners-Colors-alt-background rounded-lg inline-flex flex-col justify-center items-center">
+              <div data-show-image="false" data-show-quote="false" className="w-96 self-stretch max-w-96 bg-Colors-alt-background rounded-lg inline-flex flex-col justify-center items-center">
                 <div className="self-stretch p-6 flex flex-col justify-center items-center gap-4">
                   <div className="self-stretch flex flex-col justify-start items-center gap-3">
                     <div className="self-stretch inline-flex justify-between items-center">
-                      <div className="text-center justify-center text-Winners-Colors-alt-foreground text-sm font-normal font-primary w-full">
-                        Early Bird • Feb 14 2025
+                      <div className="text-center justify-center text-Colors-alt-foreground text-sm font-normal font-primary w-full">
+                      Early Bird • Jun 15 2024
                       </div>
                     </div>
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                      June 50/50 Draw
                     </div>
                   </div>
-                  <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-3xl font-black font-primary">
-                    $100,004.00
+                  <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-3xl font-black font-primary">
+                    $4,850.00
                   </div>
                   <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-base font-bold font-primary">
-                      A-356485
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-base font-bold font-primary">
+                      A-165497
                     </div>
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                      Amanda T. from Lombardy
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                      Jennifer L. • from Hamilton  
                     </div>
                   </div>
                 </div>
@@ -450,28 +570,29 @@ export function WinnersB() {
                   key={idx}
                   data-show-image="false"
                   data-show-quote="false"
-                  className="w-96 self-stretch max-w-96 bg-Winners-Colors-alt-background rounded-lg inline-flex flex-col justify-center items-center"
+                  className="w-96 self-stretch max-w-96 bg-Colors-alt-background rounded-lg inline-flex flex-col justify-center items-center"
                 >
                   <div className="self-stretch p-6 flex flex-col justify-start items-center gap-4">
                     <div className="self-stretch flex flex-col justify-start items-center gap-3">
                       <div className="self-stretch inline-flex justify-between items-center">
-                        <div className="text-center justify-center text-Winners-Colors-alt-foreground text-sm font-normal font-primary w-full">
-                          Early Bird • Feb 14 2025
+                        <div className="text-center justify-center text-Colors-alt-foreground text-sm font-normal font-primary w-full">
+                          {idx === 0 ? "Early Bird • Aug 2 2024" : idx === 1 ? "June 50/50 • Jun 8 2024" : "Early Bird• Jul 22 2024"}
                         </div>
                       </div>
-                      <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                        {idx === 1 ? "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " : "Event Title"}
+                      <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                        {idx === 0 ? "Summer Raffle" : idx === 1 ? "June 50/50 Draw" : "Summer Raffle"}
                       </div>
                     </div>
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-3xl font-black font-primary">
-                      $100,004.00
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-3xl font-black font-primary">
+                      {idx === 0 ? "$3,200.00" : idx === 1 ? "$4,600.00" : "$3,900.00"}
                     </div>
                     <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                      <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-base font-bold font-primary">
-                        A-356485
+                      <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-base font-bold font-primary">
+                        
+                        {idx === 0 ? "A-7986132  " : idx === 1 ? "A-846213  " : "A-114325  "}
                       </div>
-                      <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                        Amanda T. from Lombardy
+                      <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                        {idx === 0 ? "David R. • from London  " : idx === 1 ? "Lisa P. • from Windsor  " : "Robert C. • from Kitchener  "}
                       </div>
                     </div>
                   </div>
@@ -486,28 +607,28 @@ export function WinnersB() {
                   key={idx}
                   data-show-image="false"
                   data-show-quote="false"
-                  className="w-96 max-w-96 bg-Winners-Colors-alt-background rounded-lg inline-flex flex-col justify-start items-center"
+                  className="w-96 max-w-96 bg-Colors-alt-background rounded-lg inline-flex flex-col justify-start items-center"
                 >
                   <div className="self-stretch p-6 flex flex-col justify-start items-center gap-4">
                     <div className="self-stretch flex flex-col justify-start items-center gap-3">
                       <div className="self-stretch inline-flex justify-between items-center">
-                        <div className="text-center justify-center text-Winners-Colors-alt-foreground text-sm font-normal font-primary w-full">
-                          Early Bird • Feb 14 2025
+                        <div className="text-center justify-center text-Colors-alt-foreground text-sm font-normal font-primary w-full">
+                          {idx === 0 ? "Early Bird • Jun 1 2024" : idx === 1 ? "Early Bird • Jul 8 2024" : "Early Bird • May 25 2024"}
                         </div>
                       </div>
-                      <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                        {idx === 1 ? "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " : "Event Title"}
+                      <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                        {idx === 0 ? "June 50/50 Draw" : idx === 1 ? "Summer Raffle" : "June 50/50 Draw"}
                       </div>
                     </div>
-                    <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-3xl font-black font-primary">
-                      $100,004.00
+                    <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-3xl font-black font-primary">
+                      {idx === 0 ? "$4,100.00" : idx === 1 ? "$3,500.00" : "$4,700.00"}
                     </div>
                     <div className="self-stretch flex flex-col justify-start items-start gap-1">
-                      <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-base font-bold font-primary">
-                        A-356485
+                      <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-base font-bold font-primary">
+                      {idx === 0 ? "A-94451 " : idx === 1 ? "A-522134" : "A-174469  "}
                       </div>
-                      <div className="self-stretch text-center justify-start text-Winners-Colors-alt-foreground text-sm font-normal font-primary">
-                        Amanda T. from Lombardy
+                      <div className="self-stretch text-center justify-start text-Colors-alt-foreground text-sm font-normal font-primary">
+                        {idx === 0 ? "Amanda T. • from Mississauga  " : idx === 1 ? "Christopher B. • from Brampton  " : "Michelle W. • from Markham  "}
                       </div>
                     </div>
                   </div>

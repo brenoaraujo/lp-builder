@@ -181,6 +181,7 @@ export default function EditorSidebar({
   closePanel, handleDelete, handleMoveUp, handleMoveDown,
   onTogglePartFromSidebar, onCopyChangeFromSidebar,
   variantIndex, setVariantForId, variantForId, setBlocks, blocks,
+  setNavbarOverrides, setFooterOverrides,
   mode = "builder",
   hideVariantPicker = false,
   hideAdvancedActions = false,
@@ -449,20 +450,41 @@ const visibleCopyList = Array.isArray(copyList) ? copyList.filter((p) => isCopyV
                           if (!activeBlock) return;
                           
                           // Update the block with only the specific color override
-                          setBlocks(prev => prev.map(block => 
-                            block.id === activeBlock.id 
-                              ? {
-                                  ...block,
-                                  overrides: {
-                                    ...block.overrides,
-                                    values: {
-                                      ...block.overrides.values,
-                                      [colorKey]: value
+                          if (activeBlock.type === 'Navbar' && setNavbarOverrides) {
+                            setNavbarOverrides({
+                              enabled: true,
+                              values: {
+                                ...(activeBlock.overrides?.values || {}),
+                                [colorKey]: value
+                              },
+                              valuesPP: activeBlock.overrides?.valuesPP || {}
+                            });
+                          } else if (activeBlock.type === 'Footer' && setFooterOverrides) {
+                            setFooterOverrides({
+                              enabled: true,
+                              values: {
+                                ...(activeBlock.overrides?.values || {}),
+                                [colorKey]: value
+                              },
+                              valuesPP: activeBlock.overrides?.valuesPP || {}
+                            });
+                          } else {
+                            setBlocks(prev => prev.map(block => 
+                              block.id === activeBlock.id 
+                                ? {
+                                    ...block,
+                                    overrides: {
+                                      ...block.overrides,
+                                      enabled: true,
+                                      values: {
+                                        ...block.overrides.values,
+                                        [colorKey]: value
+                                      }
                                     }
                                   }
-                                }
-                              : block
-                          ));
+                                : block
+                            ));
+                          }
                           
                           // Apply the change immediately to the section element
                           const sectionElement = document.querySelector(`[data-section="${activeBlock.type}"]`);
@@ -492,14 +514,20 @@ const visibleCopyList = Array.isArray(copyList) ? copyList.filter((p) => isCopyV
                           if (!activeBlock) return;
                           
                           // Clear all overrides for this section
-                          setBlocks(prev => prev.map(block => 
-                            block.id === activeBlock.id 
-                              ? {
-                                  ...block,
-                                  overrides: { values: {} }
-                                }
-                              : block
-                          ));
+                          if (activeBlock.type === 'Navbar' && setNavbarOverrides) {
+                            setNavbarOverrides({ enabled: false, values: {}, valuesPP: {} });
+                          } else if (activeBlock.type === 'Footer' && setFooterOverrides) {
+                            setFooterOverrides({ enabled: false, values: {}, valuesPP: {} });
+                          } else {
+                            setBlocks(prev => prev.map(block => 
+                              block.id === activeBlock.id 
+                                ? {
+                                    ...block,
+                                    overrides: { enabled: false, values: {} }
+                                  }
+                                : block
+                            ));
+                          }
                           
                           // Clear the section overrides from the DOM
                           const sectionElement = document.querySelector(`[data-section="${activeBlock.type}"]`);

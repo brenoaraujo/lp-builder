@@ -113,7 +113,7 @@ export function ExtraPrizesA() {
               data-show-winners="true"
               className="w-96 max-w-96 bg-Colors-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-start items-start overflow-hidden"
             >
-              <div className="self-stretch h-36 min-h-36 px-6 bg-EB-Colors-secondary inline-flex justify-end items-center gap-6">
+              <div className="self-stretch h-36 min-h-36 px-6 bg-Colors-secondary inline-flex justify-end items-center gap-6">
                 <div className="flex-1 py-6 inline-flex flex-col justify-start items-start gap-4">
                   <div className="self-stretch flex flex-col justify-start items-start gap-1">
                     <div className="self-stretch justify-start text-Colors-secondary-foreground text-xs font-bold font-primary uppercase">
@@ -278,7 +278,7 @@ export function ExtraPrizesB() {
               data-show-winners="true"
               className="bg-Colors-background rounded-lg shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] shadow-md inline-flex flex-col justify-start items-start overflow-hidden"
             >
-              <div className="self-stretch h-36 min-h-36 px-6 bg-EB-Colors-secondary inline-flex justify-between items-center">
+              <div className="self-stretch h-36 min-h-36 px-6 bg-Colors-secondary inline-flex justify-between items-center">
                 <div className="flex-1 py-6 inline-flex flex-col justify-start items-start gap-4">
                   <div className="self-stretch flex flex-col justify-start items-start gap-1">
                     <div className="self-stretch justify-start text-Colors-secondary-foreground text-xs font-bold font-primary uppercase">

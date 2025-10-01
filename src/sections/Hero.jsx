@@ -111,20 +111,20 @@ export function HeroA({ preview = false }) {
           {/* Cards */}
           <div className="w-full grid grid-cols-4 gap-4">
             {/* Card 1 – highlighted */}
-            <div className="h-64 p-5 relative bg-PP-Colors-secondary rounded-lg outline outline-1 outline-PP-Colors-border flex flex-col items-center justify-center gap-6">
-              <div className="px-2.5 py-0.5 absolute -top-2 bg-PP-Colors-alt-foreground rounded-lg text-PP-Colors-alt-background text-xs font-medium font-primary">
+            <div className="h-64 p-5 relative bg-Colors-secondary rounded-lg outline outline-1 outline-PP-Colors-border flex flex-col items-center justify-center gap-6">
+              <div className="px-2.5 py-0.5 absolute -top-2 bg-Colors-alt-foreground rounded-lg text-Colors-alt-background text-xs font-medium font-primary">
                 Best Value
               </div>
 
               <div className="text-center">
-                <div className="text-PP-Colors-secondary-foreground text-3xl font-bold">400 tickets</div>
-                <div className="text-PP-Colors-secondary-foreground text-3xl font-medium">$60</div>
+                <div className="text-Colors-secondary-foreground text-3xl font-bold">400 tickets</div>
+                <div className="text-Colors-secondary-foreground text-3xl font-medium">$60</div>
               </div>
 
-              <div className="h-11 px-8 py-2.5 bg-PP-Colors-primary rounded-lg inline-flex items-center gap-6">
-                <Minus className="text-PP-Colors-primary-foreground" />
-                <div className="w-6 text-center text-PP-Colors-primary-foreground text-lg font-bold">1</div>
-                <Plus className="text-PP-Colors-primary-foreground" />
+              <div className="h-11 px-8 py-2.5 bg-Colors-primary rounded-lg inline-flex items-center gap-6">
+                <Minus className="text-Colors-primary-foreground" />
+                <div className="w-6 text-center text-Colors-primary-foreground text-lg font-bold">1</div>
+                <Plus className="text-Colors-primary-foreground" />
               </div>
             </div>
 
@@ -136,24 +136,24 @@ export function HeroA({ preview = false }) {
             ].map(({ t, p }, i) => (
               <div
                 key={i}
-                className="h-64 p-5 bg-PP-Colors-secondary rounded-lg outline outline-1 outline-PP-Colors-border flex flex-col items-center justify-center gap-6"
+                className="h-64 p-5 bg-Colors-secondary rounded-lg outline outline-1 outline-PP-Colors-border flex flex-col items-center justify-center gap-6"
               >
                 <div className="text-center">
-                  <div className="text-PP-Colors-secondary-foreground text-3xl font-bold">{t}</div>
-                  <div className="text-PP-Colors-secondary-foreground text-3xl font-medium">{p}</div>
+                  <div className="text-Colors-secondary-foreground text-3xl font-bold">{t}</div>
+                  <div className="text-Colors-secondary-foreground text-3xl font-medium">{p}</div>
                 </div>
-                <div className="w-8 p-[5px] bg-PP-Colors-primary rounded-[120px] inline-flex justify-center">
-                  <Plus className="text-PP-Colors-primary-foreground" />
+                <div className="w-8 p-[5px] bg-Colors-primary rounded-[120px] inline-flex justify-center">
+                  <Plus className="text-Colors-primary-foreground" />
                 </div>
               </div>
             ))}
           </div>
 
           {/* Cart row */}
-          <div className="px-6 py-4 bg-PP-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex justify-start items-center gap-2">
+          <div className="px-6 py-4 bg-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex justify-start items-center gap-2">
             <div className="flex items-center gap-4">
-              <ShoppingCart className="text-PP-Colors-secondary-foreground" />
-              <div className="text-PP-Colors-secondary-foreground text-lg font-bold leading-none font-primary">
+              <ShoppingCart className="text-Colors-secondary-foreground" />
+              <div className="text-Colors-secondary-foreground text-lg font-bold leading-none font-primary">
                 400 tickets for $60
               </div>
             </div>
@@ -161,12 +161,12 @@ export function HeroA({ preview = false }) {
             <button
               type="button"
               data-show-right-icon="true"
-              className="ml-auto h-11 px-4 bg-PP-Colors-primary rounded-lg inline-flex items-center gap-2"
+              className="ml-auto h-11 px-4 bg-Colors-primary rounded-lg inline-flex items-center gap-2"
             >
-              <span className="text-PP-Colors-primary-foreground text-sm font-medium leading-tight font-primary">
+              <span className="text-Colors-primary-foreground text-sm font-medium leading-tight font-primary">
                 BUY TICKETS
               </span>
-              <ArrowRight className="text-PP-Colors-primary-foreground" />
+              <ArrowRight className="text-Colors-primary-foreground" />
             </button>
           </div>
         </div>
@@ -291,29 +291,29 @@ export function HeroB({ preview = false }) {
               data-mobile="no"
               data-selected="yes"
               data-ticket-label="true"
-              className="flex-1 h-64 p-5 relative bg-PP-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8"
+              className="flex-1 h-64 p-5 relative bg-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8"
             >
               
-                <div className="px-2.5 py-0.5 absolute -top-2 bg-PP-Colors-alt-foreground rounded-lg text-PP-Colors-alt-background text-xs font-medium font-primary">
+                <div className="px-2.5 py-0.5 absolute -top-2 bg-Colors-alt-foreground rounded-lg text-Colors-alt-background text-xs font-medium font-primary">
                   Best Value
                 </div>
               
 
               <div className="self-stretch flex flex-col justify-start items-center">
-                <div className="self-stretch text-center justify-start text-PP-Colors-secondary-foreground text-3xl font-bold font-primary">
+                <div className="self-stretch text-center justify-start text-Colors-secondary-foreground text-3xl font-bold font-primary">
                   400 tickets
                 </div>
-                <div className="self-stretch text-center justify-start text-PP-Colors-secondary-foreground text-3xl font-medium font-primary">
+                <div className="self-stretch text-center justify-start text-Colors-secondary-foreground text-3xl font-medium font-primary">
                   $60
                 </div>
               </div>
 
-              <div className="h-11 px-8 py-2.5 bg-PP-Colors-primary rounded-lg inline-flex justify-center items-center gap-6 overflow-hidden">
-                <Minus className="text-PP-Colors-primary-foreground" />
-                <div className="w-6 text-center justify-center text-PP-Colors-primary-foreground text-lg font-bold font-primary leading-7">
+              <div className="h-11 px-8 py-2.5 bg-Colors-primary rounded-lg inline-flex justify-center items-center gap-6 overflow-hidden">
+                <Minus className="text-Colors-primary-foreground" />
+                <div className="w-6 text-center justify-center text-Colors-primary-foreground text-lg font-bold font-primary leading-7">
                   1
                 </div>
-                <Plus className="text-PP-Colors-primary-foreground" />
+                <Plus className="text-Colors-primary-foreground" />
               </div>
             </div>
 
@@ -331,19 +331,19 @@ export function HeroB({ preview = false }) {
                 data-mobile="no"
                 data-selected="no"
                 data-ticket-label="true"
-                className="flex-1 h-64 p-5 bg-PP-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8"
+                className="flex-1 h-64 p-5 bg-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8"
               >
                 <div className="self-stretch relative flex flex-col justify-start items-center">
-                  <div className="self-stretch text-center justify-start text-PP-Colors-secondary-foreground text-3xl font-bold font-primary">
+                  <div className="self-stretch text-center justify-start text-Colors-secondary-foreground text-3xl font-bold font-primary">
                     {t}
                   </div>
-                  <div className="self-stretch text-center justify-start text-PP-Colors-secondary-foreground text-3xl font-medium font-primary">
+                  <div className="self-stretch text-center justify-start text-Colors-secondary-foreground text-3xl font-medium font-primary">
                     {p}
                   </div>
                   <div className="w-0 h-0 left-[42.50px] top-[24px] absolute outline outline-1 outline-offset-[-0.50px] outline-PP-Colors-background" />
                 </div>
-                <div className="w-8 p-[5px] bg-PP-Colors-primary rounded-[120px] inline-flex justify-start items-center gap-2">
-                  <Plus className="text-PP-Colors-primary-foreground" />
+                <div className="w-8 p-[5px] bg-Colors-primary rounded-[120px] inline-flex justify-start items-center gap-2">
+                  <Plus className="text-Colors-primary-foreground" />
                 </div>
               </div>
             ))}
@@ -352,8 +352,8 @@ export function HeroB({ preview = false }) {
           {/* Cart */}
           <div className="px-6 py-4 bg-PP-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex justify-start items-center gap-2">
             <div className="w-56 flex justify-start items-center gap-4">
-              <ShoppingCart className="text-PP-Colors-secondary-foreground" />
-              <div className="w-48 justify-start text-PP-Colors-secondary-foreground text-lg font-bold font-primary leading-none">
+              <ShoppingCart className="text-Colors-secondary-foreground" />
+              <div className="w-48 justify-start text-Colors-secondary-foreground text-lg font-bold font-primary leading-none">
                 400 tickets for $60
               </div>
             </div>
@@ -364,13 +364,13 @@ export function HeroB({ preview = false }) {
               data-size="default"
               data-state="Default"
               data-variant="Default"
-              className="h-11 px-4 py-2 bg-PP-Colors-primary rounded-lg flex justify-center items-center gap-2"
+              className="h-11 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2"
             >
-              <div className="justify-center text-PP-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
+              <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
                 BUY TICKETS
               </div>
               <div className="relative overflow-hidden">
-                <ArrowRight className="text-PP-Colors-primary-foreground" />
+                <ArrowRight className="text-Colors-primary-foreground" />
               </div>
             </div>
           </div>
