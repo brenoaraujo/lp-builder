@@ -89,8 +89,8 @@ export default function EditorForOnboarding({
   }
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)] gap-6">
-      <div className="h-full min-h-0">
+    <div className="flex flex-col lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[280px_minmax(0,1fr)] gap-6">
+      <div className="lg:h-full lg:min-h-0">
         <EditorSidebar
           activeBlockId={activeBlockId}
           activeBlock={activeBlock}
@@ -122,8 +122,8 @@ export default function EditorForOnboarding({
           onSaveNext={onSaveNext}
         />
       </div>
-      <div className="h-full min-h-0">
-        <div className="h-full w-full rounded-lg border border-slate-200 bg-white shadow-lg p-4">
+      <div className="lg:h-full lg:min-h-0">
+        <div className="h-96 lg:h-full w-full rounded-lg border border-slate-200 bg-white shadow-lg p-4">
           <div ref={previewRef}>
             <AutoScaler designWidth={1440} targetWidth={targetWidth}>
               <div data-scope={sectionKey}>

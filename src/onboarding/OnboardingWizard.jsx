@@ -220,7 +220,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
     };
 
     return (
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,520px)]">
+        <div className="flex flex-col lg:grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,520px)]">
             {/* Left column (controls) */}
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -313,7 +313,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
             </div>
 
             {/* Right column (preview) */}
-            <div className="bg-white">
+            <div className="bg-white h-96 lg:h-auto">
                 <AutoScaler designWidth={1440} targetWidth={520} maxHeight={1820}>
                     <div className="pointer-events-none select-none">
                         <ComposedPreview overrides={overridesBySection} />
@@ -382,13 +382,16 @@ function StepHeader({ currentIndex }) {
     const pct = Math.round((currentIndex / (STEP_KEYS.length - 1)) * 100);
     return (
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b">
-            <div className="mx-auto max-w-[1100px] py-3 flex items-center gap-3 justify-between box-border">
-                <div className="text-xl font-bold">Landing Page Builder</div>
-                <div className="flex items-center gap-2">
-                    <div className="w-48">
+            <div className="mx-auto max-w-[1100px] py-3 px-4 flex items-center gap-2 sm:gap-3 justify-between box-border">
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                    <img src="https://cdn.brandfetch.io/idOQ3T8fjd/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1689300855088" alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
+                    <div className="text-sm sm:text-lg font-semibold truncate">Landing Page Builder</div>
+                </div>
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                    <div className="w-24 sm:w-48">
                         <Progress value={pct} />
                     </div>
-                    <div className="text-xs text-muted-foreground w-12 text-right">
+                    <div className="text-xs text-muted-foreground w-8 sm:w-12 text-right">
                         {pct}%
                     </div>
                 </div>
@@ -610,27 +613,31 @@ export default function OnboardingWizard() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50 text-foreground onboarding">
+        <div className="min-h-screen flex flex-col text-foreground onboarding bg-gradient-to-b from-white from-0% via-white via-40% to-slate-50 to-40%">
             <StepHeader currentIndex={stepIndex} />
-            <div className="flex-1 min-h-0 p-4 flex justify-center box-border">
-                <div className="w-full max-w-[1100px] h-full box-border ">
+            <div className="flex-1 min-h-0 p-2 sm:p-4 flex justify-center box-border">
+                <div className="w-full max-w-[1100px] h-full box-border">
                     {/* ============ STEP CONTENT ============ */}
                     {stepKey === "welcome" && (
-                        <div className="grid md:grid-cols-2 gap-8 items-center">
-                            <div className="space-y-4">
-                                <h1 className="text-3xl font-bold">Welcome! Let’s set up your page.</h1>
-                                <p className="text-muted-foreground">
-                                    By walking through this document you'll be able to choose which components to include on your site, customize text, images, colours and more!
-                                </p>
-                                <div className="flex gap-3">
+                        <div className="items-center text-center max-w-[700px] mx-auto mt-40">
+
+                            <div className="space-y-12 items-center">
+                                <div className="space-y-4">
+                                    <h1 className="text-4xl font-black">Welcome! Let’s set up your page.</h1>
+                                    <p className="text-muted-foreground">
+                                        By walking through this onboarding you'll be able to choose which components to include on your site, customize text, images, colours and more!
+                                    </p>
+                                </div>
+                                <div className="flex gap-3 justify-center">
                                     <Button onClick={next}>
-                                        Start
+                                        Start Onboarding
                                         <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
-                                    {/*  <Button variant="ghost" onClick={finish}>Skip for now</Button> */}
+                                    {/*<Button variant="ghost" onClick={finish}>Skip for now</Button> */}
                                 </div>
+
                             </div>
-                            <Card>
+                            {/* <Card>
                                 <CardHeader><CardTitle>What you’ll do</CardTitle></CardHeader>
                                 <CardContent className="text-sm text-muted-foreground space-y-2">
                                     <div>• Provide charity information</div>
@@ -639,36 +646,33 @@ export default function OnboardingWizard() {
                                     <div>• Upload images and documents</div>
                                     <div>• Customize site colours</div>
                                 </CardContent>
-                            </Card>
+                            </Card>*/}
                         </div>
                     )}
 
                     {stepKey === "charityInfo" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
-                                <h2 className="text-4xl font-medium">Charity Information</h2>
+
+                                <h2 className="text-4xl font-medium mt-10">Details</h2>
                                 <p className="text-base text-slate-500">
-                                    Search for your charity or enter details manually
+                                    Enter your charity information
                                 </p>
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-8">
-                                <div className="space-y-6">
+                                <div className="space-y-8 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                                     {/* Submitter Name - Always visible */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="submitterName">Your Name</Label>
+                                        <Label htmlFor="submitterName" className="text-muted-foreground">Your Name</Label>
                                         <div className="relative">
-                                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                           
                                             <Input
                                                 id="submitterName"
                                                 placeholder="Enter your full name"
                                                 value={charityInfo.submitterName}
                                                 onChange={(e) => setCharityInfo(prev => ({ ...prev, submitterName: e.target.value }))}
-                                                className="pl-10"
+                                                className=""
                                             />
                                         </div>
                                     </div>
@@ -676,9 +680,9 @@ export default function OnboardingWizard() {
 
                                     {/* Charity Name Search Field */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="charitySearch">Charity Name</Label>
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Label htmlFor="charitySearch" className="text-muted-foreground">Charity Name</Label>
+                                        <div className="relative ">
+                                            
                                             <Input
                                                 id="charitySearch"
                                                 placeholder="Search for your charity or enter name manually"
@@ -689,7 +693,7 @@ export default function OnboardingWizard() {
                                                         handleEnterKey();
                                                     }
                                                 }}
-                                                className="pl-10"
+                                                className=""
                                             />
                                             {isSearching && (
                                                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -766,9 +770,9 @@ export default function OnboardingWizard() {
 
                                     {/* Additional Fields - Only shown after selection or enter */}
                                     {showAdditionalFields && (
-                                        <div className="space-y-4">
+                                        <div className="space-y-8">
                                             <div className="space-y-2">
-                                                <Label htmlFor="charityLogo">Charity Logo URL</Label>
+                                                <Label htmlFor="charityLogo" className="text-muted-foreground">Charity Logo URL</Label>
                                                 <Input
                                                     id="charityLogo"
                                                     placeholder="https://example.com/logo.png"
@@ -778,7 +782,7 @@ export default function OnboardingWizard() {
                                             </div>
 
                                             <div className="space-y-2">
-                                                <Label htmlFor="charitySite">Charity Website</Label>
+                                                <Label htmlFor="charitySite" className="text-muted-foreground">Charity Website</Label>
                                                 <Input
                                                     id="charitySite"
                                                     placeholder="https://yourcharity.org"
@@ -801,13 +805,13 @@ export default function OnboardingWizard() {
                                         </Button>
                                     </div>
                                 </div>
-
+                                {/* Charity preview*/}
                                 <div className="space-y-4">
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>Preview</CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="space-y-4">
+                                    <div className="space-y-4 bg-white p-6 rounded-lg border border-gray-200 ">
+                                        
+                                            <div className="text-xs font-light text-center text-muted-foreground">PREVIEW</div>
+                                        
+                                        <div className="space-y-4">
                                             {(charityInfo.charityLogo || charityInfo.charitySite) && (
                                                 <div className="flex justify-center">
                                                     {charityInfo.charityLogo ? (
@@ -863,8 +867,8 @@ export default function OnboardingWizard() {
                                                     Submitted by: {charityInfo.submitterName || "Your Name"}
                                                 </p>
                                             </div>
-                                        </CardContent>
-                                    </Card>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1279,7 +1283,7 @@ function VariantCarousel({ sectionKey, onPicked }) {
     };
 
     return (
-        <div className="flex gap-3 p-1">
+        <div className="flex flex-col sm:flex-row gap-3 p-1">
             {variants.map((v) => (
                 <Card
                     key={v.key}
