@@ -1356,8 +1356,19 @@ export function MainBuilder() {
   }
   
 
+  // Get charity information from localStorage (set during onboarding)
+  const getCharityInfo = () => {
+    try {
+      const saved = localStorage.getItem("charityInfo");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  };
+
   const FOOTER_DEFAULT_DATA = {
     // mirrors defaults inside FooterPrimitive but allows builder overrides later
+    charityName: getCharityInfo().charityName || "",
   };
 
 

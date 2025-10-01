@@ -12,7 +12,8 @@ function FooterPrimitive({ data }) {
     responsabilityText =
       "Must be 18 years of age or older to play. Play responsibly. For problem gambling support, please visit Ontario Gambling Helpline (1-866-531-2600) www.connexontario.ca",
     brandName = "Brand Name",
-    brandLicense = "Lottery Licence RAF#1439950",
+    charityName = "",
+    brandLicense = "RAF#1439950",
     links = [
       "About Us",
       "Rules of Play",
@@ -36,14 +37,14 @@ function FooterPrimitive({ data }) {
         <div className="self-stretch h-0"/>
         <div className="self-stretch h-0 outline outline-1 outline-offset-[-0.50px] bg-Colors-muted-background" />
 
-        <div className="self-stretch inline-flex justify-between items-center" data-display="yes" data-label="Sell by Phone">
+        <div className="self-stretch inline-flex justify-between items-center w-full">
           {/*<div
             className="text-center justify-start text-Colors-foreground text-base font-bold leading-tight"
              
           >
             {phoneText}
           </div>*/}
-          <div className="flex justify-start items-center gap-2" >
+          <div className="flex justify-center items-center gap-2 w-full text-center " >
             <div className="text-center justify-start text-Colors-foreground text-sm font-normal leading-none" >
               We accept
             </div>
@@ -109,10 +110,10 @@ function FooterPrimitive({ data }) {
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-4">
             <div className="flex flex-col justify-start items-start gap-1">
               <div className="justify-start text-Colors-foreground text-xl font-bold leading-relaxed font-headline"  >
-                {brandName}
+                {charityName || brandName}
               </div>
               <div className="justify-start text-Colors-foreground text-sm font-normal leading-tight"  >
-                {brandLicense}
+                Lottery Licence : <span className="font-bold" data-copy="yes" data-label="Lottery Licence">{brandLicense}</span>
               </div>
             </div>
             <div className="w-72 flex flex-col justify-start items-start gap-3" >
@@ -139,15 +140,28 @@ function FooterPrimitive({ data }) {
           <div className="inline-flex flex-col justify-start items-start gap-4">
             <div className="flex flex-col justify-start items-start gap-8">
               <div className="w-80 inline-flex justify-start items-start gap-6 flex-wrap content-start">
-                {links.map((t, i) => (
-                  <div
-                    key={i}
-                    className="w-36 text-right justify-start text-Colors-foreground text-sm font-medium leading-none"
-                     
-                  >
-                    {t}
-                  </div>
-                ))}
+                {links.map((t, i) => {
+                  // Rules of Play cannot be disabled
+                  const isRulesOfPlay = t === "Rules of Play";
+                  
+                  return (
+                    <div
+                      key={i}
+                      className="w-36 text-right justify-start text-Colors-foreground text-sm font-medium leading-none"
+                      data-display={isRulesOfPlay ? "no" : "yes"}
+                      data-label={t}
+                      data-requirements={
+                        t === "Contact Us" ? "email" :
+                        t === "Rules of Play" ? "document" :
+                        t === "FAQs" ? "document" :
+                        t === "Privacy Policy" ? "url" :
+                        undefined
+                      }
+                    >
+                      {t}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

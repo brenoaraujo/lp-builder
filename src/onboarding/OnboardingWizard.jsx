@@ -605,6 +605,8 @@ export default function OnboardingWizard() {
     function finish() {
         try {
             localStorage.setItem("onboardingCompleted", "1");
+            // Save charity information for use in the main app
+            localStorage.setItem("charityInfo", JSON.stringify(charityInfo));
         } catch { }
         const url = new URL(window.location.href);
         url.searchParams.delete("wizard");
@@ -613,7 +615,7 @@ export default function OnboardingWizard() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col text-foreground onboarding bg-gradient-to-b from-white from-0% via-white via-40% to-slate-50 to-40%">
+        <div className="min-h-screen flex flex-col text-foreground onboarding bg-gradient-to-b from-white from-0% via-white via-50% to-slate-50 to-50%">
             <StepHeader currentIndex={stepIndex} />
             <div className="flex-1 min-h-0 p-2 sm:p-4 flex justify-center box-border">
                 <div className="w-full max-w-[1100px] h-full box-border">
@@ -629,9 +631,9 @@ export default function OnboardingWizard() {
                                     </p>
                                 </div>
                                 <div className="flex gap-3 justify-center">
-                                    <Button onClick={next}>
+                                    <Button onClick={next} className="p-6">
                                         Start Onboarding
-                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                        
                                     </Button>
                                     {/*<Button variant="ghost" onClick={finish}>Skip for now</Button> */}
                                 </div>
@@ -654,16 +656,16 @@ export default function OnboardingWizard() {
                         <div className="space-y-12">
                             <div className="space-y-1">
 
-                                <h2 className="text-4xl font-medium mt-10">Details</h2>
+                                <h2 className="text-4xl font-medium mt-10">Setup your profile</h2>
                                 <p className="text-base text-slate-500">
                                     Enter your charity information
                                 </p>
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-8">
-                                <div className="space-y-8 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                            <div className="grid grid-cols-[3fr_2fr] gap-8">
+                                <div className="space-y-8 bg-white p-6 rounded-lg border border-gray-200 shadow-md">
                                     {/* Submitter Name - Always visible */}
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 ">
                                         <Label htmlFor="submitterName" className="text-muted-foreground">Your Name</Label>
                                         <div className="relative">
 
@@ -679,7 +681,7 @@ export default function OnboardingWizard() {
 
 
                                     {/* Charity Name Search Field */}
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 ">
                                         <Label htmlFor="charitySearch" className="text-muted-foreground">Charity Name</Label>
                                         <div className="relative ">
 
