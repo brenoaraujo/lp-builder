@@ -467,7 +467,7 @@ export default function OnboardingWizard() {
     const advance = (steps = 1) =>
         setStepIndex((i) => Math.min(i + steps, STEP_KEYS.length - 1));
 
-    // Brandfetch search function with CORS handling
+    // Brandfetch search function with proper error handling
     const searchBrandfetch = async (query) => {
         if (!query.trim()) {
             setSearchResults([]);
@@ -476,22 +476,46 @@ export default function OnboardingWizard() {
         
         setIsSearching(true);
         try {
-            // Try Brandfetch API (works in production)
+            console.log('Searching Brandfetch for:', query);
+            
+            // Try Brandfetch API with correct format
             const response = await fetch(`https://api.brandfetch.io/v2/search/${encodeURIComponent(query)}`, {
+                method: 'GET',
                 headers: {
-                    'Authorization': 'BPpPQFtnKE9MXwkbc8cvF7G3EzpasSp/FH6NVyfX2bk=',
+                    'Authorization': 'Bearer BPpPQFtnKE9MXwkbc8cvF7G3EzpasSp/FH6NVyfX2bk=',
+                    'Content-Type': 'application/json',
                 }
             });
             
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
             if (response.ok) {
                 const data = await response.json();
-                setSearchResults(data.brands || []);
+                console.log('API Response:', data);
+                
+                // Handle different possible response structures
+                let brands = [];
+                if (data.brands) {
+                    brands = data.brands;
+                } else if (data.results) {
+                    brands = data.results;
+                } else if (Array.isArray(data)) {
+                    brands = data;
+                } else if (data.data) {
+                    brands = data.data;
+                }
+                
+                setSearchResults(brands);
             } else {
-                throw new Error('API request failed');
+                const errorText = await response.text();
+                console.error('API Error:', response.status, errorText);
+                throw new Error(`API request failed: ${response.status} ${errorText}`);
             }
         } catch (error) {
-            console.log('Brandfetch API not available (likely CORS in development), using fallback');
-            // Fallback for development/localhost - simulate search results
+            console.error('Brandfetch API Error:', error);
+            
+            // Enhanced fallback for development/production
             const mockResults = [
                 {
                     name: query,
@@ -652,6 +676,15 @@ export default function OnboardingWizard() {
                                                 </div>
                                             )}
                                         </div>
+                                        {/* Debug button - remove in production */}
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            onClick={() => searchBrandfetch('test')}
+                                            className="text-xs"
+                                        >
+                                            Test API
+                                        </Button>
                                     </div>
 
                                     {/* Search Results */}
