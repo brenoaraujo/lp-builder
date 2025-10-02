@@ -30,13 +30,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import {
-    Select,
-    SelectTrigger,
-    SelectContent,
-    SelectItem,
-    SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 //--Icons --
 import { ArrowRight, ArrowLeft, Search, Building2, Globe, User, HandHeart, Users, Rocket } from "lucide-react";
@@ -459,7 +453,10 @@ export default function OnboardingWizard() {
         charityName: "",
         charityLogo: "",
         charitySite: "",
-        submitterName: ""
+        submitterName: "",
+        ascendRepresentative: "",
+        raffleType: "",
+        campaignLaunchDate: ""
     });
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false);
@@ -514,7 +511,32 @@ export default function OnboardingWizard() {
                     brands = data.data;
                 }
 
-                setSearchResults(brands);
+                // Ensure each brand has a logo URL with preference for high-quality logos
+                const brandsWithLogos = brands.map(brand => {
+                    // Try to get the best quality logo available
+                    let logoUrl = brand.logo || brand.image || brand.icon;
+                    
+                    // If we have a logo URL, try to get a higher quality version
+                    if (logoUrl) {
+                        // Remove size parameters to get original quality
+                        logoUrl = logoUrl.replace(/[?&](w|h|size|sz)=\d+/g, '');
+                        // Some APIs use different size parameters
+                        logoUrl = logoUrl.replace(/[?&](width|height)=\d+/g, '');
+                    }
+                    
+                    // Fallback to Clearbit if no logo found
+                    if (!logoUrl && brand.domain) {
+                        const cleanDomain = brand.domain.replace(/^https?:\/\//, '').replace(/^www\./, '');
+                        logoUrl = `https://logo.clearbit.com/${cleanDomain}`;
+                    }
+                    
+                    return {
+                        ...brand,
+                        logo: logoUrl
+                    };
+                });
+
+                setSearchResults(brandsWithLogos);
             } else {
                 const errorText = await response.text();
                 console.error('API Error:', response.status, errorText);
@@ -556,11 +578,17 @@ export default function OnboardingWizard() {
     };
 
     const selectBrand = (brand) => {
+        console.log('Selected brand:', brand);
+        console.log('Brand logo URL:', brand.logo);
+        
         setCharityInfo({
             charityName: brand.name,
-            charityLogo: brand.logo,
+            charityLogo: brand.logo || '',
             charitySite: brand.domain,
-            submitterName: charityInfo.submitterName
+            submitterName: charityInfo.submitterName,
+            ascendRepresentative: charityInfo.ascendRepresentative,
+            raffleType: charityInfo.raffleType,
+            campaignLaunchDate: charityInfo.campaignLaunchDate
         });
         setSearchResults([]);
         setSearchQuery(brand.name);
@@ -678,7 +706,52 @@ export default function OnboardingWizard() {
                                             />
                                         </div>
                                     </div>
+                                    <div className="space-y-2 ">
+                                        <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Ascend Client Services Representative</Label>
+                                        <div className="relative">
 
+                                            <Input
+                                                id="ascendRepresentative"
+                                                placeholder="Enter full name"
+                                                value={charityInfo.ascendRepresentative}
+                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, ascendRepresentative: e.target.value }))}
+                                                className=""
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Type of Raffle */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="raffleType" className="text-muted-foreground">Type of Raffle</Label>
+                                        <Select
+                                            value={charityInfo.raffleType}
+                                            onValueChange={(value) => setCharityInfo(prev => ({ ...prev, raffleType: value }))}
+                                        >
+                                            <SelectTrigger id="raffleType">
+                                                <SelectValue placeholder="Select raffle type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="50/50">50/50</SelectItem>
+                                                <SelectItem value="Prize Raffle">Prize Raffle</SelectItem>
+                                                <SelectItem value="Sweepstakes">Sweepstakes</SelectItem>
+                                                <SelectItem value="Catch the Ace">Catch the Ace</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* Campaign Launch Date */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="campaignLaunchDate" className="text-muted-foreground">Campaign Launch Date</Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="campaignLaunchDate"
+                                                type="date"
+                                                value={charityInfo.campaignLaunchDate}
+                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, campaignLaunchDate: e.target.value }))}
+                                                className=""
+                                            />
+                                        </div>
+                                    </div>
 
                                     {/* Charity Name Search Field */}
                                     <div className="space-y-2 ">
@@ -822,10 +895,20 @@ export default function OnboardingWizard() {
                                                             alt="Charity Logo"
                                                             className="h-16 w-auto object-contain"
                                                             onError={(e) => {
-                                                                // Fallback to favicon if logo fails
-                                                                if (charityInfo.charitySite) {
-                                                                    const cleanDomain = charityInfo.charitySite.replace(/^https?:\/\//, '').replace(/^www\./, '');
-                                                                    e.target.src = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=64`;
+                                                                // Try alternative logo sources if the first one fails
+                                                                const cleanDomain = charityInfo.charitySite?.replace(/^https?:\/\//, '').replace(/^www\./, '');
+                                                                if (cleanDomain) {
+                                                                    // Try Clearbit logo service as fallback
+                                                                    e.target.src = `https://logo.clearbit.com/${cleanDomain}`;
+                                                                    e.target.onerror = () => {
+                                                                        // If Clearbit also fails, try Google favicon
+                                                                        e.target.src = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=64`;
+                                                                        e.target.onerror = () => {
+                                                                            // Final fallback - hide image and show icon
+                                                                            e.target.style.display = 'none';
+                                                                            e.target.nextSibling.style.display = 'block';
+                                                                        };
+                                                                    };
                                                                 } else {
                                                                     e.target.style.display = 'none';
                                                                     e.target.nextSibling.style.display = 'block';
@@ -865,6 +948,26 @@ export default function OnboardingWizard() {
                                                         <span>{charityInfo.charitySite}</span>
                                                     </div>
                                                 )}
+                                                
+                                                {/* New fields in preview */}
+                                                {charityInfo.raffleType && (
+                                                    <div className="text-sm text-muted-foreground">
+                                                        <span className="font-medium">Raffle Type:</span> {charityInfo.raffleType}
+                                                    </div>
+                                                )}
+                                                
+                                                {charityInfo.campaignLaunchDate && (
+                                                    <div className="text-sm text-muted-foreground">
+                                                        <span className="font-medium">Launch Date:</span> {new Date(charityInfo.campaignLaunchDate).toLocaleDateString()}
+                                                    </div>
+                                                )}
+                                                
+                                                {charityInfo.ascendRepresentative && (
+                                                    <div className="text-sm text-muted-foreground">
+                                                        <span className="font-medium">Ascend Rep:</span> {charityInfo.ascendRepresentative}
+                                                    </div>
+                                                )}
+                                                
                                                 <p className="text-xs text-muted-foreground">
                                                     Submitted by: {charityInfo.submitterName || "Your Name"}
                                                 </p>
