@@ -6,6 +6,7 @@
   .bg-Colors-alt-background { background-color: var(--colors-alt-background); }
   .bg-Colors-primary { background-color: var(--colors-primary); }
   .bg-Colors-secondary { background-color: var(--colors-secondary); }
+  .bg-Colors-alt-foreground { background-color: var(--colors-alt-foreground); }
 
   /* Text */
   .text-Colors-foreground { color: var(--colors-foreground); }
@@ -13,6 +14,7 @@
   .text-Colors-alt-foreground { color: var(--colors-alt-foreground); }
   .text-Colors-primary-foreground { color: var(--colors-primary-foreground); }
   .text-Colors-secondary-foreground { color: var(--colors-secondary-foreground); }
+  .text-Colors-alt-background { color: var(--colors-alt-background); }
 
   /* Border */
   .border-Colors-border { border-color: var(--colors-border); }
