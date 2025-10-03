@@ -866,7 +866,14 @@ export default function OnboardingWizard() {
                                         <Label htmlFor="raffleType" className="text-muted-foreground">Type of Raffle</Label>
                                         <Select
                                             value={charityInfo.raffleType}
-                                            onValueChange={(value) => setCharityInfo(prev => ({ ...prev, raffleType: value }))}
+                                            onValueChange={(value) => {
+                                                setCharityInfo(prev => ({ ...prev, raffleType: value }));
+                                                // Save immediately so RaffleRuleWrapper can read it
+                                                setTimeout(() => {
+                                                    const updatedInfo = { ...charityInfo, raffleType: value };
+                                                    localStorage.setItem("charityInfo", JSON.stringify(updatedInfo));
+                                                }, 100);
+                                            }}
                                         >
                                             <SelectTrigger id="raffleType">
                                                 <SelectValue placeholder="Select raffle type" />
