@@ -1702,7 +1702,7 @@ export function MainBuilder() {
 
           <div className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs text-gray-600">Approver name</label>
+              <label className="text-xs text-gray-600">Submitter name</label>
               <input
                 className="w-full rounded-md border px-2 py-1 text-sm"
                 placeholder="Jane Doe"
@@ -1711,7 +1711,7 @@ export function MainBuilder() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-gray-600">Approver email</label>
+              <label className="text-xs text-gray-600">Submitter email</label>
               <input
                 type="email"
                 className="w-full rounded-md border px-2 py-1 text-sm"
@@ -1721,15 +1721,6 @@ export function MainBuilder() {
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs text-gray-600">Customer / Company</label>
-              <input
-                className="w-full rounded-md border px-2 py-1 text-sm"
-                placeholder="Acme Co."
-                value={approvalMeta.customerName}
-                onChange={(e) => setApprovalMeta((m) => ({ ...m, customerName: e.target.value }))}
-              />
-            </div>
             <div className="space-y-1">
               <label className="text-xs text-gray-600">Project Name (optional)</label>
               <input

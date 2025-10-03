@@ -1,14 +1,15 @@
 import React from "react";
 import { ArrowRight, Plus, Minus, ShoppingCart } from "lucide-react";
 import { useImageVariant } from "../hooks/useImageVariant.js";
+import RaffleRuleWrapper from "../components/RaffleRuleWrapper.jsx";
 
 /* --------------------------------- shared --------------------------------- */
 
 const COUNTDOWN = [
   { v: "02", l: "days" },
   { v: "03", l: "hours" },
-  { v: "15", l: "min" },
-  { v: "55", l: "sec" },
+  { v: "15", l: "mins" },
+  { v: "55", l: "secs" },
 ];
 
 /* --------------------------------- Hero A --------------------------------- */
@@ -32,7 +33,7 @@ export function HeroA({ preview = false }) {
               >
                 Be the change and enter for a chance to win!
               </h1>
-
+              <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]}>
               <div className="flex flex-col" data-display="yes" data-label="Jackpot">
                 <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4" data-copy data-label="Jackpot Headline">
                   Winner's Estimated Take Home Prize
@@ -41,6 +42,7 @@ export function HeroA({ preview = false }) {
                   $1,346,000
                 </span>
               </div>
+              </RaffleRuleWrapper>
             </div>
 
             {/* Countdown (toggleable) */}
@@ -112,7 +114,7 @@ export function HeroA({ preview = false }) {
           <div className="w-full grid grid-cols-4 gap-4">
             {/* Card 1 – highlighted */}
             <div className="h-64 p-5 relative bg-Colors-secondary rounded-lg outline outline-1 outline-PP-Colors-border flex flex-col items-center justify-center gap-6">
-              <div className="px-2.5 py-0.5 absolute -top-2 bg-Colors-alt-foreground rounded-lg text-Colors-alt-background text-xs font-medium font-primary">
+              <div className="px-2.5 py-0.5 absolute -top-2 bg-Colors-alt-foreground rounded-lg text-Colors-alt-background text-md font-medium font-primary">
                 Best Value
               </div>
 
@@ -199,7 +201,7 @@ export function HeroB({ preview = false }) {
                 </div>
               </div>
             </div>
-
+            <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]}>
             {!preview && (
               <div className="flex flex-col justify-center items-center" data-display="no" data-label="Jackpot">
                 <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal" data-copy data-label="Jackpot Headline">
@@ -210,7 +212,7 @@ export function HeroB({ preview = false }) {
                 </div>
               </div>
             )}
-
+          </RaffleRuleWrapper>
             {/* Countdown */}
             <div
               data-position="left"
@@ -294,7 +296,7 @@ export function HeroB({ preview = false }) {
               className="flex-1 h-64 p-5 relative bg-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8"
             >
               
-                <div className="px-2.5 py-0.5 absolute -top-2 bg-Colors-alt-foreground rounded-lg text-Colors-alt-background text-xs font-medium font-primary">
+                <div className="px-2.5 py-0.5 absolute -top-2 bg-Colors-alt-foreground rounded-lg text-Colors-alt-background text-md font-medium font-primary">
                   Best Value
                 </div>
               

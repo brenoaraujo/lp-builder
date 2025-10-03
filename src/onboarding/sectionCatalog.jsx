@@ -8,7 +8,7 @@ import { HeroA, HeroB } from "../sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "../sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "../sections/Winners.jsx";
 import { WhoYouHelpA, WhoYouHelpB } from "../sections/WhoYouHelp.jsx";
-import { FeatureA, FeatureB } from "../sections/Feature.jsx";
+import { FeatureA, FeatureB, FeatureC } from "../sections/Feature.jsx";
 
 // [Onboarding] "Field descriptors" – keep these aligned with your data-* labels.
 // You can expand them later as you add sections.
@@ -126,10 +126,11 @@ export const SECTIONS = {
     variants: [
       { key: "A", label: "Extra Content A" },
       { key: "B", label: "Extra Content B" },
+      { key: "C", label: "Extra Content C" },
     ],
     thumbnail: (key = "A") => (
       <ThumbFrame>
-        {key === "B" ? <FeatureB preview /> : <FeatureA preview />}
+        {key === "B" ? <FeatureB preview /> : key === "C" ? <FeatureC preview /> : <FeatureA preview />}
       </ThumbFrame>
     ),
     skippable: true,

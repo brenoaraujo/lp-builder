@@ -2,7 +2,7 @@
 import { HeroA, HeroB } from "./Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "./ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "./Winners.jsx";
-import { FeatureA, FeatureB } from "./Feature.jsx";
+import { FeatureA, FeatureB, FeatureC } from "./Feature.jsx";
 import { NavbarA, NavbarB } from "./Navbar.jsx";
 import { FooterA, FooterB } from "./Footer.jsx";
 import { WhoYouHelpA, WhoYouHelpB } from "./WhoYouHelp.jsx";
@@ -45,8 +45,8 @@ export const SECTIONS = {
   },
   feature: {
     label: "Extra Content",
-    variants: [FeatureA, FeatureB],
-    labels: ["Extra Content A", "Extra Content B"],
+    variants: [FeatureA, FeatureB, FeatureC],
+    labels: ["Extra Content A", "Extra Content B", "Extra Content C"],
   },
   WhoYouHelp: {
     label: "How You Help",

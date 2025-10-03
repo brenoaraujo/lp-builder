@@ -13,8 +13,7 @@ import EditableSection from "../components/EditableSection.jsx";
 import { HeroA, HeroB } from "../sections/Hero.jsx";
 import { ExtraPrizesA, ExtraPrizesB } from "../sections/ExtraPrizes.jsx";
 import { WinnersA, WinnersB } from "../sections/Winners.jsx";
-import { WhoYouHelpA, WhoYouHelpB } from "../sections/WhoYouHelp.jsx";
-import { FeatureA, FeatureB } from "../sections/Feature.jsx";
+import { FeatureA, FeatureB, FeatureC } from "../sections/Feature.jsx";
 
 import AutoScaler from "../components/AutoScaler.jsx";
 
@@ -353,7 +352,6 @@ function ComposedPreview({ overrides }) {
             {extraContentKeys.map(key => (
                 <SectionPreview key={key} k={key} state={overrides[key]} />
             ))}
-            <SectionPreview k="WhoYouHelp" state={overrides.WhoYouHelp} />
         </div>
     );
 }
@@ -363,8 +361,9 @@ function resolveByVariant(sectionKey, variant = "A") {
     if (sectionKey === "hero") return variant === "B" ? HeroB : HeroA;
     if (sectionKey === "extraPrizes") return variant === "B" ? ExtraPrizesB : ExtraPrizesA;
     if (sectionKey === "winners") return variant === "B" ? WinnersB : WinnersA;
-    if (sectionKey === "feature" || sectionKey.startsWith("extraContent_")) return variant === "B" ? FeatureB : FeatureA;
-    if (sectionKey === "WhoYouHelp") return variant === "B" ? WhoYouHelpB : WhoYouHelpA;
+    if (sectionKey === "feature" || sectionKey.startsWith("extraContent_")) return variant === "B" ? FeatureB : variant === "C" 
+    ? FeatureC 
+    : FeatureA;
     return null;
 }
 
@@ -408,8 +407,6 @@ const STEP_KEYS = [
     "feature",        // choose
     "featureEdit",    // edit
     "addMoreSections", // option to add more sections
-    "WhoYouHelp",     // choose (optional)
-    "WhoYouHelpEdit", // edit (optional)
     "review",         // review
 ];
 
@@ -462,10 +459,50 @@ export default function OnboardingWizard() {
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [showAdditionalFields, setShowAdditionalFields] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const stepKey = STEP_KEYS[stepIndex];
 
     const advance = (steps = 1) =>
         setStepIndex((i) => Math.min(i + steps, STEP_KEYS.length - 1));
+
+    // Simple raffle type check
+    const shouldHideForRaffleType = (raffleType) => {
+        return raffleType === "Sweepstakes" || raffleType === "Prize Raffle";
+    };
+
+    // Handle click outside and keyboard events for dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            const dropdown = document.getElementById('charity-search-dropdown');
+            const input = document.getElementById('charitySearch');
+            
+            if (dropdown && input && !dropdown.contains(event.target) && !input.contains(event.target)) {
+                setIsDropdownOpen(false);
+                setSearchResults([]);
+            }
+        };
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setIsDropdownOpen(false);
+                setSearchResults([]);
+            }
+            if (event.key === 'Tab' && isDropdownOpen) {
+                setIsDropdownOpen(false);
+                setSearchResults([]);
+            }
+        };
+
+        if (isDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('keydown', handleKeyDown);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isDropdownOpen]);
 
     // Brandfetch search function with proper error handling
     const searchBrandfetch = async (query) => {
@@ -515,7 +552,7 @@ export default function OnboardingWizard() {
                 const brandsWithLogos = brands.map(brand => {
                     // Try to get the best quality logo available
                     let logoUrl = brand.logo || brand.image || brand.icon;
-                    
+
                     // If we have a logo URL, try to get a higher quality version
                     if (logoUrl) {
                         // Remove size parameters to get original quality
@@ -523,13 +560,13 @@ export default function OnboardingWizard() {
                         // Some APIs use different size parameters
                         logoUrl = logoUrl.replace(/[?&](width|height)=\d+/g, '');
                     }
-                    
+
                     // Fallback to Clearbit if no logo found
                     if (!logoUrl && brand.domain) {
                         const cleanDomain = brand.domain.replace(/^https?:\/\//, '').replace(/^www\./, '');
                         logoUrl = `https://logo.clearbit.com/${cleanDomain}`;
                     }
-                    
+
                     return {
                         ...brand,
                         logo: logoUrl
@@ -537,6 +574,7 @@ export default function OnboardingWizard() {
                 });
 
                 setSearchResults(brandsWithLogos);
+                setIsDropdownOpen(brandsWithLogos.length > 0);
             } else {
                 const errorText = await response.text();
                 console.error('API Error:', response.status, errorText);
@@ -554,6 +592,7 @@ export default function OnboardingWizard() {
                 }
             ];
             setSearchResults(mockResults);
+            setIsDropdownOpen(mockResults.length > 0);
         } finally {
             setIsSearching(false);
         }
@@ -577,10 +616,16 @@ export default function OnboardingWizard() {
         setSearchTimeout(timeout);
     };
 
+    const handleInputFocus = () => {
+        if (searchResults.length > 0) {
+            setIsDropdownOpen(true);
+        }
+    };
+
     const selectBrand = (brand) => {
         console.log('Selected brand:', brand);
         console.log('Brand logo URL:', brand.logo);
-        
+
         setCharityInfo({
             charityName: brand.name,
             charityLogo: brand.logo || '',
@@ -592,6 +637,7 @@ export default function OnboardingWizard() {
         });
         setSearchResults([]);
         setSearchQuery(brand.name);
+        setIsDropdownOpen(false);
         setShowAdditionalFields(true); // Show additional fields when brand is selected
     };
 
@@ -599,6 +645,7 @@ export default function OnboardingWizard() {
         if (searchQuery.trim()) {
             setCharityInfo(prev => ({ ...prev, charityName: searchQuery }));
             setSearchResults([]);
+            setIsDropdownOpen(false);
             setShowAdditionalFields(true); // Show additional fields when user presses enter
         }
     };
@@ -620,7 +667,6 @@ export default function OnboardingWizard() {
         });
 
         // hide optional sections by default
-        if (overridesBySection.WhoYouHelp?.visible === undefined) setVisible("WhoYouHelp", false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -661,22 +707,13 @@ export default function OnboardingWizard() {
                                 <div className="flex gap-3 justify-center">
                                     <Button onClick={next} className="p-6">
                                         Start Onboarding
-                                        
+
                                     </Button>
                                     {/*<Button variant="ghost" onClick={finish}>Skip for now</Button> */}
                                 </div>
 
                             </div>
-                            {/* <Card>
-                                <CardHeader><CardTitle>What you’ll do</CardTitle></CardHeader>
-                                <CardContent className="text-sm text-muted-foreground space-y-2">
-                                    <div>• Provide charity information</div>
-                                    <div>• Select site components</div>
-                                    <div>• Customize language</div>
-                                    <div>• Upload images and documents</div>
-                                    <div>• Customize site colours</div>
-                                </CardContent>
-                            </Card>*/}
+                           
                         </div>
                     )}
 
@@ -692,67 +729,6 @@ export default function OnboardingWizard() {
 
                             <div className="grid grid-cols-[3fr_2fr] gap-8">
                                 <div className="space-y-8 bg-white p-6 rounded-lg border border-gray-200 shadow-md">
-                                    {/* Submitter Name - Always visible */}
-                                    <div className="space-y-2 ">
-                                        <Label htmlFor="submitterName" className="text-muted-foreground">Your Name</Label>
-                                        <div className="relative">
-
-                                            <Input
-                                                id="submitterName"
-                                                placeholder="Enter your full name"
-                                                value={charityInfo.submitterName}
-                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, submitterName: e.target.value }))}
-                                                className=""
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2 ">
-                                        <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Ascend Client Services Representative</Label>
-                                        <div className="relative">
-
-                                            <Input
-                                                id="ascendRepresentative"
-                                                placeholder="Enter full name"
-                                                value={charityInfo.ascendRepresentative}
-                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, ascendRepresentative: e.target.value }))}
-                                                className=""
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Type of Raffle */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="raffleType" className="text-muted-foreground">Type of Raffle</Label>
-                                        <Select
-                                            value={charityInfo.raffleType}
-                                            onValueChange={(value) => setCharityInfo(prev => ({ ...prev, raffleType: value }))}
-                                        >
-                                            <SelectTrigger id="raffleType">
-                                                <SelectValue placeholder="Select raffle type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="50/50">50/50</SelectItem>
-                                                <SelectItem value="Prize Raffle">Prize Raffle</SelectItem>
-                                                <SelectItem value="Sweepstakes">Sweepstakes</SelectItem>
-                                                <SelectItem value="Catch the Ace">Catch the Ace</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    {/* Campaign Launch Date */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="campaignLaunchDate" className="text-muted-foreground">Campaign Launch Date</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="campaignLaunchDate"
-                                                type="date"
-                                                value={charityInfo.campaignLaunchDate}
-                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, campaignLaunchDate: e.target.value }))}
-                                                className=""
-                                            />
-                                        </div>
-                                    </div>
-
                                     {/* Charity Name Search Field */}
                                     <div className="space-y-2 ">
                                         <Label htmlFor="charitySearch" className="text-muted-foreground">Charity Name</Label>
@@ -763,6 +739,7 @@ export default function OnboardingWizard() {
                                                 placeholder="Search for your charity or enter name manually"
                                                 value={searchQuery}
                                                 onChange={(e) => handleSearchInput(e.target.value)}
+                                                onFocus={handleInputFocus}
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         handleEnterKey();
@@ -777,11 +754,13 @@ export default function OnboardingWizard() {
                                             )}
                                         </div>
                                     </div>
-
                                     {/* Search Results Dropdown */}
-                                    {searchResults.length > 0 && (
+                                    {isDropdownOpen && searchResults.length > 0 && (
                                         <div className="relative">
-                                            <div className="absolute top-0 left-0 right-0 z-10 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                            <div 
+                                                id="charity-search-dropdown"
+                                                className="absolute top-0 left-0 right-0 z-10 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                                            >
                                                 {searchResults.map((brand, index) => (
                                                     <div
                                                         key={index}
@@ -868,12 +847,62 @@ export default function OnboardingWizard() {
                                         </div>
                                     )}
 
+                                    <div className="space-y-2 ">
+                                        <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Ascend Client Services Representative</Label>
+                                        <div className="relative">
+
+                                            <Input
+                                                id="ascendRepresentative"
+                                                placeholder="Enter full name"
+                                                value={charityInfo.ascendRepresentative}
+                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, ascendRepresentative: e.target.value }))}
+                                                className=""
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Type of Raffle */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="raffleType" className="text-muted-foreground">Type of Raffle</Label>
+                                        <Select
+                                            value={charityInfo.raffleType}
+                                            onValueChange={(value) => setCharityInfo(prev => ({ ...prev, raffleType: value }))}
+                                        >
+                                            <SelectTrigger id="raffleType">
+                                                <SelectValue placeholder="Select raffle type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="50/50">50/50</SelectItem>
+                                                <SelectItem value="Prize Raffle">Prize Raffle</SelectItem>
+                                                <SelectItem value="Sweepstakes">Sweepstakes</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    {/* Campaign Launch Date */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="campaignLaunchDate" className="text-muted-foreground">Campaign Launch Date</Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="campaignLaunchDate"
+                                                type="date"
+                                                value={charityInfo.campaignLaunchDate}
+                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, campaignLaunchDate: e.target.value }))}
+                                                className=""
+                                            />
+                                        </div>
+                                    </div>
+
+
+
+
+
 
 
                                     <div className="flex gap-3">
                                         <Button
                                             onClick={next}
-                                            disabled={!charityInfo.charityName || !charityInfo.submitterName}
+                                            disabled={!charityInfo.charityName || !charityInfo.charityName}
                                         >
                                             Continue
                                             <ArrowRight className="ml-2 h-4 w-4" />
@@ -948,29 +977,27 @@ export default function OnboardingWizard() {
                                                         <span>{charityInfo.charitySite}</span>
                                                     </div>
                                                 )}
-                                                
+
                                                 {/* New fields in preview */}
                                                 {charityInfo.raffleType && (
                                                     <div className="text-sm text-muted-foreground">
                                                         <span className="font-medium">Raffle Type:</span> {charityInfo.raffleType}
                                                     </div>
                                                 )}
-                                                
+
                                                 {charityInfo.campaignLaunchDate && (
                                                     <div className="text-sm text-muted-foreground">
                                                         <span className="font-medium">Launch Date:</span> {new Date(charityInfo.campaignLaunchDate).toLocaleDateString()}
                                                     </div>
                                                 )}
-                                                
+
                                                 {charityInfo.ascendRepresentative && (
                                                     <div className="text-sm text-muted-foreground">
                                                         <span className="font-medium">Ascend Rep:</span> {charityInfo.ascendRepresentative}
                                                     </div>
                                                 )}
-                                                
-                                                <p className="text-xs text-muted-foreground">
-                                                    Submitted by: {charityInfo.submitterName || "Your Name"}
-                                                </p>
+
+                                               
                                             </div>
                                         </div>
                                     </div>
@@ -1043,6 +1070,21 @@ export default function OnboardingWizard() {
                                 sectionKey="extraPrizes"
                                 onPicked={() => setStepIndex((i) => i + 1)}
                             />
+
+                            {/* Skip section button */}
+                            <div className="flex ">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        // Hide the extra prizes section and skip to next step
+                                        setVisible("extraPrizes", false);
+                                        setStepIndex((i) => i + 2); // Skip both extraPrizes and extraPrizesEdit
+                                    }}
+                                    className="p-6"
+                                >
+                                    Skip this section
+                                </Button>
+                            </div>
                         </div>
                     )}
 
@@ -1068,6 +1110,21 @@ export default function OnboardingWizard() {
                                     setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                 }
                             />
+
+                            {/* Skip section button */}
+                            <div className="flex justify-center">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        // Hide the extra prizes section and continue to next step
+                                        setVisible("extraPrizes", false);
+                                        setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1));
+                                    }}
+                                    className="p-6"
+                                >
+                                    Skip Section
+                                </Button>
+                            </div>
                         </div>
                     )}
 
@@ -1303,53 +1360,6 @@ export default function OnboardingWizard() {
                         </div>
                     )}
 
-                    {stepKey === "WhoYouHelp" && (
-                        <div className="space-y-12">
-                            <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
-                                <h2 className="text-4xl font-medium">Choose How You Help Layout</h2>
-                                <p className="text-base text-slate-500">Add custom content to your page</p>
-                            </div>
-                            <VariantCarousel sectionKey="WhoYouHelp" onPicked={() => advance(1)} />
-                            <Button
-                                variant="ghost"
-                                onClick={() => {
-                                    setVisible("WhoYouHelp", false); // hide this section
-                                    advance(2); // skip its edit step as well
-                                }}
-                            >
-                                Skip this section
-                            </Button>
-                        </div>
-                    )}
-
-                    {stepKey === "WhoYouHelpEdit" && (
-                        <div className="space-y-12">
-                            <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
-                                <h2 className="text-4xl font-medium">Edit How You Help Components</h2>
-                                <p className="text-base text-slate-500">
-                                    Customize your section components by removing and change components copy
-                                </p>
-                            </div>
-                            <EditorForOnboarding
-                                sectionKey="WhoYouHelp"
-                                variantKey={overridesBySection.WhoYouHelp?.variant || "A"}
-                                overrides={overridesBySection.WhoYouHelp}
-                                onTogglePart={(id, v) => setDisplay("WhoYouHelp", id, v)}
-                                onCopyChange={(id, t) => setCopy("WhoYouHelp", id, t)}
-                                onSaveNext={() =>
-                                    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
-                                }
-                            />
-                        </div>
-                    )}
 
                     {stepKey === "review" && (
                         <ReviewStep onFinish={finish} onBack={back} stepIndex={stepIndex} />

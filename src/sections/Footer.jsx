@@ -150,6 +150,8 @@ function FooterPrimitive({ data }) {
                       className="w-36 text-right justify-start text-Colors-foreground text-sm font-medium leading-none"
                       data-display={isRulesOfPlay ? "no" : "yes"}
                       data-label={t}
+                      data-copy="true"
+                      data-id={`footer-link-${i}`}
                       data-requirements={
                         t === "Contact Us" ? "email" :
                         t === "Rules of Play" ? "document" :
@@ -163,6 +165,26 @@ function FooterPrimitive({ data }) {
                   );
                 })}
               </div>
+              
+              {/* Footer Link Action URLs - Metadata only, not displayed */}
+              {links.map((t, i) => {
+                const isRulesOfPlay = t === "Rules of Play";
+                if (isRulesOfPlay) return null; // Skip Rules of Play as it can't be disabled
+                
+                return (
+                  <div
+                    key={`metadata-${i}`}
+                    data-copy="true"
+                    data-label={`${t} Action URL`}
+                    data-id={`footer-link-${i}-action`}
+                    data-control-id={`footer-link-${i}`}
+                    data-max-chars="200"
+                    style={{ display: 'none' }}
+                  >
+                    https://example.com
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
