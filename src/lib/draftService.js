@@ -1,5 +1,5 @@
 // Draft service for server-based draft management
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://kvtouoigckngalfvzmsp.supabase.co'
 
 class DraftService {
   constructor() {

@@ -518,7 +518,7 @@ export default function OnboardingWizard() {
             console.log('Searching Brandfetch for:', query);
 
             // Try Brandfetch API with correct format
-            const apiKey = import.meta.env.VITE_BRANDFETCH_API_KEY;
+            const apiKey = import.meta.env.VITE_BRANDFETCH_API_KEY || 'BPpPQFtnKE9MXwkbc8cvF7G3EzpasSp/FH6NVyfX2bk=';
             if (!apiKey) {
                 throw new Error('Brandfetch API key not configured');
             }
