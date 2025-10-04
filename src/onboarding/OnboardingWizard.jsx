@@ -17,6 +17,7 @@ import { FeatureA, FeatureB, FeatureC } from "../sections/Feature.jsx";
 
 import AutoScaler from "../components/AutoScaler.jsx";
 import LogoUpload from "../components/LogoUpload.jsx";
+import { draftService } from "../lib/draftService.js";
 
 // [KEEP] theme helpers
 import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readBaselineColors, applySavedTheme, clearInlineColorVars } from "../theme-utils.js";
@@ -177,7 +178,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
         try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch { }
         setCSSVars(document.documentElement, "colors", buildThemeVars(colors, themeMode));
         applySavedTheme(themeMode);
-        onFinish?.();
+        onFinish?.(colors, themeMode);
     };
 
     function resetReviewToDefaults() {
@@ -677,16 +678,30 @@ export default function OnboardingWizard() {
     function back() {
         setStepIndex((i) => Math.max(i - 1, 0));
     }
-    function finish() {
+    async function finish(colors, themeMode) {
         try {
-            localStorage.setItem("onboardingCompleted", "1");
-            // Save charity information for use in the main app
-            localStorage.setItem("charityInfo", JSON.stringify(charityInfo));
-        } catch { }
-        const url = new URL(window.location.href);
-        url.searchParams.delete("wizard");
-        history.replaceState(null, "", url.toString());
-        location.replace("#/");
+            // Create draft with current configuration
+            const seedConfig = {
+                charityInfo,
+                overridesBySection,
+                theme: {
+                    colors: colors || {},
+                    mode: themeMode || 'light'
+                }
+            };
+
+            const result = await draftService.createDraft(charityInfo.clientEmail || charityInfo.submitterName, seedConfig);
+            
+            // Redirect to configurator with the new draft
+            const url = new URL(window.location.href);
+            url.searchParams.delete("wizard");
+            url.hash = `/configurator/${result.draftId}`;
+            history.replaceState(null, "", url.toString());
+            location.replace(url.toString());
+        } catch (error) {
+            console.error('Failed to create draft:', error);
+            alert('Failed to create draft. Please try again.');
+        }
     }
 
     return (

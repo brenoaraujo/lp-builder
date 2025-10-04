@@ -14,6 +14,11 @@ import { FooterA, FooterB } from "./sections/Footer.jsx";
 import OnboardingWizard from "./onboarding/OnboardingWizard.jsx";
 
 import EditorForOnboarding from "./onboarding/EditorForOnboarding.jsx";
+
+// Pages
+import Configurator from "./pages/Configurator.jsx";
+import PublishedPage from "./pages/PublishedPage.jsx";
+import AdminPage from "./pages/AdminPage.jsx";
 import { SECTIONS } from "./sections/registry.js";
 import EditorSidebar from "./components/EditorSidebar.jsx";
 import { useBuilderOverrides } from "./context/BuilderOverridesContext.jsx";
@@ -1431,6 +1436,9 @@ export function MainBuilder() {
           </div>
 
           <div className="flex items-center gap-2">
+            <a href="#/admin" className="text-xs underline text-muted-foreground">
+              Admin
+            </a>
             <a href="#/onboarding" onClick={(e) => { try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); localStorage.removeItem("theme.colors"); localStorage.removeItem("theme.fonts"); reset(); } catch { } }} className="text-xs underline text-muted-foreground" >
               Restart onboarding
             </a>
@@ -1813,6 +1821,19 @@ export function AppRouterShell() {
   const route = useHashRoute();
   const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
   const isSnapshot = !!hash && !hash.startsWith("/");
+
+  // Handle new server draft routes
+  if (route.startsWith("/configurator/")) {
+    return <Configurator />;
+  }
+  
+  if (route.startsWith("/p/")) {
+    return <PublishedPage />;
+  }
+
+  if (route === "/admin") {
+    return <AdminPage />;
+  }
 
   // If a share/snapshot URL is present, mark onboarding completed and go straight to the builder.
   useEffect(() => {
