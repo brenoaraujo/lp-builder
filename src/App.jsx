@@ -1847,7 +1847,7 @@ export function AppRouterShell() {
   }
 
   const done = localStorage.getItem("onboardingCompleted") === "1";
-  if (route === "/onboarding" || !done) return <OnboardingWizard />;
+  if (route === "/onboarding" || (!done && route !== "/admin")) return <OnboardingWizard />;
   return <MainBuilder />;
 }
 export default AppRouterShell;

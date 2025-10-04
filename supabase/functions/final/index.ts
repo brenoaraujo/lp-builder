@@ -127,6 +127,30 @@ async function sendMagicLink(req: Request) {
     const baseUrl = Deno.env.get('SITE_BASE_URL') || 'http://localhost:3000'
     const magicLink = `${baseUrl}/configurator/${draft.id}?token=${tokenString}`
 
+    // Send email (optional - you can implement this based on your email service)
+    try {
+      await sendEmail({
+        to: clientEmail,
+        subject: `Your Landing Page Builder Access - ${charityName || 'New Project'}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Welcome to the Landing Page Builder!</h2>
+            <p>You've been invited to create a custom landing page for ${charityName || 'your organization'}.</p>
+            <p>Click the link below to get started:</p>
+            <a href="${magicLink}" style="display: inline-block; background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+              Start Building Your Page
+            </a>
+            <p style="color: #666; font-size: 14px;">
+              This link will expire in 14 days. If you have any questions, please contact our team.
+            </p>
+          </div>
+        `
+      })
+    } catch (emailError) {
+      console.warn('Failed to send email:', emailError)
+      // Don't fail the request if email fails
+    }
+
     return new Response(
       JSON.stringify({
         draftId: draft.id,
@@ -228,5 +252,42 @@ async function getStats(req: Request) {
       JSON.stringify({ error: 'Internal error', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
+  }
+}
+
+// Simple email sending function (using same config as handoff API)
+async function sendEmail({ to, subject, html }: { to: string, subject: string, html: string }) {
+  console.log('Email would be sent:', { to, subject, html })
+  
+  // Use same Resend configuration as handoff API
+  const resendApiKey = Deno.env.get('RESEND_API_KEY')
+  const fromAddress = Deno.env.get('RESEND_FROM') || 'LP Builder <onboarding@resend.dev>'
+  
+  if (resendApiKey) {
+    try {
+      const { Resend } = await import('https://esm.sh/resend@1.1.0')
+      const resend = new Resend(resendApiKey)
+
+      const { data, error } = await resend.emails.send({
+        from: fromAddress,
+        to: [to],
+        subject: subject,
+        html: html,
+      })
+
+      if (error) {
+        console.error('Resend email error:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('Resend email sent successfully:', data)
+      return { success: true, data }
+    } catch (error) {
+      console.error('Resend integration error:', error)
+      return { success: false, error: error.message }
+    }
+  } else {
+    console.log('No RESEND_API_KEY found, email not sent')
+    return { success: true, message: 'Email logged, not actually sent (no API key)' }
   }
 }
