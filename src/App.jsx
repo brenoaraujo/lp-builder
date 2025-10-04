@@ -589,23 +589,62 @@ function SortableBlock({
               {copyParts.length === 0 ? (
                 <div className="text-xs text-gray-500">No copy-editable parts in this section.</div>
               ) : (
-                copyParts.map((p) => {
+                (() => {
+                  // Order copy list to pair copy inputs with their action URLs
+                  const regular = [];
+                  const actionUrls = [];
+                  
+                  copyParts.forEach(p => {
+                    if (p.id.includes('-action')) {
+                      actionUrls.push(p);
+                    } else {
+                      regular.push(p);
+                    }
+                  });
+                  
+                  const ordered = [];
+                  regular.forEach(regularItem => {
+                    ordered.push(regularItem);
+                    const actionUrl = actionUrls.find(actionItem => {
+                      const baseId = actionItem.id.replace('-action', '');
+                      return baseId === regularItem.id;
+                    });
+                    if (actionUrl) {
+                      ordered.push(actionUrl);
+                    }
+                  });
+                  
+                  actionUrls.forEach(actionUrl => {
+                    const baseId = actionUrl.id.replace('-action', '');
+                    const hasRegular = regular.some(regularItem => regularItem.id === baseId);
+                    if (!hasRegular) {
+                      ordered.push(actionUrl);
+                    }
+                  });
+                  
+                  return ordered;
+                })().map((p) => {
                   const current =
                     copyValues && typeof copyValues[p.id] === "string" ? copyValues[p.id] : p.defaultText;
                   const max = p.maxChars || 120;
+                  const isActionUrl = p.id.includes('-action');
+                  const hasPlaceholder = p.placeholder;
+                  
                   return (
-                    <div key={p.id} className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-xs font-medium text-gray-600">{p.label}</label>
-                        <div className="text-right text-[11px] text-gray-400">{current?.length ?? 0}/{max}</div>
-                      </div>
+                    <div key={p.id} className={`space-y-1 ${isActionUrl ? 'mb-3' : 'mb-6'}`}>
+                      {!isActionUrl && (
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-medium text-gray-600">{p.label}</label>
+                          <div className="text-right text-[11px] text-gray-400">{current?.length ?? 0}/{max}</div>
+                        </div>
+                      )}
                       <input
                         type="text"
                         value={current}
                         maxLength={max}
                         onChange={(e) => !readOnly && onCopyChange(p.id, e.target.value)}
                         className="w-full rounded-md border p-2 text-sm outline focus:outline-2 focus:outline-blue-500"
-                        placeholder={`Up to ${max} characters`}
+                        placeholder={hasPlaceholder ? p.placeholder : `Up to ${max} characters`}
                         readOnly={readOnly}
                       />
                     </div>
@@ -1369,6 +1408,7 @@ export function MainBuilder() {
   const FOOTER_DEFAULT_DATA = {
     // mirrors defaults inside FooterPrimitive but allows builder overrides later
     charityName: getCharityInfo().charityName || "",
+    charityLogo: getCharityInfo().charityLogo || "",
   };
 
 

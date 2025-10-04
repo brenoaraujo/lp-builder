@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // Simple wrapper component for raffle type rules
 const RaffleRuleWrapper = ({ children, hideFor = ["Sweepstakes", "Prize Raffle"] }) => {
     const [raffleType, setRaffleType] = useState(null);
     
+    // Get raffle type from localStorage (set during onboarding)
+    const getRaffleType = useCallback(() => {
+        try {
+            const charityInfo = JSON.parse(localStorage.getItem("charityInfo") || "{}");
+            return charityInfo.raffleType || null;
+        } catch (error) {
+            console.warn("Failed to parse charityInfo from localStorage:", error);
+            return null;
+        }
+    }, []);
+    
     useEffect(() => {
-        // Get raffle type from localStorage (set during onboarding)
-        const getRaffleType = () => {
-            try {
-                const charityInfo = JSON.parse(localStorage.getItem("charityInfo") || "{}");
-                return charityInfo.raffleType;
-            } catch (error) {
-                console.warn("Failed to parse charityInfo from localStorage:", error);
-                return null;
-            }
-        };
-        
         // Set initial value
         setRaffleType(getRaffleType());
         
@@ -31,16 +31,14 @@ const RaffleRuleWrapper = ({ children, hideFor = ["Sweepstakes", "Prize Raffle"]
         // Also check periodically in case storage event doesn't fire
         const interval = setInterval(() => {
             const currentRaffleType = getRaffleType();
-            if (currentRaffleType !== raffleType) {
-                setRaffleType(currentRaffleType);
-            }
+            setRaffleType(prev => prev !== currentRaffleType ? currentRaffleType : prev);
         }, 1000);
         
         return () => {
             window.removeEventListener("storage", handleStorageChange);
             clearInterval(interval);
         };
-    }, [raffleType]);
+    }, [getRaffleType]);
     
     const shouldHide = raffleType && hideFor.includes(raffleType);
     

@@ -249,6 +249,50 @@ const isCopyVisible = (copyItem) => {
 // Filtered copy list used by the "Copy" panel
 const visibleCopyList = Array.isArray(copyList) ? copyList.filter((p) => isCopyVisible(p)) : [];
 
+// Order copy list to pair copy inputs with their action URLs
+const orderedCopyList = (() => {
+  const regular = [];
+  const actionUrls = [];
+  
+  // Separate regular copy inputs from action URL inputs
+  visibleCopyList.forEach(p => {
+    if (p.id.includes('-action')) {
+      actionUrls.push(p);
+    } else {
+      regular.push(p);
+    }
+  });
+  
+  // Create ordered list by pairing each regular input with its action URL
+  const ordered = [];
+  regular.forEach(regularItem => {
+    // Add the regular copy input
+    ordered.push(regularItem);
+    
+    // Find and add its corresponding action URL input
+    const actionUrl = actionUrls.find(actionItem => {
+      // Extract the base ID from the action URL (e.g., "cta-button-action" -> "cta-button")
+      const baseId = actionItem.id.replace('-action', '');
+      return baseId === regularItem.id;
+    });
+    
+    if (actionUrl) {
+      ordered.push(actionUrl);
+    }
+  });
+  
+  // Add any remaining action URLs that don't have a corresponding regular input
+  actionUrls.forEach(actionUrl => {
+    const baseId = actionUrl.id.replace('-action', '');
+    const hasRegular = regular.some(regularItem => regularItem.id === baseId);
+    if (!hasRegular) {
+      ordered.push(actionUrl);
+    }
+  });
+  
+  return ordered;
+})();
+
 
   return (
     <aside className={
@@ -404,29 +448,36 @@ const visibleCopyList = Array.isArray(copyList) ? copyList.filter((p) => isCopyV
               {/* Copy edits */}
               <div>
                 <div className="text-xs font-semibold text-gray-500 my-4">Copy</div>
-                {visibleCopyList.length > 0 ? (
-                  visibleCopyList.map((p) => {
+                {orderedCopyList.length > 0 ? (
+                  orderedCopyList.map((p) => {
                     const current =
                       activeBlock?.copy && typeof activeBlock.copy[p.id] === "string"
                         ? activeBlock.copy[p.id]
                         : p.defaultText;
                     const max = p.maxChars || 120;
+                    const isActionUrl = p.id.includes('-action');
+                    const hasPlaceholder = p.placeholder;
+                    
                     return (
-                      <div key={p.id} className="space-y-1 mb-6 px-1">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-xs font-medium text-gray-600">{p.label}</label>
-                          <div className="text-right text-[11px] text-gray-400">{current?.length ?? 0}/{max}</div>
-                        </div>
+                      
+                      <div key={p.id} className={`space-y-1 ${isActionUrl ? ' mb-8 mt-[-10px]' : ' mb-8'} px-1`}>
+                        {!isActionUrl && (
+                          <div className="flex items-center justify-between">
+                            <label className="block text-xs font-medium text-gray-600">{p.label}</label>
+                            <div className="text-right text-[11px] text-gray-400">{current?.length ?? 0}/{max}</div>
+                          </div>
+                        )}
                         <input
                           type="text"
                           value={current ?? ""}
                           maxLength={max}
                           onChange={(e) => !approvedMode && onCopyChangeFromSidebar(p.id, e.target.value)}
                           className="w-full rounded-md border p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder={`Up to ${max} characters`}
+                          placeholder={hasPlaceholder ? p.placeholder : `Up to ${max} characters`}
                           readOnly={approvedMode}
                         />
                       </div>
+                      
                     );
                   })
                 ) : (

@@ -45,13 +45,9 @@ export function FeatureA() {
                     </div>
 
                     {/* Actions */}
-                    <div
-
-                        className="inline-flex justify-start items-start gap-3"
-                    >
+                    <div className="inline-flex justify-start items-start gap-3">
                         {/* Primary */}
                         <div
-
                             data-display="true"
                             data-label="Button"
                             data-copy="true"
@@ -68,10 +64,10 @@ export function FeatureA() {
                         {/* Button Action URL - Metadata only, not displayed */}
                         <div
                             data-copy="true"
-                            data-label="Button Action URL"
                             data-id="cta-button-action"
                             data-control-id="cta-button"
                             data-max-chars="200"
+                            data-placeholder="Learn More Url"
                             style={{ display: 'none' }}
                         >
                             https://example.com
@@ -173,13 +169,9 @@ export function FeatureB() {
                 </div>
 
                 {/* Actions */}
-                <div
-
-                    className="inline-flex justify-start items-start gap-3"
-                >
+                <div className="inline-flex justify-start items-start gap-3">
                     {/* Primary */}
                     <div
-                        
                         data-display="true"
                         data-label="Button"
                         data-copy="true"
@@ -189,14 +181,14 @@ export function FeatureB() {
                         className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
                     >
                         <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
-                        Learn More
+                            Learn More
                         </div>
                     </div>
                     
                     {/* Button Action URL - Metadata only, not displayed */}
                     <div
                         data-copy="true"
-                        data-label="Button Action URL"
+                        data-placeholder="Learn More Url"
                         data-id="cta-button-action"
                         data-control-id="cta-button"
                         data-max-chars="200"
@@ -283,13 +275,9 @@ export function FeatureC() {
                 </div>
 
                 {/* Actions */}
-                <div
-
-                    className="inline-flex justify-center items-start gap-3"
-                >
+                <div className="inline-flex justify-center items-start gap-3">
                     {/* Primary */}
                     <div
-                        
                         data-display="true"
                         data-label="Button"
                         data-copy="true"
@@ -299,14 +287,14 @@ export function FeatureC() {
                         className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
                     >
                         <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
-                        Learn More
+                            Learn More
                         </div>
                     </div>
                     
                     {/* Button Action URL - Metadata only, not displayed */}
                     <div
                         data-copy="true"
-                        data-label="Button Action URL"
+                        data-placeholder="Learn More Url"
                         data-id="cta-button-action"
                         data-control-id="cta-button"
                         data-max-chars="200"

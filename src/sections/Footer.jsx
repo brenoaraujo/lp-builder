@@ -13,6 +13,7 @@ function FooterPrimitive({ data }) {
       "Must be 18 years of age or older to play. Play responsibly. For problem gambling support, please visit Ontario Gambling Helpline (1-866-531-2600) www.connexontario.ca",
     brandName = "Brand Name",
     charityName = "",
+    charityLogo = "",
     brandLicense = "RAF#1439950",
     links = [
       "About Us",
@@ -109,6 +110,19 @@ function FooterPrimitive({ data }) {
         <div className="self-stretch inline-flex justify-between items-center">
           <div className="flex-1 inline-flex flex-col justify-start items-start gap-4">
             <div className="flex flex-col justify-start items-start gap-1">
+              {/* Charity Logo */}
+              {charityLogo && (
+                <div className="mb-2">
+                  <img 
+                    src={charityLogo} 
+                    alt={`${charityName || brandName} logo`}
+                    className="h-12 w-auto object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
               <div className="justify-start text-Colors-foreground text-xl font-bold leading-relaxed font-headline"  >
                 {charityName || brandName}
               </div>
@@ -141,14 +155,11 @@ function FooterPrimitive({ data }) {
             <div className="flex flex-col justify-start items-start gap-8">
               <div className="w-80 inline-flex justify-start items-start gap-6 flex-wrap content-start">
                 {links.map((t, i) => {
-                  // Rules of Play cannot be disabled
-                  const isRulesOfPlay = t === "Rules of Play";
-                  
                   return (
                     <div
                       key={i}
                       className="w-36 text-right justify-start text-Colors-foreground text-sm font-medium leading-none"
-                      data-display={isRulesOfPlay ? "no" : "yes"}
+                      data-display="yes"
                       data-label={t}
                       data-copy="true"
                       data-id={`footer-link-${i}`}
@@ -168,20 +179,29 @@ function FooterPrimitive({ data }) {
               
               {/* Footer Link Action URLs - Metadata only, not displayed */}
               {links.map((t, i) => {
-                const isRulesOfPlay = t === "Rules of Play";
-                if (isRulesOfPlay) return null; // Skip Rules of Play as it can't be disabled
+                // Define which footer items get action URL inputs
+                const itemsWithActionUrls = [
+                 
+                  "Rules of Play", 
+                  
+                  "FAQs",
+                  "Contact Us",
+                  "Privacy Policy"
+                ];
+                
+                if (!itemsWithActionUrls.includes(t)) return null;
                 
                 return (
                   <div
                     key={`metadata-${i}`}
                     data-copy="true"
-                    data-label={`${t} Action URL`}
+                    data-placeholder={`${t} Url`}
                     data-id={`footer-link-${i}-action`}
                     data-control-id={`footer-link-${i}`}
                     data-max-chars="200"
                     style={{ display: 'none' }}
                   >
-                    https://example.com
+                   
                   </div>
                 );
               })}

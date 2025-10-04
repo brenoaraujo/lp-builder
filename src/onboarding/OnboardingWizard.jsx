@@ -16,6 +16,7 @@ import { WinnersA, WinnersB } from "../sections/Winners.jsx";
 import { FeatureA, FeatureB, FeatureC } from "../sections/Feature.jsx";
 
 import AutoScaler from "../components/AutoScaler.jsx";
+import LogoUpload from "../components/LogoUpload.jsx";
 
 // [KEEP] theme helpers
 import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readBaselineColors, applySavedTheme, clearInlineColorVars } from "../theme-utils.js";
@@ -825,15 +826,12 @@ export default function OnboardingWizard() {
                                     {/* Additional Fields - Only shown after selection or enter */}
                                     {showAdditionalFields && (
                                         <div className="space-y-8">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="charityLogo" className="text-muted-foreground">Charity Logo URL</Label>
-                                                <Input
-                                                    id="charityLogo"
-                                                    placeholder="https://example.com/logo.png"
-                                                    value={charityInfo.charityLogo}
-                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, charityLogo: e.target.value }))}
-                                                />
-                                            </div>
+                                            <LogoUpload
+                                                value={charityInfo.charityLogo}
+                                                onChange={(url) => setCharityInfo(prev => ({ ...prev, charityLogo: url }))}
+                                                label="Charity Logo"
+                                                description="Upload your charity logo or enter a URL"
+                                            />
 
                                             <div className="space-y-2">
                                                 <Label htmlFor="charitySite" className="text-muted-foreground">Charity Website</Label>
@@ -867,12 +865,14 @@ export default function OnboardingWizard() {
                                         <Select
                                             value={charityInfo.raffleType}
                                             onValueChange={(value) => {
-                                                setCharityInfo(prev => ({ ...prev, raffleType: value }));
+                                                const updatedInfo = { ...charityInfo, raffleType: value };
+                                                setCharityInfo(updatedInfo);
                                                 // Save immediately so RaffleRuleWrapper can read it
-                                                setTimeout(() => {
-                                                    const updatedInfo = { ...charityInfo, raffleType: value };
+                                                try {
                                                     localStorage.setItem("charityInfo", JSON.stringify(updatedInfo));
-                                                }, 100);
+                                                } catch (error) {
+                                                    console.warn("Failed to save charityInfo to localStorage:", error);
+                                                }
                                             }}
                                         >
                                             <SelectTrigger id="raffleType">
