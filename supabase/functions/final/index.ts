@@ -124,7 +124,7 @@ async function sendMagicLink(req: Request) {
     }
 
     // Generate magic link
-    const baseUrl = Deno.env.get('SITE_BASE_URL') || 'http://localhost:3000'
+    const baseUrl = Deno.env.get('SITE_BASE_URL') || 'https://your-production-url.com'
     const magicLink = `${baseUrl}/configurator/${draft.id}?token=${tokenString}`
 
     // Send email (optional - you can implement this based on your email service)
