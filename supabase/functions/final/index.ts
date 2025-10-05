@@ -128,8 +128,9 @@ async function sendMagicLink(req: Request) {
     const magicLink = `${baseUrl}/configurator/${draft.id}?token=${tokenString}`
 
     // Send email (optional - you can implement this based on your email service)
+    console.log('Attempting to send email to:', clientEmail)
     try {
-      await sendEmail({
+      const emailResult = await sendEmail({
         to: clientEmail,
         subject: `Your Landing Page Builder Access - ${charityName || 'New Project'}`,
         html: `
@@ -146,8 +147,9 @@ async function sendMagicLink(req: Request) {
           </div>
         `
       })
+      console.log('Email result:', emailResult)
     } catch (emailError) {
-      console.warn('Failed to send email:', emailError)
+      console.error('Failed to send email:', emailError)
       // Don't fail the request if email fails
     }
 
@@ -257,23 +259,41 @@ async function getStats(req: Request) {
 
 // Simple email sending function (using same config as handoff API)
 async function sendEmail({ to, subject, html }: { to: string, subject: string, html: string }) {
-  console.log('Email would be sent:', { to, subject, html })
+  console.log('sendEmail called with:', { to, subject: subject.substring(0, 50) + '...' })
   
   // Use same Resend configuration as handoff API
   const resendApiKey = Deno.env.get('RESEND_API_KEY')
   const fromAddress = Deno.env.get('RESEND_FROM') || 'LP Builder <onboarding@resend.dev>'
   
+  console.log('Environment check:', {
+    hasResendApiKey: !!resendApiKey,
+    resendApiKeyLength: resendApiKey ? resendApiKey.length : 0,
+    fromAddress: fromAddress,
+    resendApiKeyPrefix: resendApiKey ? resendApiKey.substring(0, 10) + '...' : 'none'
+  })
+  
   if (resendApiKey) {
     try {
+      console.log('Importing Resend...')
       const { Resend } = await import('https://esm.sh/resend@1.1.0')
       const resend = new Resend(resendApiKey)
 
+      console.log('Sending email via Resend...')
+      console.log('Email details:', {
+        from: fromAddress,
+        to: [to],
+        subject: subject.substring(0, 50) + '...',
+        htmlLength: html.length
+      })
+      
       const { data, error } = await resend.emails.send({
         from: fromAddress,
         to: [to],
         subject: subject,
         html: html,
       })
+
+      console.log('Resend response:', { data, error })
 
       if (error) {
         console.error('Resend email error:', error)
