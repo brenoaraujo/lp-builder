@@ -263,7 +263,10 @@ async function sendEmail({ to, subject, html }: { to: string, subject: string, h
   
   // Use same Resend configuration as handoff API
   const resendApiKey = Deno.env.get('RESEND_API_KEY')
-  const fromAddress = Deno.env.get('RESEND_FROM') || 'LP Builder <onboarding@resend.dev>'
+  let fromAddress = Deno.env.get('RESEND_FROM') || 'LP Builder <onboarding@resend.dev>'
+  
+  // Clean up the from address - remove any extra text in parentheses
+  fromAddress = fromAddress.replace(/\s*\([^)]*\)\s*$/, '').trim()
   
   console.log('Environment check:', {
     hasResendApiKey: !!resendApiKey,
