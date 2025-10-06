@@ -156,6 +156,24 @@ class DraftService {
 
     return response.json()
   }
+
+  async updateDraftStatus(draftId, status) {
+    const response = await fetch(`${this.baseUrl}/drafts/${draftId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG91b2lnY2tuZ2FsZnZ6bXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMjc3OTcsImV4cCI6MjA3NDkwMzc5N30.i67Sfnl2PA4Pj5OcToT28o2bqpmLYtPbXasuNuExve0'}`,
+      },
+      body: JSON.stringify({ status })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to update draft status')
+    }
+
+    return response.json()
+  }
 }
 
 export const draftService = new DraftService()

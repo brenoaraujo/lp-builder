@@ -471,6 +471,10 @@ export default function OnboardingWizard() {
 
     // Progress saving key
     const PROGRESS_KEY = 'onboarding-progress';
+    
+    // Check if user is coming from a magic link (configurator route)
+    const [existingDraftId, setExistingDraftId] = useState(null);
+    const [isUpdatingExistingDraft, setIsUpdatingExistingDraft] = useState(false);
 
     // Save progress to localStorage
     const saveProgress = () => {
@@ -732,8 +736,34 @@ export default function OnboardingWizard() {
         }
     };
 
-    // Load progress on mount
+    // Load progress on mount and check for existing draft
     useEffect(() => {
+        // Check if user is coming from a magic link (configurator route or onboarding with draftId)
+        const hash = window.location.hash;
+        const urlParams = new URLSearchParams(window.location.search);
+        const draftIdFromParams = urlParams.get('draftId');
+        
+        let draftId = null;
+        
+        // Check configurator route first
+        const configuratorMatch = hash.match(/#\/configurator\/([^?]+)/);
+        if (configuratorMatch) {
+            draftId = configuratorMatch[1];
+        } else if (draftIdFromParams) {
+            // Check URL search parameters
+            draftId = draftIdFromParams;
+        }
+        
+        if (draftId) {
+            setExistingDraftId(draftId);
+            setIsUpdatingExistingDraft(true);
+            
+            // Update draft status to "in-progress" when user starts onboarding
+            draftService.updateDraftStatus(draftId, 'active').catch(error => {
+                console.warn('Failed to update draft status to in-progress:', error);
+            });
+        }
+        
         const progressLoaded = loadProgress();
         if (!progressLoaded) {
             // Only reset defaults if no progress was loaded
@@ -812,13 +842,37 @@ export default function OnboardingWizard() {
                 }
             };
 
-            console.log('Creating draft with email:', charityInfo.clientEmail);
-            const result = await draftService.createDraft(charityInfo.clientEmail.trim(), seedConfig);
+            let result;
+            
+            if (isUpdatingExistingDraft && existingDraftId) {
+                // Update existing draft with full configuration
+                console.log('Updating existing draft:', existingDraftId);
+                result = await draftService.updateDraft(existingDraftId, 1, {
+                    charityInfo,
+                    overridesBySection,
+                    theme: {
+                        colors: colors || {},
+                        mode: themeMode || 'light'
+                    }
+                });
+                result.draftId = existingDraftId;
+            } else {
+                // Create new draft
+                console.log('Creating new draft with email:', charityInfo.clientEmail);
+                result = await draftService.createDraft(charityInfo.clientEmail.trim(), seedConfig);
+            }
+            
+            // Mark onboarding as completed BEFORE clearing progress
+            try {
+                localStorage.setItem("onboardingCompleted", "1");
+            } catch (error) {
+                console.warn('Failed to mark onboarding as completed:', error);
+            }
             
             // Clear progress since onboarding is complete
             clearProgress();
             
-            // Redirect to configurator with the new draft
+            // Redirect to configurator with the draft
             const configuratorUrl = `${window.location.origin}/#/configurator/${result.draftId}`;
             console.log('Redirecting to:', configuratorUrl);
             

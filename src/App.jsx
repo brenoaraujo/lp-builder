@@ -1824,6 +1824,13 @@ export function AppRouterShell() {
 
   // Handle new server draft routes
   if (route.startsWith("/configurator/")) {
+    const done = localStorage.getItem("onboardingCompleted") === "1";
+    if (!done) {
+      // User hasn't completed onboarding, redirect to onboarding with the draft ID
+      const draftId = route.split('/')[2];
+      window.location.hash = `#/onboarding?draftId=${draftId}`;
+      return <OnboardingWizard />;
+    }
     return <Configurator />;
   }
   

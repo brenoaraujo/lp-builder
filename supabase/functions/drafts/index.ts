@@ -43,6 +43,8 @@ serve(async (req) => {
       case 'PATCH':
         if (pathParts.length === 3) {
           return await updateDraft(draftId, req)
+        } else if (pathParts.length === 4 && pathParts[3] === 'status') {
+          return await updateDraftStatus(draftId, req)
         }
         break
       
@@ -333,5 +335,50 @@ async function confirmDraft(draftId: string, req: Request) {
     JSON.stringify({ publishedUrl }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
+}
+
+async function updateDraftStatus(draftId: string, req: Request) {
+  try {
+    console.log('Updating draft status:', draftId)
+    
+    const { status } = await req.json()
+    
+    if (!status) {
+      return new Response(
+        JSON.stringify({ error: 'Status is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Update the draft status
+    const { error: updateError } = await supabase
+      .from('drafts')
+      .update({ status })
+      .eq('id', draftId)
+
+    if (updateError) {
+      console.error('Error updating draft status:', updateError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to update draft status' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Draft status updated successfully:', draftId, 'to', status)
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: 'Draft status updated successfully',
+        status: status
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Update draft status error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
 }
 
