@@ -55,18 +55,41 @@ serve(async (req) => {
     // Audit log
     await auditLog(supabase, 'draft', draftId, 'opened', access.email, req)
 
-    // Redirect to configurator
-    const baseUrl = Deno.env.get('SITE_BASE_URL') || 'http://localhost:3000'
-    const redirectUrl = `${baseUrl}/configurator/${draftId}`
+    // Check if this is a fetch request (has Accept header) or a browser redirect
+    const acceptHeader = req.headers.get('Accept') || ''
+    const isFetchRequest = acceptHeader.includes('application/json') || req.headers.get('Content-Type') === 'application/json'
 
-    return new Response(null, {
-      status: 302,
-      headers: {
-        ...corsHeaders,
-        'Location': redirectUrl,
-        'Set-Cookie': cookieHeader
-      }
-    })
+    if (isFetchRequest) {
+      // Return JSON response for fetch requests
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Authentication successful',
+          draftId: draftId
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Set-Cookie': cookieHeader
+          }
+        }
+      )
+    } else {
+      // Redirect for browser requests
+      const baseUrl = Deno.env.get('SITE_BASE_URL') || 'http://localhost:3000'
+      const redirectUrl = `${baseUrl}/configurator/${draftId}`
+
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': redirectUrl,
+          'Set-Cookie': cookieHeader
+        }
+      })
+    }
   } catch (error) {
     console.error('Error:', error)
     return new Response(

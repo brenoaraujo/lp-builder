@@ -1,22 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeadersNoCredentials } from '../_shared/cors.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
-// CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-}
-
 serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeadersNoCredentials })
   }
 
   try {
@@ -53,14 +47,14 @@ serve(async (req) => {
           method: req.method,
           pathname: url.pathname
         }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
       )
     }
   } catch (error) {
     console.error('Admin API Error:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
     )
   }
 })
@@ -72,7 +66,7 @@ async function sendMagicLink(req: Request) {
     if (!clientEmail || typeof clientEmail !== 'string') {
       return new Response(
         JSON.stringify({ error: 'clientEmail is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -97,7 +91,7 @@ async function sendMagicLink(req: Request) {
       console.error('Draft creation error:', draftError)
       return new Response(
         JSON.stringify({ error: 'Failed to create draft', details: draftError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -123,7 +117,7 @@ async function sendMagicLink(req: Request) {
       console.error('Version creation error:', versionError)
       return new Response(
         JSON.stringify({ error: 'Failed to create initial version', details: versionError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -163,13 +157,13 @@ async function sendMagicLink(req: Request) {
         magicLink,
         message: 'Magic link created successfully'
       }),
-      { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 201, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Error in sendMagicLink:', error)
     return new Response(
       JSON.stringify({ error: 'Internal error', details: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
     )
   }
 }
@@ -199,7 +193,7 @@ async function getAllDrafts(req: Request) {
       console.error('Error fetching drafts:', error)
       return new Response(
         JSON.stringify({ error: 'Failed to fetch drafts', details: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -234,7 +228,7 @@ async function getAllDrafts(req: Request) {
     console.error('Error in getAllDrafts:', error)
     return new Response(
       JSON.stringify({ error: 'Internal error', details: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
     )
   }
 }
@@ -256,7 +250,7 @@ async function getStats(req: Request) {
     console.error('Error in getStats:', error)
     return new Response(
       JSON.stringify({ error: 'Internal error', details: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
     )
   }
 }

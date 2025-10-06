@@ -28,12 +28,17 @@ export default function Configurator() {
             credentials: 'include', // Critical for cookies
             headers: {
               'Content-Type': 'application/json',
+              'Accept': 'application/json', // Ensure we get JSON response
             }
           })
           
           if (!response.ok) {
-            throw new Error('Failed to authenticate draft access')
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.error || 'Failed to authenticate draft access')
           }
+          
+          const result = await response.json()
+          console.log('Draft authentication successful:', result)
           
           // Remove token from URL for security
           const newUrl = window.location.pathname + window.location.hash
