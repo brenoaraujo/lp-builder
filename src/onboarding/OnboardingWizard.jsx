@@ -373,7 +373,7 @@ function resolveByVariant(sectionKey, variant = "A") {
    Wizard Shell
    ========================================================================= */
 
-function StepHeader({ currentIndex }) {
+function StepHeader({ currentIndex, onStartOver }) {
     const pct = Math.round((currentIndex / (STEP_KEYS.length - 1)) * 100);
     return (
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b">
@@ -383,6 +383,16 @@ function StepHeader({ currentIndex }) {
                     <div className="text-sm sm:text-lg font-semibold truncate">Landing Page Builder</div>
                 </div>
                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                    {onStartOver && currentIndex > 0 && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onStartOver}
+                            className="text-xs text-muted-foreground hover:text-foreground"
+                        >
+                            Start Over
+                        </Button>
+                    )}
                     <div className="w-24 sm:w-48">
                         <Progress value={pct} />
                     </div>
@@ -458,6 +468,74 @@ export default function OnboardingWizard() {
         raffleType: "",
         campaignLaunchDate: ""
     });
+
+    // Progress saving key
+    const PROGRESS_KEY = 'onboarding-progress';
+
+    // Save progress to localStorage
+    const saveProgress = () => {
+        try {
+            const progress = {
+                stepIndex,
+                charityInfo,
+                overridesBySection,
+                currentExtraContentKey,
+                searchQuery,
+                showAdditionalFields,
+                timestamp: Date.now()
+            };
+            localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+        } catch (error) {
+            console.warn('Failed to save progress:', error);
+        }
+    };
+
+    // Load progress from localStorage
+    const loadProgress = () => {
+        try {
+            const saved = localStorage.getItem(PROGRESS_KEY);
+            if (saved) {
+                const progress = JSON.parse(saved);
+                // Only load if progress is less than 24 hours old
+                if (Date.now() - progress.timestamp < 24 * 60 * 60 * 1000) {
+                    setStepIndex(progress.stepIndex || 0);
+                    setCharityInfo(progress.charityInfo || charityInfo);
+                    setCurrentExtraContentKey(progress.currentExtraContentKey || null);
+                    setSearchQuery(progress.searchQuery || "");
+                    setShowAdditionalFields(progress.showAdditionalFields || false);
+                    
+                    // Restore overrides
+                    if (progress.overridesBySection) {
+                        Object.entries(progress.overridesBySection).forEach(([section, overrides]) => {
+                            if (overrides.visible !== undefined) setVisible(section, overrides.visible);
+                            if (overrides.variant !== undefined) setVariant(section, overrides.variant);
+                            if (overrides.display !== undefined) setDisplay(section, overrides.display);
+                            if (overrides.copy !== undefined) setCopy(section, overrides.copy);
+                        });
+                    }
+                    
+                    return true; // Progress was loaded
+                } else {
+                    // Clear old progress
+                    localStorage.removeItem(PROGRESS_KEY);
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load progress:', error);
+            localStorage.removeItem(PROGRESS_KEY);
+        }
+        return false; // No progress was loaded
+    };
+
+    // Clear progress
+    const clearProgress = () => {
+        try {
+            localStorage.removeItem(PROGRESS_KEY);
+        } catch (error) {
+            console.warn('Failed to clear progress:', error);
+        }
+    };
+
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
@@ -654,31 +732,62 @@ export default function OnboardingWizard() {
         }
     };
 
-    // [KEEP] ensure defaults so previews don't show as blank
+    // Load progress on mount
     useEffect(() => {
-        // Reset colors and fonts to defaults when onboarding starts
-        try {
-            localStorage.removeItem("theme.colors");
-            localStorage.removeItem("theme.fonts");
-        } catch { }
+        const progressLoaded = loadProgress();
+        if (!progressLoaded) {
+            // Only reset defaults if no progress was loaded
+            try {
+                localStorage.removeItem("theme.colors");
+                localStorage.removeItem("theme.fonts");
+            } catch { }
 
-        // nuke inline overrides so tokens.css values become visible again
-        clearInlineColorVars();
+            // nuke inline overrides so tokens.css values become visible again
+            clearInlineColorVars();
 
-        // show core sections by default on first mount
-        ["hero", "extraPrizes", "winners"].forEach((k) => {
-            if (overridesBySection[k]?.visible === undefined) setVisible(k, true);
-        });
-
-        // hide optional sections by default
+            // show core sections by default on first mount
+            ["hero", "extraPrizes", "winners"].forEach((k) => {
+                if (overridesBySection[k]?.visible === undefined) setVisible(k, true);
+            });
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Save progress whenever key state changes
+    useEffect(() => {
+        saveProgress();
+    }, [stepIndex, charityInfo, overridesBySection, currentExtraContentKey, searchQuery, showAdditionalFields]);
 
     function next() {
         setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1));
     }
     function back() {
         setStepIndex((i) => Math.max(i - 1, 0));
+    }
+
+    function startOver() {
+        if (confirm('Are you sure you want to start over? This will clear all your progress.')) {
+            clearProgress();
+            setStepIndex(0);
+            setCharityInfo({
+                charityName: "",
+                charityLogo: "",
+                charitySite: "",
+                submitterName: "",
+                clientEmail: "",
+                ascendRepresentative: "",
+                raffleType: "",
+                campaignLaunchDate: ""
+            });
+            setSearchQuery("");
+            setShowAdditionalFields(false);
+            setCurrentExtraContentKey(null);
+            
+            // Reset overrides to defaults
+            ["hero", "extraPrizes", "winners"].forEach((k) => {
+                setVisible(k, true);
+            });
+        }
     }
     async function finish(colors, themeMode) {
         try {
@@ -706,12 +815,15 @@ export default function OnboardingWizard() {
             console.log('Creating draft with email:', charityInfo.clientEmail);
             const result = await draftService.createDraft(charityInfo.clientEmail.trim(), seedConfig);
             
+            // Clear progress since onboarding is complete
+            clearProgress();
+            
             // Redirect to configurator with the new draft
-            const url = new URL(window.location.href);
-            url.searchParams.delete("wizard");
-            url.hash = `/configurator/${result.draftId}`;
-            history.replaceState(null, "", url.toString());
-            location.replace(url.toString());
+            const configuratorUrl = `${window.location.origin}/#/configurator/${result.draftId}`;
+            console.log('Redirecting to:', configuratorUrl);
+            
+            // Use window.location.href for a full page redirect
+            window.location.href = configuratorUrl;
         } catch (error) {
             console.error('Failed to create draft:', error);
             alert('Failed to create draft. Please try again.');
@@ -720,7 +832,7 @@ export default function OnboardingWizard() {
 
     return (
         <div className="min-h-screen flex flex-col text-foreground onboarding bg-gradient-to-b from-white from-0% via-white via-50% to-slate-50 to-50%">
-            <StepHeader currentIndex={stepIndex} />
+            <StepHeader currentIndex={stepIndex} onStartOver={startOver} />
             <div className="flex-1 min-h-0 p-2 sm:p-4 flex justify-center box-border">
                 <div className="w-full max-w-[1100px] h-full box-border">
                     {/* ============ STEP CONTENT ============ */}
