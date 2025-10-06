@@ -453,6 +453,7 @@ export default function OnboardingWizard() {
         charityLogo: "",
         charitySite: "",
         submitterName: "",
+        clientEmail: "",
         ascendRepresentative: "",
         raffleType: "",
         campaignLaunchDate: ""
@@ -633,6 +634,7 @@ export default function OnboardingWizard() {
             charityLogo: brand.logo || '',
             charitySite: brand.domain,
             submitterName: charityInfo.submitterName,
+            clientEmail: charityInfo.clientEmail,
             ascendRepresentative: charityInfo.ascendRepresentative,
             raffleType: charityInfo.raffleType,
             campaignLaunchDate: charityInfo.campaignLaunchDate
@@ -680,6 +682,17 @@ export default function OnboardingWizard() {
     }
     async function finish(colors, themeMode) {
         try {
+            // Validate required fields
+            if (!charityInfo.clientEmail || !charityInfo.clientEmail.trim()) {
+                alert('Please enter your email address to continue.');
+                return;
+            }
+
+            if (!charityInfo.charityName || !charityInfo.charityName.trim()) {
+                alert('Please enter a charity name to continue.');
+                return;
+            }
+
             // Create draft with current configuration
             const seedConfig = {
                 charityInfo,
@@ -690,7 +703,8 @@ export default function OnboardingWizard() {
                 }
             };
 
-            const result = await draftService.createDraft(charityInfo.clientEmail || charityInfo.submitterName, seedConfig);
+            console.log('Creating draft with email:', charityInfo.clientEmail);
+            const result = await draftService.createDraft(charityInfo.clientEmail.trim(), seedConfig);
             
             // Redirect to configurator with the new draft
             const url = new URL(window.location.href);
@@ -874,6 +888,21 @@ export default function OnboardingWizard() {
                                         </div>
                                     </div>
 
+                                    <div className="space-y-2">
+                                        <Label htmlFor="clientEmail" className="text-muted-foreground">Your Email Address *</Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="clientEmail"
+                                                type="email"
+                                                placeholder="your.email@example.com"
+                                                value={charityInfo.clientEmail}
+                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, clientEmail: e.target.value }))}
+                                                className=""
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
                                     {/* Type of Raffle */}
                                     <div className="space-y-2">
                                         <Label htmlFor="raffleType" className="text-muted-foreground">Type of Raffle</Label>
@@ -1016,6 +1045,12 @@ export default function OnboardingWizard() {
                                                 {charityInfo.ascendRepresentative && (
                                                     <div className="text-sm text-muted-foreground">
                                                         <span className="font-medium">Ascend Rep:</span> {charityInfo.ascendRepresentative}
+                                                    </div>
+                                                )}
+
+                                                {charityInfo.clientEmail && (
+                                                    <div className="text-sm text-muted-foreground">
+                                                        <span className="font-medium">Your Email:</span> {charityInfo.clientEmail}
                                                     </div>
                                                 )}
 
