@@ -38,7 +38,8 @@ import {
   Calendar,
   Mail,
   Building2,
-  Globe
+  Globe,
+  Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -99,6 +100,23 @@ class AdminService {
     if (!response.ok) {
       const error = await response.json()
       throw new Error(error.error || 'Failed to fetch stats')
+    }
+
+    return response.json()
+  }
+
+  async deleteDraft(draftId) {
+    const response = await fetch(`${this.baseUrl}/final/drafts/${draftId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG91b2lnY2tuZ2FsZnZ6bXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMjc3OTcsImV4cCI6MjA3NDkwMzc5N30.i67Sfnl2PA4Pj5OcToT28o2bqpmLYtPbXasuNuExve0'}`,
+      }
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to delete draft')
     }
 
     return response.json()
@@ -204,17 +222,51 @@ export default function AdminPage() {
     }
   }
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, draft) => {
+    // Determine status based on draft data
+    let displayStatus = status
+    let statusColor = 'bg-blue-100 text-blue-800'
+    
+    if (status === 'active') {
+      // Check if it's been opened (has more than just the initial version)
+      const hasBeenOpened = draft.latestVersion && draft.latestVersion.version > 1
+      if (hasBeenOpened) {
+        displayStatus = 'in-progress'
+        statusColor = 'bg-yellow-100 text-yellow-800'
+      } else {
+        displayStatus = 'invited'
+        statusColor = 'bg-orange-100 text-orange-800'
+      }
+    }
+    
     const variants = {
+      invited: 'bg-orange-100 text-orange-800',
+      'in-progress': 'bg-yellow-100 text-yellow-800',
       active: 'bg-blue-100 text-blue-800',
       confirmed: 'bg-green-100 text-green-800',
       archived: 'bg-gray-100 text-gray-800'
     }
+    
     return (
-      <Badge className={variants[status] || variants.active}>
-        {status}
+      <Badge className={variants[displayStatus] || variants.active}>
+        {displayStatus}
       </Badge>
     )
+  }
+
+  const handleDeleteDraft = async (draftId) => {
+    if (!confirm('Are you sure you want to delete this draft? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      await adminService.deleteDraft(draftId)
+      toast.success('Draft deleted successfully')
+      await loadData()
+    } catch (error) {
+      console.error('Failed to delete draft:', error)
+      toast.error(error.message || 'Failed to delete draft')
+    }
   }
 
   const formatDate = (dateString) => {
@@ -436,7 +488,7 @@ export default function AdminPage() {
                               </TableCell>
                               
                               <TableCell>
-                                {getStatusBadge(draft.status)}
+                                {getStatusBadge(draft.status, draft)}
                               </TableCell>
                               
                               <TableCell>
@@ -521,6 +573,14 @@ export default function AdminPage() {
                                       </div>
                                     </DialogContent>
                                   </Dialog>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDeleteDraft(draft.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Delete
+                                  </Button>
                                 </div>
                               </TableCell>
                             </TableRow>

@@ -33,7 +33,11 @@ serve(async (req) => {
     if (pathParts[1] === 'stats') {
       return await getStats(req)
     } else if (pathParts[1] === 'drafts') {
-      return await getAllDrafts(req)
+      if (pathParts[2] && req.method === 'DELETE') {
+        return await deleteDraft(req, pathParts[2])
+      } else {
+        return await getAllDrafts(req)
+      }
     } else if (pathParts[1] === 'send-magic-link') {
       return await sendMagicLink(req)
     } else {
@@ -312,5 +316,51 @@ async function sendEmail({ to, subject, html }: { to: string, subject: string, h
   } else {
     console.log('No RESEND_API_KEY found, email not sent')
     return { success: true, message: 'Email logged, not actually sent (no API key)' }
+  }
+}
+
+async function deleteDraft(req: Request, draftId: string) {
+  try {
+    console.log('Deleting draft:', draftId)
+
+    // Delete the draft and all its versions
+    const { error: draftError } = await supabase
+      .from('drafts')
+      .delete()
+      .eq('id', draftId)
+
+    if (draftError) {
+      console.error('Error deleting draft:', draftError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to delete draft' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    console.log('Draft deleted successfully:', draftId)
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: 'Draft deleted successfully',
+        draftId: draftId
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    )
+  } catch (error) {
+    console.error('Delete draft error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    )
   }
 }
