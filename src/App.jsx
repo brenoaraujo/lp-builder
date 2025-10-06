@@ -1828,7 +1828,8 @@ export function AppRouterShell() {
     if (!done) {
       // User hasn't completed onboarding, redirect to onboarding with the draft ID
       const draftId = route.split('/')[2];
-      window.location.hash = `#/onboarding?draftId=${draftId}`;
+      // Use replaceState to avoid adding to history
+      history.replaceState(null, "", `#/onboarding?draftId=${draftId}`);
       return <OnboardingWizard />;
     }
     return <Configurator />;

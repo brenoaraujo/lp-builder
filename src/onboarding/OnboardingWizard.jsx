@@ -754,13 +754,20 @@ export default function OnboardingWizard() {
             draftId = draftIdFromParams;
         }
         
+        console.log('Draft ID detection:', { hash, draftIdFromParams, draftId, configuratorMatch });
+        
         if (draftId) {
             setExistingDraftId(draftId);
             setIsUpdatingExistingDraft(true);
             
-            // Update draft status to "in-progress" when user starts onboarding
-            draftService.updateDraftStatus(draftId, 'active').catch(error => {
-                console.warn('Failed to update draft status to in-progress:', error);
+            // Update draft to version 2 to mark as "in-progress" when user starts onboarding
+            // This will make the admin dashboard show "in-progress" status
+            draftService.updateDraft(draftId, 1, {
+                charityInfo: { startedOnboarding: true },
+                overridesBySection: {},
+                theme: { colors: {}, mode: 'light' }
+            }).catch(error => {
+                console.warn('Failed to update draft version to mark as in-progress:', error);
             });
         }
         
@@ -845,9 +852,9 @@ export default function OnboardingWizard() {
             let result;
             
             if (isUpdatingExistingDraft && existingDraftId) {
-                // Update existing draft with full configuration
+                // Update existing draft with full configuration (version 3 - completed onboarding)
                 console.log('Updating existing draft:', existingDraftId);
-                result = await draftService.updateDraft(existingDraftId, 1, {
+                result = await draftService.updateDraft(existingDraftId, 2, {
                     charityInfo,
                     overridesBySection,
                     theme: {
@@ -876,8 +883,10 @@ export default function OnboardingWizard() {
             const configuratorUrl = `${window.location.origin}/#/configurator/${result.draftId}`;
             console.log('Redirecting to:', configuratorUrl);
             
-            // Use window.location.href for a full page redirect
-            window.location.href = configuratorUrl;
+            // Use replaceState to avoid adding to history and prevent redirect loops
+            history.replaceState(null, "", `#/configurator/${result.draftId}`);
+            // Force a page reload to ensure the routing logic picks up the new state
+            window.location.reload();
         } catch (error) {
             console.error('Failed to create draft:', error);
             alert('Failed to create draft. Please try again.');
