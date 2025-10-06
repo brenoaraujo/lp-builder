@@ -10,7 +10,52 @@ import { toast } from 'sonner'
 export default function Configurator() {
   // Extract draftId from URL hash
   const draftId = window.location.hash.split('/')[2] // /configurator/:draftId
-  const { config, version, collaborators, me, isLoading, error, saveDraft, confirmDraft } = useDraft(draftId)
+  const [isAuthenticating, setIsAuthenticating] = useState(true)
+  const [authError, setAuthError] = useState(null)
+  
+  // Authenticate with draft-open first if we have a token
+  useEffect(() => {
+    const authenticateDraft = async () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search)
+        const token = urlParams.get('token')
+        
+        if (token) {
+          // Call draft-open to set the authentication cookie
+          const baseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kvtouoigckngalfvzmsp.supabase.co'
+          const response = await fetch(`${baseUrl}/functions/v1/draft-open/${draftId}?token=${token}`, {
+            method: 'POST',
+            credentials: 'include', // Critical for cookies
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          })
+          
+          if (!response.ok) {
+            throw new Error('Failed to authenticate draft access')
+          }
+          
+          // Remove token from URL for security
+          const newUrl = window.location.pathname + window.location.hash
+          history.replaceState({}, '', newUrl)
+        }
+        
+        setIsAuthenticating(false)
+      } catch (error) {
+        console.error('Draft authentication error:', error)
+        setAuthError(error.message)
+        setIsAuthenticating(false)
+      }
+    }
+    
+    if (draftId) {
+      authenticateDraft()
+    } else {
+      setIsAuthenticating(false)
+    }
+  }, [draftId])
+  
+  const { config, version, collaborators, me, isLoading, error, saveDraft, confirmDraft } = useDraft(draftId, !isAuthenticating)
   const { overridesBySection, setSection } = useBuilderOverrides()
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
@@ -94,6 +139,29 @@ export default function Configurator() {
     } finally {
       setIsPublishing(false)
     }
+  }
+
+  if (isAuthenticating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Authenticating...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4">Authentication Failed</h2>
+          <p className="text-red-600 mb-4">{authError}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    )
   }
 
   if (isLoading) {

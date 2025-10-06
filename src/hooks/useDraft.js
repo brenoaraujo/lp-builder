@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { draftService } from '../lib/draftService'
 
-export function useDraft(draftId) {
+export function useDraft(draftId, shouldLoad = true) {
   const [config, setConfig] = useState(null)
   const [version, setVersion] = useState(0)
   const [collaborators, setCollaborators] = useState([])
   const [comments, setComments] = useState([])
   const [me, setMe] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(shouldLoad)
   const [error, setError] = useState(null)
 
   // Load draft data
   const loadDraft = useCallback(async () => {
-    if (!draftId) return
+    if (!draftId || !shouldLoad) return
 
     try {
       setIsLoading(true)
@@ -31,7 +31,7 @@ export function useDraft(draftId) {
     } finally {
       setIsLoading(false)
     }
-  }, [draftId])
+  }, [draftId, shouldLoad])
 
   // Save draft
   const saveDraft = useCallback(async (newConfig) => {
