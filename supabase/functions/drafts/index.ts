@@ -18,7 +18,7 @@ serve(async (req) => {
   try {
     const url = new URL(req.url)
     const pathParts = url.pathname.split('/').filter(Boolean)
-    const draftId = pathParts[2] // /drafts/:id
+    const draftId = pathParts[1] // /drafts/:id
 
     console.log('Drafts function called:', {
       method: req.method,
@@ -31,26 +31,22 @@ serve(async (req) => {
       case 'POST':
         if (pathParts.length === 1) {
           return await createDraft(req)
+        } else if (pathParts.length === 3 && pathParts[2] === 'confirm') {
+          return await confirmDraft(draftId, req)
         }
         break
       
       case 'GET':
-        if (pathParts.length === 3) {
+        if (pathParts.length === 2) {
           return await getDraft(draftId, req)
         }
         break
       
       case 'PATCH':
-        if (pathParts.length === 3) {
+        if (pathParts.length === 2) {
           return await updateDraft(draftId, req)
-        } else if (pathParts.length === 4 && pathParts[3] === 'status') {
+        } else if (pathParts.length === 3 && pathParts[2] === 'status') {
           return await updateDraftStatus(draftId, req)
-        }
-        break
-      
-      case 'POST':
-        if (pathParts.length === 4 && pathParts[3] === 'confirm') {
-          return await confirmDraft(draftId, req)
         }
         break
     }
