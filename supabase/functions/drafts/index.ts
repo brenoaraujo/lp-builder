@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
-import { validateRequest, getDraftAccess } from '../_shared/auth.ts'
+import { validateRequest, getDraftAccess, validateToken } from '../_shared/auth.ts'
 import { auditLog } from '../_shared/audit.ts'
 
 const supabase = createClient(
@@ -19,6 +19,13 @@ serve(async (req) => {
     const url = new URL(req.url)
     const pathParts = url.pathname.split('/').filter(Boolean)
     const draftId = pathParts[2] // /drafts/:id
+
+    console.log('Drafts function called:', {
+      method: req.method,
+      pathname: url.pathname,
+      pathParts: pathParts,
+      draftId: draftId
+    })
 
     switch (req.method) {
       case 'POST':
@@ -46,6 +53,8 @@ serve(async (req) => {
         break
     }
 
+    // If no route matched, return method not allowed
+    console.log('No matching route found for:', req.method, pathParts.length)
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
       { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -130,7 +139,17 @@ async function createDraft(req: Request) {
 }
 
 async function getDraft(draftId: string, req: Request) {
-  const access = await getDraftAccess(supabase, draftId, req)
+  // Try cookie-based access first
+  let access = await getDraftAccess(supabase, draftId, req)
+  
+  // If no cookie access, try token-based access
+  if (!access) {
+    const url = new URL(req.url)
+    const token = url.searchParams.get('token')
+    if (token) {
+      access = await validateToken(supabase, draftId, token)
+    }
+  }
   
   if (!access) {
     return new Response(
