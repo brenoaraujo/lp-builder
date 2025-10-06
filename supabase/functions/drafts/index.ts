@@ -22,7 +22,7 @@ serve(async (req) => {
 
     switch (req.method) {
       case 'POST':
-        if (pathParts.length === 2) {
+        if (pathParts.length === 1) {
           return await createDraft(req)
         }
         break

@@ -21,6 +21,13 @@ import {
   DialogTrigger 
 } from '@/components/ui/dialog'
 import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from '@/components/ui/sheet'
+import { 
   Select, 
   SelectContent, 
   SelectItem, 
@@ -234,7 +241,7 @@ export default function AdminPage() {
         displayStatus = 'in-progress'
         statusColor = 'bg-yellow-100 text-yellow-800'
       } else {
-        displayStatus = 'invited'
+        displayStatus = 'Invited'
         statusColor = 'bg-orange-100 text-orange-800'
       }
     }
@@ -254,18 +261,34 @@ export default function AdminPage() {
     )
   }
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [draftToDelete, setDraftToDelete] = useState(null)
+  const [detailsSheetOpen, setDetailsSheetOpen] = useState(false)
+  const [selectedDraft, setSelectedDraft] = useState(null)
+
   const handleDeleteDraft = async (draftId) => {
-    if (!confirm('Are you sure you want to delete this draft? This action cannot be undone.')) {
-      return
-    }
+    setDraftToDelete(draftId)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleViewDetails = (draft) => {
+    setSelectedDraft(draft)
+    setDetailsSheetOpen(true)
+  }
+
+  const confirmDeleteDraft = async () => {
+    if (!draftToDelete) return
 
     try {
-      await adminService.deleteDraft(draftId)
+      await adminService.deleteDraft(draftToDelete)
       toast.success('Draft deleted successfully')
       await loadData()
     } catch (error) {
       console.error('Failed to delete draft:', error)
       toast.error(error.message || 'Failed to delete draft')
+    } finally {
+      setDeleteDialogOpen(false)
+      setDraftToDelete(null)
     }
   }
 
@@ -411,7 +434,6 @@ export default function AdminPage() {
                       <TableRow>
                         <TableHead>Charity</TableHead>
                         <TableHead>Submitter</TableHead>
-                        <TableHead>Logo</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Created</TableHead>
                         <TableHead>App Link</TableHead>
@@ -434,28 +456,16 @@ export default function AdminPage() {
                           return (
                             <TableRow key={draft.id}>
                               <TableCell>
-                                <div className="flex items-center gap-3">
-                                  {charityInfo.charityLogo && (
-                                    <img 
-                                      src={charityInfo.charityLogo} 
-                                      alt="Charity logo"
-                                      className="h-8 w-8 rounded object-cover"
-                                      onError={(e) => {
-                                        e.target.style.display = 'none'
-                                      }}
-                                    />
-                                  )}
-                                  <div>
-                                    <div className="font-medium">
-                                      {charityInfo.charityName || 'Unnamed Charity'}
-                                    </div>
-                                    {charityInfo.charitySite && (
-                                      <div className="text-sm text-gray-500 flex items-center gap-1">
-                                        <Globe className="h-3 w-3" />
-                                        {charityInfo.charitySite}
-                                      </div>
-                                    )}
+                                <div>
+                                  <div className="font-medium">
+                                    {charityInfo.charityName || 'Unnamed Charity'}
                                   </div>
+                                  {charityInfo.charitySite && (
+                                    <div className="text-sm text-gray-500 flex items-center gap-1">
+                                      <Globe className="h-3 w-3" />
+                                      {charityInfo.charitySite}
+                                    </div>
+                                  )}
                                 </div>
                               </TableCell>
                               
@@ -466,26 +476,6 @@ export default function AdminPage() {
                                 </div>
                               </TableCell>
                               
-                              <TableCell>
-                                {charityInfo.charityLogo ? (
-                                  <div className="flex items-center gap-2">
-                                    <img 
-                                      src={charityInfo.charityLogo} 
-                                      alt="Logo"
-                                      className="h-6 w-6 rounded object-cover"
-                                    />
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => copyToClipboard(charityInfo.charityLogo)}
-                                    >
-                                      <Copy className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">No logo</span>
-                                )}
-                              </TableCell>
                               
                               <TableCell>
                                 {getStatusBadge(draft.status, draft)}
@@ -519,60 +509,14 @@ export default function AdminPage() {
                               
                               <TableCell>
                                 <div className="flex items-center gap-2">
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <Button size="sm" variant="outline">
-                                        <Eye className="h-3 w-3 mr-1" />
-                                        View
-                                      </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-2xl">
-                                      <DialogHeader>
-                                        <DialogTitle>Draft Details</DialogTitle>
-                                      </DialogHeader>
-                                      <div className="space-y-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                          <div>
-                                            <Label className="text-sm font-medium">Charity Name</Label>
-                                            <p className="text-sm text-gray-600">
-                                              {charityInfo.charityName || 'Not specified'}
-                                            </p>
-                                          </div>
-                                          <div>
-                                            <Label className="text-sm font-medium">Client Email</Label>
-                                            <p className="text-sm text-gray-600">{draft.client_email}</p>
-                                          </div>
-                                          <div>
-                                            <Label className="text-sm font-medium">Raffle Type</Label>
-                                            <p className="text-sm text-gray-600">
-                                              {charityInfo.raffleType || 'Not specified'}
-                                            </p>
-                                          </div>
-                                          <div>
-                                            <Label className="text-sm font-medium">Launch Date</Label>
-                                            <p className="text-sm text-gray-600">
-                                              {charityInfo.campaignLaunchDate ? 
-                                                new Date(charityInfo.campaignLaunchDate).toLocaleDateString() : 
-                                                'Not specified'
-                                              }
-                                            </p>
-                                          </div>
-                                        </div>
-                                        {charityInfo.charityLogo && (
-                                          <div>
-                                            <Label className="text-sm font-medium">Logo</Label>
-                                            <div className="mt-2">
-                                              <img 
-                                                src={charityInfo.charityLogo} 
-                                                alt="Charity logo"
-                                                className="h-16 w-auto object-contain"
-                                              />
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleViewDetails(draft)}
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    View
+                                  </Button>
                                   <Button
                                     size="sm"
                                     variant="destructive"
@@ -648,6 +592,150 @@ export default function AdminPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Draft Details Sheet */}
+      <Sheet open={detailsSheetOpen} onOpenChange={setDetailsSheetOpen}>
+        <SheetContent className="w-[400px] sm:w-[540px]">
+          <SheetHeader>
+            <SheetTitle>Draft Details</SheetTitle>
+          </SheetHeader>
+          {selectedDraft && (
+            <div className="space-y-6 mt-6">
+              {/* Logo Section */}
+              {selectedDraft.latestVersion?.config_json?.charityInfo?.charityLogo && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Charity Logo</Label>
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={selectedDraft.latestVersion.config_json.charityInfo.charityLogo} 
+                      alt="Charity logo"
+                      className="h-20 w-20 rounded-lg object-cover border"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyToClipboard(selectedDraft.latestVersion.config_json.charityInfo.charityLogo)}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy URL
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Charity Name</Label>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedDraft.latestVersion?.config_json?.charityInfo?.charityName || 'Not specified'}
+                  </p>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Client Email</Label>
+                  <p className="text-sm text-gray-600 mt-1">{selectedDraft.client_email}</p>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Raffle Type</Label>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedDraft.latestVersion?.config_json?.charityInfo?.raffleType || 'Not specified'}
+                  </p>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Launch Date</Label>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedDraft.latestVersion?.config_json?.charityInfo?.campaignLaunchDate ? 
+                      new Date(selectedDraft.latestVersion.config_json.charityInfo.campaignLaunchDate).toLocaleDateString() : 
+                      'Not specified'
+                    }
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Website</Label>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedDraft.latestVersion?.config_json?.charityInfo?.charitySite || 'Not specified'}
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Status</Label>
+                  <div className="mt-1">
+                    {getStatusBadge(selectedDraft.status, selectedDraft)}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Created</Label>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {formatDate(selectedDraft.created_at)}
+                  </p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">App Link</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(
+                        selectedDraft.latestVersion?.config_json?.publishedUrl || 
+                        `${window.location.origin}/configurator/${selectedDraft.id}`, 
+                        '_blank'
+                      )}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyToClipboard(
+                        selectedDraft.latestVersion?.config_json?.publishedUrl || 
+                        `${window.location.origin}/configurator/${selectedDraft.id}`
+                      )}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Draft</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Are you sure you want to delete this draft? This action cannot be undone and will permanently remove all associated data.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDeleteDraft}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Draft
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
