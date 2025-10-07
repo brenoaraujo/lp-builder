@@ -17,7 +17,6 @@ class DraftService {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG91b2lnY2tuZ2FsZnZ6bXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMjc3OTcsImV4cCI6MjA3NDkwMzc5N30.i67Sfnl2PA4Pj5OcToT28o2bqpmLYtPbXasuNuExve0'}`,
       },
-      credentials: 'include',
       body: JSON.stringify({
         clientEmail,
         seedConfig
@@ -43,8 +42,7 @@ class DraftService {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG91b2lnY2tuZ2FsZnZ6bXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMjc3OTcsImV4cCI6MjA3NDkwMzc5N30.i67Sfnl2PA4Pj5OcToT28o2bqpmLYtPbXasuNuExve0'}`,
-      },
-      credentials: 'include' // Include cookies for auth
+      }
     })
 
     if (!response.ok) {
@@ -62,7 +60,6 @@ class DraftService {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG91b2lnY2tuZ2FsZnZ6bXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMjc3OTcsImV4cCI6MjA3NDkwMzc5N30.i67Sfnl2PA4Pj5OcToT28o2bqpmLYtPbXasuNuExve0'}`,
       },
-      credentials: 'include',
       body: JSON.stringify({
         baseVersion,
         patch
@@ -85,7 +82,6 @@ class DraftService {
   async confirmDraft(draftId) {
     const response = await fetch(`${this.baseUrl}/drafts/${draftId}/confirm`, {
       method: 'POST',
-      credentials: 'include'
     })
 
     if (!response.ok) {
@@ -115,7 +111,6 @@ class DraftService {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
       body: JSON.stringify({
         emails,
         role
@@ -133,7 +128,6 @@ class DraftService {
   async listCollaborators(draftId) {
     const response = await fetch(`${this.baseUrl}/collaborators/${draftId}`, {
       method: 'GET',
-      credentials: 'include'
     })
 
     if (!response.ok) {
@@ -147,7 +141,6 @@ class DraftService {
   async revokeCollaborator(draftId, collabId) {
     const response = await fetch(`${this.baseUrl}/collaborators/${draftId}/${collabId}`, {
       method: 'DELETE',
-      credentials: 'include'
     })
 
     if (!response.ok) {
@@ -165,7 +158,6 @@ class DraftService {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG91b2lnY2tuZ2FsZnZ6bXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMjc3OTcsImV4cCI6MjA3NDkwMzc5N30.i67Sfnl2PA4Pj5OcToT28o2bqpmLYtPbXasuNuExve0'}`,
       },
-      credentials: 'include',
       body: JSON.stringify({ status })
     })
 
