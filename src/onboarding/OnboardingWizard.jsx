@@ -740,21 +740,28 @@ export default function OnboardingWizard() {
     useEffect(() => {
         // Check if user is coming from a magic link (configurator route or onboarding with draftId)
         const hash = window.location.hash;
+        const pathname = window.location.pathname;
         const urlParams = new URLSearchParams(window.location.search);
         const draftIdFromParams = urlParams.get('draftId');
         
         let draftId = null;
         
-        // Check configurator route first
-        const configuratorMatch = hash.match(/#\/configurator\/([^?]+)/);
-        if (configuratorMatch) {
-            draftId = configuratorMatch[1];
-        } else if (draftIdFromParams) {
-            // Check URL search parameters
-            draftId = draftIdFromParams;
+        // Check configurator route in PATH first (for magic links)
+        const pathMatch = pathname.match(/\/configurator\/([^\/\?]+)/);
+        if (pathMatch) {
+            draftId = pathMatch[1];
+        } else {
+            // Check configurator route in HASH (for regular navigation)
+            const configuratorMatch = hash.match(/#\/configurator\/([^?]+)/);
+            if (configuratorMatch) {
+                draftId = configuratorMatch[1];
+            } else if (draftIdFromParams) {
+                // Check URL search parameters
+                draftId = draftIdFromParams;
+            }
         }
         
-        console.log('Draft ID detection:', { hash, draftIdFromParams, draftId, configuratorMatch });
+        console.log('Draft ID detection:', { pathname, hash, draftIdFromParams, draftId, pathMatch });
         
         if (draftId) {
             setExistingDraftId(draftId);
