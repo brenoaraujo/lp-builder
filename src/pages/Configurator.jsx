@@ -20,10 +20,17 @@ export default function Configurator() {
         const urlParams = new URLSearchParams(window.location.search)
         const token = urlParams.get('token')
         
+        console.log('Configurator: draftId =', draftId)
+        console.log('Configurator: token =', token ? 'present' : 'missing')
+        console.log('Configurator: current URL =', window.location.href)
+        
         if (token) {
           // Call draft-open to set the authentication cookie
           const baseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kvtouoigckngalfvzmsp.supabase.co'
-          const response = await fetch(`${baseUrl}/functions/v1/draft-open/${draftId}?token=${token}`, {
+          const draftOpenUrl = `${baseUrl}/functions/v1/draft-open/${draftId}?token=${token}`
+          console.log('Configurator: Calling draft-open URL =', draftOpenUrl)
+          
+          const response = await fetch(draftOpenUrl, {
             method: 'POST',
             credentials: 'include', // Critical for cookies
             headers: {
@@ -31,6 +38,9 @@ export default function Configurator() {
               'Accept': 'application/json', // Ensure we get JSON response
             }
           })
+          
+          console.log('Configurator: draft-open response status =', response.status)
+          console.log('Configurator: draft-open response ok =', response.ok)
           
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}))
@@ -67,7 +77,7 @@ export default function Configurator() {
     }
   }, [draftId])
   
-  const { config, version, collaborators, me, isLoading, error, saveDraft, confirmDraft } = useDraft(draftId, !isAuthenticating)
+  const { config, version, collaborators, me, isLoading, error, saveDraft, confirmDraft } = useDraft(draftId, !isAuthenticating && !authError)
   const { overridesBySection, setSection } = useBuilderOverrides()
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
