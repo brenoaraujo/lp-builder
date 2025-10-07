@@ -851,6 +851,8 @@ export default function OnboardingWizard() {
 
             let result;
             
+            console.log('Finish function - isUpdatingExistingDraft:', isUpdatingExistingDraft, 'existingDraftId:', existingDraftId);
+            
             if (isUpdatingExistingDraft && existingDraftId) {
                 // Update existing draft with full configuration (version 3 - completed onboarding)
                 console.log('Updating existing draft:', existingDraftId);
