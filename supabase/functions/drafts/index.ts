@@ -189,8 +189,24 @@ async function createDraft(req: Request) {
 async function getDraft(draftId: string, req: Request) {
   console.log('Getting draft:', draftId)
   
-  // Try cookie-based access
-  const access = await getDraftAccess(supabase, draftId, req)
+  // Try cookie-based access first
+  let access = await getDraftAccess(supabase, draftId, req)
+  
+  // If no cookie access, try to get auth data from request body (for direct auth)
+  if (!access) {
+    try {
+      const body = await req.json()
+      if (body.authData && body.authData.draftId === draftId) {
+        access = {
+          email: body.authData.email,
+          role: body.authData.role
+        }
+        console.log('Using direct auth data for draft:', draftId)
+      }
+    } catch {
+      // Ignore JSON parse errors
+    }
+  }
   
   if (!access) {
     console.log('Access denied for draft:', draftId)

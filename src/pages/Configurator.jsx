@@ -31,10 +31,8 @@ export default function Configurator() {
           console.log('Configurator: Calling draft-open URL =', draftOpenUrl)
           
           const response = await fetch(draftOpenUrl, {
-            method: 'POST',
-            credentials: 'include', // Critical for cookies
+            method: 'GET',
             headers: {
-              'Content-Type': 'application/json',
               'Accept': 'application/json', // Ensure we get JSON response
             }
           })
@@ -50,8 +48,17 @@ export default function Configurator() {
           const result = await response.json()
           console.log('Draft authentication successful:', result)
           
-          // Remove token from URL for security
-          const newUrl = window.location.pathname + window.location.hash
+          // Store auth data in localStorage for the draft service to use
+          if (result.authData) {
+            try {
+              localStorage.setItem(`draft_auth_${draftId}`, JSON.stringify(result.authData))
+            } catch (error) {
+              console.warn('Failed to store auth data:', error)
+            }
+          }
+          
+          // Remove token from URL for security - only keep the pathname, not the hash
+          const newUrl = window.location.pathname
           history.replaceState({}, '', newUrl)
           
           // Mark onboarding as completed since user has access to configurator

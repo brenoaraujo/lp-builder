@@ -95,12 +95,17 @@ serve(async (req) => {
 
     console.log('Authentication successful for draft:', draftId)
 
-    // Return success response with cookie
+    // Return success response with cookie AND authentication data
     return createResponse(
       { 
         success: true, 
         message: 'Authentication successful',
-        draftId: draftId
+        draftId: draftId,
+        authData: {
+          draftId,
+          email: draft.client_email,
+          role: 'owner'
+        }
       },
       200,
       { 'Set-Cookie': cookieHeader }
