@@ -764,20 +764,7 @@ export function MainBuilder() {
       window.location.hash = "/";
     }
     
-    // Clear any old WhoYouHelp data from localStorage
-    try {
-      const raw = localStorage.getItem("builderOverrides");
-      if (raw) {
-        const ovr = JSON.parse(raw);
-        if (ovr.WhoYouHelp && ovr.WhoYouHelp.visible !== true) {
-          // Remove WhoYouHelp if it's not explicitly enabled
-          delete ovr.WhoYouHelp;
-          localStorage.setItem("builderOverrides", JSON.stringify(ovr));
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to clean WhoYouHelp data:', error);
-    }
+    // No localStorage cleanup needed - using database-first approach
   }, []);
 
   function blocksFromOverrides(ovr) {

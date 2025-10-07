@@ -774,11 +774,6 @@ export default function OnboardingWizard() {
         const progressLoaded = loadProgress();
         if (!progressLoaded) {
             // Only reset defaults if no progress was loaded
-            try {
-                localStorage.removeItem("theme.colors");
-                localStorage.removeItem("theme.fonts");
-            } catch { }
-
             // nuke inline overrides so tokens.css values become visible again
             clearInlineColorVars();
 
