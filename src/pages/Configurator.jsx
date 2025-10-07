@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 export default function Configurator() {
-  // Extract draftId from URL hash
-  const draftId = window.location.hash.split('/')[2] // /configurator/:draftId
+  // Extract draftId from URL path
+  const draftId = window.location.pathname.split('/')[2] // /configurator/:draftId
   const [isAuthenticating, setIsAuthenticating] = useState(true)
   const [authError, setAuthError] = useState(null)
   
