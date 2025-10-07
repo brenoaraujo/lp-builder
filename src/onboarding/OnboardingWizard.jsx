@@ -760,15 +760,8 @@ export default function OnboardingWizard() {
             setExistingDraftId(draftId);
             setIsUpdatingExistingDraft(true);
             
-            // Update draft to version 2 to mark as "in-progress" when user starts onboarding
-            // This will make the admin dashboard show "in-progress" status
-            draftService.updateDraft(draftId, 1, {
-                charityInfo: { startedOnboarding: true },
-                overridesBySection: {},
-                theme: { colors: {}, mode: 'light' }
-            }).catch(error => {
-                console.warn('Failed to update draft version to mark as in-progress:', error);
-            });
+            // Don't create a new version here - just mark that onboarding was started
+            // The actual draft update will happen when onboarding is completed
         }
         
         const progressLoaded = loadProgress();

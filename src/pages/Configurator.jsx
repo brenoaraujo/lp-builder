@@ -43,6 +43,13 @@ export default function Configurator() {
           // Remove token from URL for security
           const newUrl = window.location.pathname + window.location.hash
           history.replaceState({}, '', newUrl)
+          
+          // Mark onboarding as completed since user has access to configurator
+          try {
+            localStorage.setItem("onboardingCompleted", "1")
+          } catch (error) {
+            console.warn('Failed to mark onboarding as completed:', error)
+          }
         }
         
         setIsAuthenticating(false)

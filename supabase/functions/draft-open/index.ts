@@ -1,101 +1,157 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
-import { validateToken, createDraftCookie } from '../_shared/auth.ts'
-import { auditLog } from '../_shared/audit.ts'
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'https://lp-builder-pi.vercel.app',
+  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Vary': 'Origin',
+}
+
 serve(async (req) => {
+  console.log('Function called:', req.method, req.url)
+  
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    console.log('OPTIONS request - returning CORS headers')
+    return new Response('ok', { 
+      status: 200,
+      headers: corsHeaders
+    })
   }
 
   try {
     const url = new URL(req.url)
+    console.log('URL pathname:', url.pathname)
+    
+    // Better URL parsing - look for the draft ID after 'draft-open'
     const pathParts = url.pathname.split('/').filter(Boolean)
-    const draftId = pathParts[2] // /draft-open/:id
+    console.log('Path parts:', pathParts)
+    
+    // Find the index of 'draft-open' and get the next part
+    const draftOpenIndex = pathParts.indexOf('draft-open')
+    const draftId = draftOpenIndex !== -1 ? pathParts[draftOpenIndex + 1] : null
+    
     const token = url.searchParams.get('token')
+    
+    console.log('Parsed values:', { draftId, token: token ? 'present' : 'missing' })
 
     if (!draftId || !token) {
+      console.log('Missing values - draftId:', draftId, 'token:', token ? 'present' : 'missing')
       return new Response(
         JSON.stringify({ error: 'Missing draftId or token' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { 
+          status: 400, 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json' 
+          } 
+        }
       )
     }
 
-    // Validate token
-    const access = await validateToken(supabase, draftId, token)
-    if (!access) {
+    // Hash the token
+    const tokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))
+    const tokenHashString = Array.from(new Uint8Array(tokenHash), byte => byte.toString(16).padStart(2, '0')).join('')
+
+    // Check if token exists and is valid
+    const { data: draft, error } = await supabase
+      .from('drafts')
+      .select('id, client_email, expires_at, status')
+      .eq('id', draftId)
+      .eq('token_hash', tokenHashString)
+      .single()
+
+    console.log('Database query result:', { draft: draft ? 'found' : 'not found', error })
+
+    if (error || !draft) {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { 
+          status: 401, 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json' 
+          } 
+        }
       )
     }
 
-    // Rotate token (invalidate old one, generate new)
-    const newToken = crypto.getRandomValues(new Uint8Array(32))
-    const newTokenString = Array.from(newToken, byte => byte.toString(16).padStart(2, '0')).join('')
-    const newTokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(newTokenString))
-    const newTokenHashString = Array.from(new Uint8Array(newTokenHash), byte => byte.toString(16).padStart(2, '0')).join('')
-
-    // Update draft with new token
-    await supabase
-      .from('drafts')
-      .update({ token_hash: newTokenHashString })
-      .eq('id', draftId)
-
-    // Create cookie
-    const cookie = createDraftCookie(draftId, access.email, access.role)
-    const cookieHeader = `draft_${draftId}=${cookie}; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; Path=/`
-
-    // Audit log
-    await auditLog(supabase, 'draft', draftId, 'opened', access.email, req)
-
-    // Check if this is a fetch request (has Accept header) or a browser redirect
-    const acceptHeader = req.headers.get('Accept') || ''
-    const isFetchRequest = acceptHeader.includes('application/json') || req.headers.get('Content-Type') === 'application/json'
-
-    if (isFetchRequest) {
-      // Return JSON response for fetch requests
+    // Check if token is expired
+    if (new Date(draft.expires_at) < new Date()) {
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Authentication successful',
-          draftId: draftId
-        }),
-        {
-          status: 200,
-          headers: {
+        JSON.stringify({ error: 'Token expired' }),
+        { 
+          status: 401, 
+          headers: { 
             ...corsHeaders,
-            'Content-Type': 'application/json',
-            'Set-Cookie': cookieHeader
-          }
+            'Content-Type': 'application/json' 
+          } 
         }
       )
-    } else {
-      // Redirect for browser requests
-      const baseUrl = Deno.env.get('SITE_BASE_URL') || 'http://localhost:3000'
-      const redirectUrl = `${baseUrl}/configurator/${draftId}`
+    }
 
-      return new Response(null, {
-        status: 302,
+    // Check if draft is still active
+    if (draft.status !== 'active') {
+      return new Response(
+        JSON.stringify({ error: 'Draft not active' }),
+        { 
+          status: 401, 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json' 
+          } 
+        }
+      )
+    }
+
+    // Create simple cookie
+    const cookie = btoa(JSON.stringify({
+      draftId,
+      email: draft.client_email,
+      role: 'owner',
+      exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60)
+    }))
+    
+    // Use SameSite=None for cross-site cookies
+    const cookieHeader = `draft_${draftId}=${cookie}; HttpOnly; Secure; SameSite=None; Max-Age=${7 * 24 * 60 * 60}; Path=/`
+
+    console.log('Authentication successful for draft:', draftId)
+
+    // Return success response
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: 'Authentication successful',
+        draftId: draftId
+      }),
+      {
+        status: 200,
         headers: {
           ...corsHeaders,
-          'Location': redirectUrl,
+          'Content-Type': 'application/json',
           'Set-Cookie': cookieHeader
         }
-      })
-    }
+      }
+    )
+
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Function error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      { 
+        status: 500, 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
   }
 })
-

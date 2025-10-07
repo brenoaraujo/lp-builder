@@ -1,13 +1,50 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
-import { validateRequest, getDraftAccess, validateToken } from '../_shared/auth.ts'
-import { auditLog } from '../_shared/audit.ts'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'https://lp-builder-pi.vercel.app',
+  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Vary': 'Origin',
+}
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
+
+// FIXED: Cookie parser that preserves = in base64 values
+async function getDraftAccess(supabase: any, draftId: string, req: Request) {
+  const cookieHeader = req.headers.get('Cookie')
+  if (!cookieHeader) return null
+
+  const cookies = Object.fromEntries(
+    cookieHeader.split(';').map(c => {
+      const [key, ...rest] = c.trim().split('=')
+      return [key, rest.join('=')] // preserve '=' inside the value
+    })
+  )
+
+  const draftCookie = cookies[`draft_${draftId}`]
+  if (!draftCookie) return null
+
+  try {
+    const payload = JSON.parse(atob(draftCookie))
+    
+    // Check if cookie is expired
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+      return null
+    }
+
+    return {
+      email: payload.email,
+      role: payload.role
+    }
+  } catch {
+    return null
+  }
+}
 
 serve(async (req) => {
   // Handle CORS
@@ -137,17 +174,8 @@ async function createDraft(req: Request) {
 }
 
 async function getDraft(draftId: string, req: Request) {
-  // Try cookie-based access first
-  let access = await getDraftAccess(supabase, draftId, req)
-  
-  // If no cookie access, try token-based access
-  if (!access) {
-    const url = new URL(req.url)
-    const token = url.searchParams.get('token')
-    if (token) {
-      access = await validateToken(supabase, draftId, token)
-    }
-  }
+  // Try cookie-based access
+  const access = await getDraftAccess(supabase, draftId, req)
   
   if (!access) {
     return new Response(
