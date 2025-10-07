@@ -876,10 +876,8 @@ export default function OnboardingWizard() {
             const configuratorUrl = `${window.location.origin}/#/configurator/${result.draftId}`;
             console.log('Redirecting to:', configuratorUrl);
             
-            // Use replaceState to avoid adding to history and prevent redirect loops
-            history.replaceState(null, "", `#/configurator/${result.draftId}`);
-            // Force a page reload to ensure the routing logic picks up the new state
-            window.location.reload();
+            // Direct redirect to the configurator URL
+            window.location.href = configuratorUrl;
         } catch (error) {
             console.error('Failed to create draft:', error);
             alert('Failed to create draft. Please try again.');
