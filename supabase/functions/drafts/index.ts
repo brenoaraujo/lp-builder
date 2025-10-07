@@ -57,30 +57,40 @@ serve(async (req) => {
   try {
     const url = new URL(req.url)
     const pathParts = url.pathname.split('/').filter(Boolean)
-    const draftId = pathParts[1] // /drafts/:id
+    
+    // Robust draftId extraction - works with both /drafts/:id and /functions/v1/drafts/:id
+    const draftIdMatch = url.pathname.match(/\/drafts\/([^\/\?]+)/)
+    const draftId = draftIdMatch ? draftIdMatch[1] : null
 
     console.log('Path parts:', pathParts, 'draftId:', draftId)
 
     switch (req.method) {
       case 'POST':
-        if (pathParts.length === 1) {
+        if (!draftId) {
+          // POST /drafts (create new draft)
           return await createDraft(req)
-        } else if (pathParts.length === 3 && pathParts[2] === 'confirm') {
+        } else if (url.pathname.includes('/confirm')) {
+          // POST /drafts/:id/confirm
           return await confirmDraft(draftId, req)
         }
         break
       
       case 'GET':
-        if (pathParts.length === 2) {
+        if (draftId) {
+          // GET /drafts/:id
           return await getDraft(draftId, req)
         }
         break
       
       case 'PATCH':
-        if (pathParts.length === 2) {
-          return await updateDraft(draftId, req)
-        } else if (pathParts.length === 3 && pathParts[2] === 'status') {
-          return await updateDraftStatus(draftId, req)
+        if (draftId) {
+          if (url.pathname.includes('/status')) {
+            // PATCH /drafts/:id/status
+            return await updateDraftStatus(draftId, req)
+          } else {
+            // PATCH /drafts/:id
+            return await updateDraft(draftId, req)
+          }
         }
         break
     }

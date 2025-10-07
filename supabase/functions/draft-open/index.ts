@@ -37,13 +37,11 @@ serve(async (req) => {
     const url = new URL(req.url)
     console.log('URL pathname:', url.pathname)
     
-    // Better URL parsing - look for the draft ID after 'draft-open'
-    const pathParts = url.pathname.split('/').filter(Boolean)
-    console.log('Path parts:', pathParts)
-    
-    // Find the index of 'draft-open' and get the next part
-    const draftOpenIndex = pathParts.indexOf('draft-open')
-    const draftId = draftOpenIndex !== -1 ? pathParts[draftOpenIndex + 1] : null
+    // Robust draftId extraction - works with both /draft-open/:id and /functions/v1/draft-open/:id
+    const draftIdMatch = url.pathname.match(/\/draft-open\/([^\/\?]+)/)
+    const draftId = draftIdMatch ? draftIdMatch[1] : null
+    console.log('Path parts:', url.pathname.split('/').filter(Boolean))
+    console.log('DraftId extracted:', draftId)
     
     const token = url.searchParams.get('token')
     
