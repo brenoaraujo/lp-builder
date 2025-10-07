@@ -854,9 +854,12 @@ export default function OnboardingWizard() {
             console.log('Finish function - isUpdatingExistingDraft:', isUpdatingExistingDraft, 'existingDraftId:', existingDraftId);
             
             if (isUpdatingExistingDraft && existingDraftId) {
-                // Update existing draft with full configuration (version 3 - completed onboarding)
+                // Get current version first, then update
                 console.log('Updating existing draft:', existingDraftId);
-                result = await draftService.updateDraft(existingDraftId, 2, {
+                const currentDraft = await draftService.getDraft(existingDraftId);
+                const currentVersion = currentDraft.version;
+                
+                result = await draftService.updateDraft(existingDraftId, currentVersion, {
                     charityInfo,
                     overridesBySection,
                     theme: {
