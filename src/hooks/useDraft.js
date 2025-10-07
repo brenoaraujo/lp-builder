@@ -18,6 +18,7 @@ export function useDraft(draftId, shouldLoad = true) {
       setIsLoading(true)
       setError(null)
       
+      console.log('useDraft: Loading draft data for:', draftId)
       const data = await draftService.getDraft(draftId)
       
       setConfig(data.config)
