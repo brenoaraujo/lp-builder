@@ -964,7 +964,7 @@ export function MainBuilder() {
     try {
       const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
       if (Object.keys(saved).length) {
-        // merge into state (so ThemePanel sees them)
+        // merge into state (so ThemeAside sees them)
         setGlobalTheme(t => ({ ...t, colors: { ...(t.colors || {}), ...saved } }));
         // and write the CSS vars immediately
         const mode =

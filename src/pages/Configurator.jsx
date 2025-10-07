@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDraft } from '../hooks/useDraft.js'
 import { useBuilderOverrides } from '../context/BuilderOverridesContext.jsx'
 import EditorSidebar from '../components/EditorSidebar.jsx'
-import ThemePanel from '../components/ThemePanel.jsx'
+import ThemeAside from '../components/ThemeAside.jsx'
 import { SECTIONS } from '../sections/registry.js'
 import { buildThemeVars, setCSSVars, applySavedTheme } from '../theme-utils.js'
 import { Button } from '@/components/ui/button'
@@ -399,11 +399,12 @@ export default function Configurator() {
         </div>
       </div>
 
-      {/* Theme Panel */}
-      <ThemePanel 
+      {/* Theme Aside */}
+      <ThemeAside 
         open={themeOpen} 
-        onOpenChange={setThemeOpen} 
+        onClose={() => setThemeOpen(false)}
         draftId={draftId}
+        sectionOverrides={overridesBySection}
       />
     </div>
   )

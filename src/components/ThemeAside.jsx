@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
+import { toast } from "sonner";
 import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readTokenDefaults, readThemeMode, resetThemeToBaseline, applyGlobalThemeToSectionsWithoutOverrides, updateSectionsWithPartialOverrides } from "../theme-utils.js";
+import { DraftStorage } from "../lib/draftStorage.js";
 
 /* Small color input row */
 function ColorRole({ label, value, onChange }) {
@@ -36,18 +38,33 @@ const FONT_OPTIONS = [
   { label: "Oswald", value: "Oswald", gf: { family: "Oswald", axis: "wght@400;700" } },
 ];
 
-export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange, sectionOverrides = {} }) {
-  // Load saved or token defaults
-  const initialColors = useMemo(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
-      return Object.keys(saved).length ? saved : readTokenDefaults();
-    } catch {
-      return readTokenDefaults();
-    }
-  }, []);
+export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange, sectionOverrides = {}, draftId }) {
+  // Load colors from database when panel opens
+  const [colors, setColors] = useState(readTokenDefaults());
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [colors, setColors] = useState(initialColors);
+  // Load colors from database when panel opens
+  useEffect(() => {
+    const loadColors = async () => {
+      if (!open || !draftId) return;
+      
+      setIsLoading(true);
+      try {
+        const storage = new DraftStorage(draftId);
+        const savedColors = await storage.getThemeColors();
+        setColors(Object.keys(savedColors).length ? savedColors : readTokenDefaults());
+      } catch (error) {
+        console.error('Failed to load theme colors:', error);
+        toast.error('Failed to load theme colors');
+        setColors(readTokenDefaults());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadColors();
+  }, [open, draftId]);
   const [fonts, setFonts] = useState(() => {
     try { return JSON.parse(localStorage.getItem("theme.fonts") || "{}"); } catch { return {}; }
   });
@@ -103,19 +120,42 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Save colors to database
+  const saveColors = async (newColors) => {
+    if (!draftId) {
+      // Fallback for non-draft contexts
+      onColorsChange?.(newColors);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const storage = new DraftStorage(draftId);
+      await storage.setThemeColors(newColors);
+      onColorsChange?.(newColors);
+      toast.success('Theme colors saved');
+    } catch (error) {
+      console.error('Failed to save theme colors:', error);
+      toast.error('Failed to save theme colors');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Helpers
   const setRole = (key) => (hex) => {
     if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return;
     setColors((prev) => {
       let next = { ...prev, [key]: hex };
-    if (key === "background" && "foreground" in next) {
-      // let buildThemeVars pick a readable foreground for the new bg
-      const { foreground, ...rest } = next;
-      next = rest;
-    }
-    onColorsChange?.(next);
-    return next;
+      if (key === "background" && "foreground" in next) {
+        // let buildThemeVars pick a readable foreground for the new bg
+        const { foreground, ...rest } = next;
+        next = rest;
+      }
       
+      // Save to database
+      saveColors(next);
+      return next;
     });
   };
   function handlePickFont(token, v) {
@@ -126,14 +166,26 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
   }
 
 
-  function handleReset() {
+  const handleReset = async () => {
     resetThemeToBaseline();
     const fresh = readTokenDefaults();
     setColors(fresh);
+    
+    // Save to database if we have a draftId
+    if (draftId) {
+      try {
+        const storage = new DraftStorage(draftId);
+        await storage.setThemeColors(fresh);
+        toast.success('Theme reset to defaults');
+      } catch (error) {
+        console.error('Failed to save reset theme:', error);
+        toast.error('Failed to save theme reset');
+      }
+    }
+    
     onColorsChange?.(fresh);
     onFontsChange?.({ primary: null, headline: null, numbers: null }); // clears overrides
-
-  }
+  };
 
   function handleCancel() {
     onClose?.();
@@ -227,7 +279,9 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
         {/* Footer */}
         <div className="shrink-0 border-t bg-slate-50 p-3 flex flex-col gap-2">
 
-          <Button variant="outline" onClick={handleReset}>Reset to defauts</Button>
+          <Button variant="outline" onClick={handleReset} disabled={isSaving || isLoading}>
+            {isSaving ? 'Saving...' : 'Reset to defaults'}
+          </Button>
           {/*<Button variant="ghost" onClick={handleCancel}>Cancel</Button>*/}
         </div>
       </div>
