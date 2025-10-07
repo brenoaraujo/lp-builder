@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDraft } from '../hooks/useDraft.js'
 import { useBuilderOverrides } from '../context/BuilderOverridesContext.jsx'
 import EditorSidebar from '../components/EditorSidebar.jsx'
+import ThemePanel from '../components/ThemePanel.jsx'
 import { SECTIONS } from '../sections/registry.js'
 import { buildThemeVars, setCSSVars, applySavedTheme } from '../theme-utils.js'
 import { Button } from '@/components/ui/button'
@@ -90,6 +91,7 @@ export default function Configurator() {
   const { overridesBySection, setSection } = useBuilderOverrides()
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [themeOpen, setThemeOpen] = useState(false)
 
   // Load config into builder context when available
   useEffect(() => {
@@ -115,34 +117,13 @@ export default function Configurator() {
     try {
       setIsSaving(true)
       
-      // Get current theme colors from localStorage
-      let currentColors = config?.theme?.colors || {}
-      try {
-        const savedColors = JSON.parse(localStorage.getItem("theme.colors") || "{}")
-        if (Object.keys(savedColors).length > 0) {
-          currentColors = savedColors
-        }
-      } catch (error) {
-        console.warn('Failed to read theme colors from localStorage:', error)
-      }
-      
-      // Get current theme mode
-      let currentMode = config?.theme?.mode || 'light'
-      try {
-        const savedMode = localStorage.getItem("lpb.theme.mode")
-        if (savedMode) {
-          currentMode = savedMode
-        }
-      } catch (error) {
-        console.warn('Failed to read theme mode from localStorage:', error)
-      }
-      
+      // Get current state from builder context (no localStorage)
       const currentConfig = {
         charityInfo: config?.charityInfo,
-        overridesBySection,
+        overridesBySection, // From useBuilderOverrides context
         theme: {
-          colors: currentColors,
-          mode: currentMode
+          colors: config?.theme?.colors || {}, // From database
+          mode: config?.theme?.mode || 'light' // From database
         }
       }
 
@@ -160,35 +141,13 @@ export default function Configurator() {
     try {
       setIsPublishing(true)
       
-      // Get current theme colors from localStorage
-      let currentColors = config?.theme?.colors || {}
-      try {
-        const savedColors = JSON.parse(localStorage.getItem("theme.colors") || "{}")
-        if (Object.keys(savedColors).length > 0) {
-          currentColors = savedColors
-        }
-      } catch (error) {
-        console.warn('Failed to read theme colors from localStorage:', error)
-      }
-      
-      // Get current theme mode
-      let currentMode = config?.theme?.mode || 'light'
-      try {
-        const savedMode = localStorage.getItem("lpb.theme.mode")
-        if (savedMode) {
-          currentMode = savedMode
-        }
-      } catch (error) {
-        console.warn('Failed to read theme mode from localStorage:', error)
-      }
-      
-      // Save current state first
+      // Save current state first (no localStorage)
       const currentConfig = {
         charityInfo: config?.charityInfo,
         overridesBySection,
         theme: {
-          colors: currentColors,
-          mode: currentMode
+          colors: config?.theme?.colors || {},
+          mode: config?.theme?.mode || 'light'
         }
       }
 
@@ -352,6 +311,13 @@ export default function Configurator() {
             
             <Button 
               variant="outline" 
+              onClick={() => setThemeOpen(true)}
+            >
+              Theme
+            </Button>
+            
+            <Button 
+              variant="outline" 
               onClick={handleSave}
               disabled={isSaving}
             >
@@ -432,6 +398,13 @@ export default function Configurator() {
           </div>
         </div>
       </div>
+
+      {/* Theme Panel */}
+      <ThemePanel 
+        open={themeOpen} 
+        onOpenChange={setThemeOpen} 
+        draftId={draftId}
+      />
     </div>
   )
 }
