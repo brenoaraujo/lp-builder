@@ -15,7 +15,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  console.log('Function called:', req.method, req.url)
+  console.log('Draft-open function called:', req.method, req.url)
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -142,7 +142,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Function error:', error)
+    console.error('Draft-open function error:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       { 

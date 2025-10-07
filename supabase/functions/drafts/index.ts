@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+)
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://lp-builder-pi.vercel.app',
   'Access-Control-Allow-Credentials': 'true',
@@ -8,11 +13,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Vary': 'Origin',
 }
-
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-)
 
 // FIXED: Cookie parser that preserves = in base64 values
 async function getDraftAccess(supabase: any, draftId: string, req: Request) {
@@ -47,6 +47,8 @@ async function getDraftAccess(supabase: any, draftId: string, req: Request) {
 }
 
 serve(async (req) => {
+  console.log('Drafts function called:', req.method, req.url)
+  
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -57,12 +59,7 @@ serve(async (req) => {
     const pathParts = url.pathname.split('/').filter(Boolean)
     const draftId = pathParts[1] // /drafts/:id
 
-    console.log('Drafts function called:', {
-      method: req.method,
-      pathname: url.pathname,
-      pathParts: pathParts,
-      draftId: draftId
-    })
+    console.log('Path parts:', pathParts, 'draftId:', draftId)
 
     switch (req.method) {
       case 'POST':
@@ -95,94 +92,115 @@ serve(async (req) => {
       { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Drafts function error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
 
 async function createDraft(req: Request) {
-  const { clientEmail, seedConfig } = await req.json()
+  console.log('Creating draft...')
   
-  if (!clientEmail || typeof clientEmail !== 'string') {
+  try {
+    const { clientEmail, seedConfig } = await req.json()
+    console.log('Request data:', { clientEmail, seedConfig })
+    
+    if (!clientEmail || typeof clientEmail !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'clientEmail is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Generate random token
+    const token = crypto.getRandomValues(new Uint8Array(32))
+    const tokenString = Array.from(token, byte => byte.toString(16).padStart(2, '0')).join('')
+    const tokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tokenString))
+    const tokenHashString = Array.from(new Uint8Array(tokenHash), byte => byte.toString(16).padStart(2, '0')).join('')
+
+    console.log('Generated token for:', clientEmail)
+
+    // Create draft
+    const { data: draft, error: draftError } = await supabase
+      .from('drafts')
+      .insert({
+        client_email: clientEmail,
+        token_hash: tokenHashString,
+        expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() // 14 days
+      })
+      .select()
+      .single()
+
+    if (draftError) {
+      console.error('Draft creation error:', draftError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to create draft', details: draftError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Draft created:', draft.id)
+
+    // Create initial version
+    const { error: versionError } = await supabase
+      .from('draft_versions')
+      .insert({
+        draft_id: draft.id,
+        version: 1,
+        config_json: seedConfig || {},
+        author_email: clientEmail
+      })
+
+    if (versionError) {
+      console.error('Version creation error:', versionError)
+      return new Response(
+        JSON.stringify({ error: 'Failed to create initial version', details: versionError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Initial version created for draft:', draft.id)
+
+    // Generate magic link
+    const baseUrl = Deno.env.get('SITE_BASE_URL') || 'http://localhost:3000'
+    const magicLink = `${baseUrl}/configurator/${draft.id}?token=${tokenString}`
+
+    console.log('Magic link generated:', magicLink)
+
     return new Response(
-      JSON.stringify({ error: 'clientEmail is required' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        draftId: draft.id,
+        inviteEmailPreview: clientEmail,
+        magicLink
+      }),
+      { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-  }
-
-  // Generate random token
-  const token = crypto.getRandomValues(new Uint8Array(32))
-  const tokenString = Array.from(token, byte => byte.toString(16).padStart(2, '0')).join('')
-  const tokenHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tokenString))
-  const tokenHashString = Array.from(new Uint8Array(tokenHash), byte => byte.toString(16).padStart(2, '0')).join('')
-
-  // Create draft
-  const { data: draft, error: draftError } = await supabase
-    .from('drafts')
-    .insert({
-      client_email: clientEmail,
-      token_hash: tokenHashString,
-      expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() // 14 days
-    })
-    .select()
-    .single()
-
-  if (draftError) {
-    console.error('Draft creation error:', draftError)
+  } catch (error) {
+    console.error('Create draft error:', error)
     return new Response(
-      JSON.stringify({ error: 'Failed to create draft' }),
+      JSON.stringify({ error: 'Failed to create draft', details: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
-
-  // Create initial version
-  const { error: versionError } = await supabase
-    .from('draft_versions')
-    .insert({
-      draft_id: draft.id,
-      version: 1,
-      config_json: seedConfig || {},
-      author_email: clientEmail
-    })
-
-  if (versionError) {
-    console.error('Version creation error:', versionError)
-    return new Response(
-      JSON.stringify({ error: 'Failed to create initial version' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  }
-
-  // Audit log
-  await auditLog(supabase, 'draft', draft.id, 'created', clientEmail, req)
-
-  // Generate magic link
-  const baseUrl = Deno.env.get('SITE_BASE_URL') || 'http://localhost:3000'
-  const magicLink = `${baseUrl}/configurator/${draft.id}?token=${tokenString}`
-
-  return new Response(
-    JSON.stringify({
-      draftId: draft.id,
-      inviteEmailPreview: clientEmail,
-      magicLink
-    }),
-    { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-  )
 }
 
 async function getDraft(draftId: string, req: Request) {
+  console.log('Getting draft:', draftId)
+  
   // Try cookie-based access
   const access = await getDraftAccess(supabase, draftId, req)
   
   if (!access) {
+    console.log('Access denied for draft:', draftId)
     return new Response(
       JSON.stringify({ error: 'Access denied' }),
       { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
+
+  console.log('Access granted for draft:', draftId, 'by:', access.email)
 
   // Get latest version
   const { data: version, error: versionError } = await supabase
@@ -196,62 +214,39 @@ async function getDraft(draftId: string, req: Request) {
   if (versionError) {
     console.error('Version fetch error:', versionError)
     return new Response(
-      JSON.stringify({ error: 'Failed to fetch draft' }),
+      JSON.stringify({ error: 'Failed to fetch draft', details: versionError.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
-
-  // Get collaborators
-  const { data: collaborators } = await supabase
-    .from('draft_collaborators')
-    .select('email, role, invited_at, accepted_at')
-    .eq('draft_id', draftId)
-    .is('revoked_at', null)
-
-  // Get comments
-  const { data: comments } = await supabase
-    .from('comments')
-    .select('id, path, body, created_by, resolved_at, created_at')
-    .eq('draft_id', draftId)
-    .is('resolved_at', null)
-    .order('created_at', { ascending: false })
 
   return new Response(
     JSON.stringify({
       config: version.config_json,
       version: version.version,
-      collaborators: collaborators || [],
-      comments: comments || [],
-      me: {
-        email: access.email,
-        role: access.role
-      }
+      collaborators: [],
+      comments: [],
+      me: access
     }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
 }
 
 async function updateDraft(draftId: string, req: Request) {
+  console.log('Updating draft:', draftId)
+  
   const access = await getDraftAccess(supabase, draftId, req)
   
-  if (!access || (access.role !== 'editor' && access.role !== 'owner')) {
+  if (!access) {
     return new Response(
-      JSON.stringify({ error: 'Insufficient permissions' }),
+      JSON.stringify({ error: 'Access denied' }),
       { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 
   const { baseVersion, patch } = await req.json()
-  
-  if (typeof baseVersion !== 'number') {
-    return new Response(
-      JSON.stringify({ error: 'baseVersion is required' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  }
 
-  // Check current version
-  const { data: currentVersion } = await supabase
+  // Get current version
+  const { data: currentVersion, error: versionError } = await supabase
     .from('draft_versions')
     .select('version')
     .eq('draft_id', draftId)
@@ -259,150 +254,104 @@ async function updateDraft(draftId: string, req: Request) {
     .limit(1)
     .single()
 
-  if (currentVersion && currentVersion.version !== baseVersion) {
+  if (versionError) {
     return new Response(
-      JSON.stringify({ error: 'Version conflict', currentVersion: currentVersion.version }),
+      JSON.stringify({ error: 'Failed to get current version' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // Check version conflict
+  if (currentVersion.version !== baseVersion) {
+    return new Response(
+      JSON.stringify({ 
+        error: 'Version conflict', 
+        currentVersion: currentVersion.version 
+      }),
       { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 
   // Create new version
-  const newVersion = (currentVersion?.version || 0) + 1
-  const { error: versionError } = await supabase
+  const { data: newVersion, error: createError } = await supabase
     .from('draft_versions')
     .insert({
       draft_id: draftId,
-      version: newVersion,
+      version: currentVersion.version + 1,
       config_json: patch,
       author_email: access.email
     })
+    .select()
+    .single()
 
-  if (versionError) {
-    console.error('Version update error:', versionError)
+  if (createError) {
+    console.error('Version creation error:', createError)
     return new Response(
-      JSON.stringify({ error: 'Failed to update draft' }),
+      JSON.stringify({ error: 'Failed to create new version' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 
-  // Audit log
-  await auditLog(supabase, 'draft', draftId, 'updated', access.email, req)
-
   return new Response(
-    JSON.stringify({ version: newVersion }),
+    JSON.stringify({
+      version: newVersion.version
+    }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
 }
 
 async function confirmDraft(draftId: string, req: Request) {
+  console.log('Confirming draft:', draftId)
+  
   const access = await getDraftAccess(supabase, draftId, req)
   
-  if (!access || access.role !== 'owner') {
+  if (!access) {
     return new Response(
-      JSON.stringify({ error: 'Only draft owner can confirm' }),
+      JSON.stringify({ error: 'Access denied' }),
       { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 
-  // Get latest version
-  const { data: version, error: versionError } = await supabase
-    .from('draft_versions')
-    .select('config_json')
-    .eq('draft_id', draftId)
-    .order('version', { ascending: false })
-    .limit(1)
-    .single()
-
-  if (versionError) {
-    return new Response(
-      JSON.stringify({ error: 'Failed to fetch draft version' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  }
-
-  // Generate slug
-  const slug = `page-${draftId.slice(0, 8)}`
-
-  // Create published page
-  const { data: published, error: publishError } = await supabase
-    .from('published')
-    .insert({
-      draft_id: draftId,
-      slug: slug,
-      config_json: version.config_json,
-      published_by: access.email
-    })
-    .select()
-    .single()
-
-  if (publishError) {
-    console.error('Publish error:', publishError)
-    return new Response(
-      JSON.stringify({ error: 'Failed to publish draft' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  }
-
-  // Update draft status
-  await supabase
+  // Update draft status to confirmed
+  const { error: updateError } = await supabase
     .from('drafts')
     .update({ status: 'confirmed' })
     .eq('id', draftId)
 
-  // Audit log
-  await auditLog(supabase, 'draft', draftId, 'confirmed', access.email, req)
-
-  const publicBaseUrl = Deno.env.get('PUBLIC_BASE_URL') || 'http://localhost:3000'
-  const publishedUrl = `${publicBaseUrl}/p/${slug}`
+  if (updateError) {
+    console.error('Draft confirmation error:', updateError)
+    return new Response(
+      JSON.stringify({ error: 'Failed to confirm draft' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
 
   return new Response(
-    JSON.stringify({ publishedUrl }),
+    JSON.stringify({ success: true }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
 }
 
 async function updateDraftStatus(draftId: string, req: Request) {
-  try {
-    console.log('Updating draft status:', draftId)
-    
-    const { status } = await req.json()
-    
-    if (!status) {
-      return new Response(
-        JSON.stringify({ error: 'Status is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+  console.log('Updating draft status:', draftId)
+  
+  const { status } = await req.json()
 
-    // Update the draft status
-    const { error: updateError } = await supabase
-      .from('drafts')
-      .update({ status })
-      .eq('id', draftId)
+  const { error: updateError } = await supabase
+    .from('drafts')
+    .update({ status })
+    .eq('id', draftId)
 
-    if (updateError) {
-      console.error('Error updating draft status:', updateError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to update draft status' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    console.log('Draft status updated successfully:', draftId, 'to', status)
+  if (updateError) {
+    console.error('Status update error:', updateError)
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Draft status updated successfully',
-        status: status
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  } catch (error) {
-    console.error('Update draft status error:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ error: 'Failed to update status' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
-}
 
+  return new Response(
+    JSON.stringify({ success: true }),
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  )
+}
