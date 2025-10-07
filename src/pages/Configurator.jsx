@@ -30,6 +30,7 @@ export default function Configurator() {
           const draftOpenUrl = `${baseUrl}/functions/v1/draft-open/${draftId}?token=${token}`
           console.log('Configurator: Calling draft-open URL =', draftOpenUrl)
           
+          console.log('Configurator: Making fetch request WITHOUT credentials')
           const response = await fetch(draftOpenUrl, {
             method: 'GET',
             headers: {
