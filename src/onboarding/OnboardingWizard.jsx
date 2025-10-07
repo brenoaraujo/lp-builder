@@ -869,7 +869,7 @@ export default function OnboardingWizard() {
                 result = await draftService.createDraft(charityInfo.clientEmail.trim(), seedConfig);
             }
             
-            // Mark onboarding as completed BEFORE clearing progress
+            // Mark onboarding as completed
             try {
                 localStorage.setItem("onboardingCompleted", "1");
             } catch (error) {
@@ -879,12 +879,9 @@ export default function OnboardingWizard() {
             // Clear progress since onboarding is complete
             clearProgress();
             
-            // Redirect to configurator with the draft
-            const configuratorUrl = `${window.location.origin}/#/configurator/${result.draftId}`;
-            console.log('Redirecting to:', configuratorUrl);
-            
-            // Direct redirect to the configurator URL
-            window.location.href = configuratorUrl;
+            // Simply refresh the page - let the app handle the routing
+            console.log('Onboarding completed, refreshing page...');
+            window.location.reload();
         } catch (error) {
             console.error('Failed to create draft:', error);
             alert('Failed to create draft. Please try again.');
