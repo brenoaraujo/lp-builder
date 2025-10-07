@@ -48,6 +48,7 @@ async function getDraftAccess(supabase: any, draftId: string, req: Request) {
 
 serve(async (req) => {
   console.log('Drafts function called:', req.method, req.url)
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()))
   
   // Handle CORS
   if (req.method === 'OPTIONS') {
