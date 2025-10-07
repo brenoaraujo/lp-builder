@@ -278,6 +278,59 @@ export default function Configurator() {
     )
   }
 
+  // Generate blocks from overrides (same logic as main app)
+  const blocks = (() => {
+    const order = ["hero", "extraPrizes", "winners"];
+    const toIndex = (v) => (v === "B" ? 1 : 0);
+
+    const blocks = [];
+    
+    // First, add sections in the standard order
+    order.forEach((k) => {
+      if (overridesBySection?.[k]?.visible !== false) {
+        const s = overridesBySection[k] || {};
+        blocks.push({
+          id: `b_${k}_${Date.now()}`,
+          type: k,
+          variant: toIndex(s.variant || "A"),
+          controls: s.display || {},
+          copy: s.copy || {},
+          overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
+        });
+      }
+    });
+    
+    // Add WhoYouHelp only if explicitly enabled
+    if (overridesBySection?.WhoYouHelp?.visible === true) {
+      const s = overridesBySection.WhoYouHelp || {};
+      blocks.push({
+        id: `b_WhoYouHelp_${Date.now()}`,
+        type: "WhoYouHelp",
+        variant: toIndex(s.variant || "A"),
+        controls: s.display || {},
+        copy: s.copy || {},
+        overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
+      });
+    }
+    
+    // Then, add all extra content sections
+    Object.keys(overridesBySection).forEach((k) => {
+      if (k.startsWith('extraContent_') && overridesBySection[k]?.visible !== false) {
+        const s = overridesBySection[k] || {};
+        blocks.push({
+          id: `b_${k}_${Date.now()}`,
+          type: k,
+          variant: toIndex(s.variant || "A"),
+          controls: s.display || {},
+          copy: s.copy || {},
+          overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
+        });
+      }
+    });
+    
+    return blocks;
+  })();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -322,14 +375,14 @@ export default function Configurator() {
         {/* Sidebar */}
         <div className="w-80 border-r bg-white">
           <EditorSidebar
-            activeBlockId="hero"
-            activeBlock={{
+            activeBlockId={blocks[0]?.id || "hero"}
+            activeBlock={blocks[0] || {
               id: "hero",
               type: "hero",
               variant: 0,
-              controls: overridesBySection.hero?.display || {},
-              copy: overridesBySection.hero?.copy || {},
-              overrides: overridesBySection.hero?.theme || { enabled: false, values: {} }
+              controls: {},
+              copy: {},
+              overrides: { enabled: false, values: {} }
             }}
             partList={[]}
             copyList={[]}
@@ -339,7 +392,7 @@ export default function Configurator() {
             setVariantForId={() => {}}
             variantForId={{}}
             setBlocks={() => {}}
-            blocks={[]}
+            blocks={blocks}
             mode="builder"
             hideVariantPicker={false}
             hideAdvancedActions={false}
@@ -358,9 +411,22 @@ export default function Configurator() {
                 Use the sidebar to customize sections, copy, and styling.
               </p>
               
-              {/* TODO: Add actual section rendering here */}
-              <div className="mt-8 p-8 border-2 border-dashed border-gray-200 rounded-lg text-center">
-                <p className="text-gray-500">Section previews will appear here</p>
+              {/* Render actual sections */}
+              <div className="mt-8">
+                {blocks.map((block) => {
+                  const SectionComponent = SECTIONS[block.type]?.variants?.[block.variant];
+                  if (!SectionComponent) return null;
+                  
+                  return (
+                    <div key={block.id} className="mb-8">
+                      <SectionComponent
+                        controls={block.controls}
+                        copy={block.copy}
+                        overrides={block.overrides}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
