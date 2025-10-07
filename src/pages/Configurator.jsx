@@ -115,12 +115,34 @@ export default function Configurator() {
     try {
       setIsSaving(true)
       
+      // Get current theme colors from localStorage
+      let currentColors = config?.theme?.colors || {}
+      try {
+        const savedColors = JSON.parse(localStorage.getItem("theme.colors") || "{}")
+        if (Object.keys(savedColors).length > 0) {
+          currentColors = savedColors
+        }
+      } catch (error) {
+        console.warn('Failed to read theme colors from localStorage:', error)
+      }
+      
+      // Get current theme mode
+      let currentMode = config?.theme?.mode || 'light'
+      try {
+        const savedMode = localStorage.getItem("lpb.theme.mode")
+        if (savedMode) {
+          currentMode = savedMode
+        }
+      } catch (error) {
+        console.warn('Failed to read theme mode from localStorage:', error)
+      }
+      
       const currentConfig = {
         charityInfo: config?.charityInfo,
         overridesBySection,
         theme: {
-          colors: config?.theme?.colors,
-          mode: config?.theme?.mode
+          colors: currentColors,
+          mode: currentMode
         }
       }
 
@@ -138,13 +160,35 @@ export default function Configurator() {
     try {
       setIsPublishing(true)
       
+      // Get current theme colors from localStorage
+      let currentColors = config?.theme?.colors || {}
+      try {
+        const savedColors = JSON.parse(localStorage.getItem("theme.colors") || "{}")
+        if (Object.keys(savedColors).length > 0) {
+          currentColors = savedColors
+        }
+      } catch (error) {
+        console.warn('Failed to read theme colors from localStorage:', error)
+      }
+      
+      // Get current theme mode
+      let currentMode = config?.theme?.mode || 'light'
+      try {
+        const savedMode = localStorage.getItem("lpb.theme.mode")
+        if (savedMode) {
+          currentMode = savedMode
+        }
+      } catch (error) {
+        console.warn('Failed to read theme mode from localStorage:', error)
+      }
+      
       // Save current state first
       const currentConfig = {
         charityInfo: config?.charityInfo,
         overridesBySection,
         theme: {
-          colors: config?.theme?.colors,
-          mode: config?.theme?.mode
+          colors: currentColors,
+          mode: currentMode
         }
       }
 

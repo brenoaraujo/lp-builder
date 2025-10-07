@@ -692,7 +692,8 @@ function blocksFromOverrides(ovr = {}) {
     }
   });
   
-  if (ovr.WhoYouHelp?.visible !== false) push("WhoYouHelp", ovr.WhoYouHelp?.variant || "A", ovr.WhoYouHelp);
+  // Only add WhoYouHelp if explicitly enabled
+  if (ovr.WhoYouHelp?.visible === true) push("WhoYouHelp", ovr.WhoYouHelp?.variant || "A", ovr.WhoYouHelp);
   return out.length ? out : [{
     id: crypto?.randomUUID?.() ?? `hero_${Date.now()}`,
     type: "hero", variant: 0, controls: {}, copy: {},
@@ -765,7 +766,7 @@ export function MainBuilder() {
   }, []);
 
   function blocksFromOverrides(ovr) {
-    const order = ["hero", "extraPrizes", "winners", "WhoYouHelp"]; // keep this consistent with your app
+    const order = ["hero", "extraPrizes", "winners"]; // Removed WhoYouHelp from default order
     const toIndex = (v) => (v === "B" ? 1 : 0);       // "A" → 0, "B" → 1
 
     const blocks = [];
@@ -784,6 +785,19 @@ export function MainBuilder() {
         });
       }
     });
+    
+    // Add WhoYouHelp only if explicitly enabled
+    if (ovr?.WhoYouHelp?.visible === true) {
+      const s = ovr.WhoYouHelp || {};
+      blocks.push({
+        id: crypto?.randomUUID?.() ?? `b_WhoYouHelp_${Date.now()}`,
+        type: "WhoYouHelp",
+        variant: toIndex(s.variant || "A"),
+        controls: s.display || {},
+        copy: s.copy || {},
+        overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
+      });
+    }
     
     // Then, add all extra content sections
     Object.keys(ovr).forEach((k) => {

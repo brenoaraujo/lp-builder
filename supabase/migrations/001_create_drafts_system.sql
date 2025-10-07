@@ -1,5 +1,4 @@
 -- Enable necessary extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Create ENUM types
@@ -8,7 +7,7 @@ CREATE TYPE collaborator_role AS ENUM ('viewer', 'editor');
 
 -- 1. Drafts table
 CREATE TABLE drafts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     status draft_status NOT NULL DEFAULT 'active',
     client_email TEXT NOT NULL,
     token_hash TEXT,
@@ -20,7 +19,7 @@ CREATE TABLE drafts (
 
 -- 2. Draft versions table
 CREATE TABLE draft_versions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     draft_id UUID NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
     version INTEGER NOT NULL,
     config_json JSONB NOT NULL,
@@ -30,7 +29,7 @@ CREATE TABLE draft_versions (
 
 -- 3. Published pages table
 CREATE TABLE published (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     draft_id UUID REFERENCES drafts(id),
     slug TEXT UNIQUE NOT NULL,
     config_json JSONB NOT NULL,
@@ -40,7 +39,7 @@ CREATE TABLE published (
 
 -- 4. Draft collaborators table
 CREATE TABLE draft_collaborators (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     draft_id UUID NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
     role collaborator_role NOT NULL DEFAULT 'editor',
@@ -57,7 +56,7 @@ WHERE revoked_at IS NULL;
 
 -- 5. Comments table
 CREATE TABLE comments (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     draft_id UUID NOT NULL REFERENCES drafts(id) ON DELETE CASCADE,
     path TEXT NOT NULL,
     body TEXT NOT NULL,
@@ -69,7 +68,7 @@ CREATE TABLE comments (
 
 -- 6. Audit log table
 CREATE TABLE audit (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     entity_type TEXT NOT NULL,
     entity_id UUID,
     action TEXT NOT NULL,
