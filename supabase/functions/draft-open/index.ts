@@ -6,24 +6,31 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://lp-builder-pi.vercel.app',
-  'Access-Control-Allow-Credentials': 'true',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Vary': 'Origin',
-}
-
 serve(async (req) => {
   console.log('Draft-open function called:', req.method, req.url)
+  
+  // Create response with proper CORS headers
+  const createResponse = (body: any, status = 200, additionalHeaders = {}) => {
+    const headers = new Headers({
+      'Access-Control-Allow-Origin': 'https://lp-builder-pi.vercel.app',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+      'Vary': 'Origin',
+      'Content-Type': 'application/json',
+      ...additionalHeaders
+    })
+    
+    return new Response(
+      typeof body === 'string' ? body : JSON.stringify(body),
+      { status, headers }
+    )
+  }
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     console.log('OPTIONS request - returning CORS headers')
-    return new Response('ok', { 
-      status: 200,
-      headers: corsHeaders
-    })
+    return createResponse('ok', 200)
   }
 
   try {
@@ -44,16 +51,7 @@ serve(async (req) => {
 
     if (!draftId || !token) {
       console.log('Missing values - draftId:', draftId, 'token:', token ? 'present' : 'missing')
-      return new Response(
-        JSON.stringify({ error: 'Missing draftId or token' }),
-        { 
-          status: 400, 
-          headers: { 
-            ...corsHeaders,
-            'Content-Type': 'application/json' 
-          } 
-        }
-      )
+      return createResponse({ error: 'Missing draftId or token' }, 400)
     }
 
     // Hash the token
@@ -71,44 +69,17 @@ serve(async (req) => {
     console.log('Database query result:', { draft: draft ? 'found' : 'not found', error })
 
     if (error || !draft) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid or expired token' }),
-        { 
-          status: 401, 
-          headers: { 
-            ...corsHeaders,
-            'Content-Type': 'application/json' 
-          } 
-        }
-      )
+      return createResponse({ error: 'Invalid or expired token' }, 401)
     }
 
     // Check if token is expired
     if (new Date(draft.expires_at) < new Date()) {
-      return new Response(
-        JSON.stringify({ error: 'Token expired' }),
-        { 
-          status: 401, 
-          headers: { 
-            ...corsHeaders,
-            'Content-Type': 'application/json' 
-          } 
-        }
-      )
+      return createResponse({ error: 'Token expired' }, 401)
     }
 
     // Check if draft is still active
     if (draft.status !== 'active') {
-      return new Response(
-        JSON.stringify({ error: 'Draft not active' }),
-        { 
-          status: 401, 
-          headers: { 
-            ...corsHeaders,
-            'Content-Type': 'application/json' 
-          } 
-        }
-      )
+      return createResponse({ error: 'Draft not active' }, 401)
     }
 
     // Create simple cookie
@@ -124,34 +95,22 @@ serve(async (req) => {
 
     console.log('Authentication successful for draft:', draftId)
 
-    // Return success response
-    return new Response(
-      JSON.stringify({ 
+    // Return success response with cookie
+    return createResponse(
+      { 
         success: true, 
         message: 'Authentication successful',
         draftId: draftId
-      }),
-      {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-          'Set-Cookie': cookieHeader
-        }
-      }
+      },
+      200,
+      { 'Set-Cookie': cookieHeader }
     )
 
   } catch (error) {
     console.error('Draft-open function error:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
-      }
+    return createResponse(
+      { error: 'Internal server error', details: error.message },
+      500
     )
   }
 })
