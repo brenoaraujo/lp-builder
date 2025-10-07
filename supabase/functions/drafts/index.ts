@@ -199,8 +199,13 @@ async function createDraft(req: Request) {
 async function getDraft(draftId: string, req: Request) {
   console.log('Getting draft:', draftId)
   
+  // Debug cookie headers
+  const cookieHeader = req.headers.get('Cookie')
+  console.log('Cookie header:', cookieHeader)
+  
   // Try cookie-based access
   const access = await getDraftAccess(supabase, draftId, req)
+  console.log('Access result:', access)
   
   if (!access) {
     console.log('Access denied for draft:', draftId)
