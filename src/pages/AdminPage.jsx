@@ -57,7 +57,7 @@ class AdminService {
     this.baseUrl = supabaseUrl + '/functions/v1'
   }
 
-  async sendMagicLink(clientEmail, charityName = '') {
+  async createMagicLink(clientEmail, charityName = '') {
     const response = await fetch(`${this.baseUrl}/final/send-magic-link`, {
       method: 'POST',
       headers: {
@@ -72,7 +72,7 @@ class AdminService {
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.error || 'Failed to send magic link')
+      throw new Error(error.error || 'Failed to create magic link')
     }
 
     return response.json()
@@ -138,7 +138,8 @@ export default function AdminPage() {
   const [drafts, setDrafts] = useState([])
   const [stats, setStats] = useState({})
   const [isLoading, setIsLoading] = useState(true)
-  const [isSendingLink, setIsSendingLink] = useState(false)
+  const [isCreatingLink, setIsCreatingLink] = useState(false)
+  const [createdMagicLink, setCreatedMagicLink] = useState(null)
   const [magicLinkForm, setMagicLinkForm] = useState({
     clientEmail: '',
     charityName: ''
@@ -194,29 +195,30 @@ export default function AdminPage() {
     }
   }
 
-  const handleSendMagicLink = async () => {
+  const handleCreateMagicLink = async () => {
     if (!magicLinkForm.clientEmail.trim()) {
       toast.error('Please enter a client email')
       return
     }
 
     try {
-      setIsSendingLink(true)
-      const result = await adminService.sendMagicLink(
+      setIsCreatingLink(true)
+      const result = await adminService.createMagicLink(
         magicLinkForm.clientEmail,
         magicLinkForm.charityName
       )
       
-      toast.success(`Magic link sent to ${magicLinkForm.clientEmail}`)
-      setMagicLinkForm({ clientEmail: '', charityName: '' })
+      // Store the created magic link
+      setCreatedMagicLink(result.magicLink)
+      toast.success(`Magic link created for ${magicLinkForm.clientEmail}`)
       
       // Refresh the drafts list
       await loadData()
     } catch (error) {
-      console.error('Failed to send magic link:', error)
-      toast.error(error.message || 'Failed to send magic link')
+      console.error('Failed to create magic link:', error)
+      toast.error(error.message || 'Failed to create magic link')
     } finally {
-      setIsSendingLink(false)
+      setIsCreatingLink(false)
     }
   }
 
@@ -576,17 +578,55 @@ export default function AdminPage() {
                 </div>
                 
                 <Button 
-                  onClick={handleSendMagicLink}
-                  disabled={isSendingLink || !magicLinkForm.clientEmail.trim()}
+                  onClick={handleCreateMagicLink}
+                  disabled={isCreatingLink || !magicLinkForm.clientEmail.trim()}
                   className="flex items-center gap-2"
                 >
-                  {isSendingLink ? (
+                  {isCreatingLink ? (
                     <RefreshCw className="h-4 w-4 animate-spin" />
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
-                  {isSendingLink ? 'Sending...' : 'Send Magic Link'}
+                  {isCreatingLink ? 'Creating...' : 'Create Magic Link'}
                 </Button>
+
+                {/* Display created magic link */}
+                {createdMagicLink && (
+                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-green-800">Magic Link Created!</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={createdMagicLink}
+                        readOnly
+                        className="flex-1 text-sm font-mono bg-white"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyToClipboard(createdMagicLink)}
+                        className="flex items-center gap-1"
+                      >
+                        <Copy className="h-3 w-3" />
+                        Copy
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(createdMagicLink, '_blank')}
+                        className="flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        Open
+                      </Button>
+                    </div>
+                    <p className="text-xs text-green-600 mt-2">
+                      Share this link with the charity to start their landing page creation.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

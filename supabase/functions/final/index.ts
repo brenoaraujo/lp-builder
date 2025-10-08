@@ -146,31 +146,12 @@ async function sendMagicLink(req: Request) {
     const baseUrl = Deno.env.get('SITE_BASE_URL') || 'https://your-production-url.com'
     const magicLink = `${baseUrl}/configurator/${draft.id}?token=${tokenString}`
 
-    // Send email (optional - you can implement this based on your email service)
-    console.log('Attempting to send email to:', clientEmail)
-    try {
-      const emailResult = await sendEmail({
-        to: clientEmail,
-        subject: `Your Landing Page Builder Access - ${charityName || 'New Project'}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Welcome to the Landing Page Builder!</h2>
-            <p>You've been invited to create a custom landing page for ${charityName || 'your organization'}.</p>
-            <p>Click the link below to get started:</p>
-            <a href="${magicLink}" style="display: inline-block; background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 16px 0;">
-              Start Building Your Page
-            </a>
-            <p style="color: #666; font-size: 14px;">
-              This link will expire in 14 days. If you have any questions, please contact our team.
-            </p>
-          </div>
-        `
-      })
-      console.log('Email result:', emailResult)
-    } catch (emailError) {
-      console.error('Failed to send email:', emailError)
-      // Don't fail the request if email fails
-    }
+    // Email sending is disabled for testing - just log the magic link
+    console.log('Magic link created for:', clientEmail)
+    console.log('Magic link:', magicLink)
+    
+    // TODO: Re-enable email sending when ready for production
+    // const emailResult = await sendEmail({...})
 
     return new Response(
       JSON.stringify({
