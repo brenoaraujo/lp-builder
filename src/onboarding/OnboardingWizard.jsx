@@ -891,9 +891,10 @@ export default function OnboardingWizard() {
             // Clear progress since onboarding is complete
             clearProgress();
             
-            // Simply refresh the page - let the app handle the routing
-            console.log('Onboarding completed, refreshing page...');
-            window.location.reload();
+            // Redirect to configurator instead of reloading
+            console.log('Onboarding completed, redirecting to configurator...');
+            const configuratorUrl = `/configurator/${result.draftId}`;
+            window.location.href = configuratorUrl;
         } catch (error) {
             console.error('Failed to create draft:', error);
             alert('Failed to create draft. Please try again.');

@@ -780,9 +780,12 @@ export function MainBuilder() {
       return;
     }
     
-    // Onboarding completion is now tracked in database
+    // Check if we're on a configurator route (draft-specific)
+  const isConfiguratorRoute = window.location.pathname.startsWith('/configurator/');
+  
+  // Onboarding completion is now tracked in database
   // const done = localStorage.getItem("onboardingCompleted") === "1"; // REMOVED
-  const done = false; // Always show onboarding for now - will be replaced with database check
+  const done = isConfiguratorRoute; // If we're on a configurator route, onboarding is done
     const hash = window.location.hash.replace(/^#/, "");
     // If user finished onboarding, never sit on the onboarding route
     if (done && hash.startsWith("/onboarding")) {
@@ -852,9 +855,12 @@ export function MainBuilder() {
       return;
     }
     
-    // Onboarding completion is now tracked in database
+    // Check if we're on a configurator route (draft-specific)
+  const isConfiguratorRoute = window.location.pathname.startsWith('/configurator/');
+  
+  // Onboarding completion is now tracked in database
   // const done = localStorage.getItem("onboardingCompleted") === "1"; // REMOVED
-  const done = false; // Always show onboarding for now - will be replaced with database check
+  const done = isConfiguratorRoute; // If we're on a configurator route, onboarding is done
     const wantsWizard = new URLSearchParams(window.location.search).get("wizard") === "1";
 
     if (!done || wantsWizard) {
@@ -1916,9 +1922,12 @@ export function AppRouterShell() {
     return <MainBuilder />;  // <-- render builder even if onboarding wasn't completed before
   }
 
+  // Check if we're on a configurator route (draft-specific)
+  const isConfiguratorRoute = window.location.pathname.startsWith('/configurator/');
+  
   // Onboarding completion is now tracked in database
   // const done = localStorage.getItem("onboardingCompleted") === "1"; // REMOVED
-  const done = false; // Always show onboarding for now - will be replaced with database check
+  const done = isConfiguratorRoute; // If we're on a configurator route, onboarding is done
   if (route === "/onboarding" || (!done && route !== "/admin")) return <OnboardingWizard />;
   return <MainBuilder />;
 }
