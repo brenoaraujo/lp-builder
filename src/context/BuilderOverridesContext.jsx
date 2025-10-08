@@ -5,14 +5,20 @@ const BuilderOverridesContext = createContext(null);
 const STORAGE_KEY = "builderOverrides";
 
 export function BuilderOverridesProvider({ children, initial }) {
-  const [overridesBySection, setOverridesBySection] = useState(initial || {});
+  const [overridesBySection, setOverridesBySection] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initial || {};
+  });
 
-  // No localStorage persistence - data comes from database
-  // useEffect(() => {
-  //   try {
-  //     localStorage.setItem(STORAGE_KEY, JSON.stringify(overridesBySection));
-  //   } catch {}
-  // }, [overridesBySection]);
+  // Persist changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(overridesBySection));
+    } catch {}
+  }, [overridesBySection]);
 
   const api = useMemo(() => ({
     overridesBySection,
