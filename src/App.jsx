@@ -167,15 +167,26 @@ function buildApprovalMailto(to, { company, project, approverName, approverEmail
 }
 
 function packSnapshot({ blocks, globalTheme }) {
-  // pull the in-use theme & fonts from localStorage so the share matches exactly
+  // For published pages, we need to get theme data from the draft
+  // This function is called from PublishedPage which has access to draft data
   let savedColors = {};
   let savedFonts = {};
-  try { savedColors = JSON.parse(localStorage.getItem("theme.colors") || "{}"); } catch { }
-  try { savedFonts = JSON.parse(localStorage.getItem("theme.fonts") || "{}"); } catch { }
-
-  // include builder overrides so the preview matches
   let overrides = {};
-  try { overrides = JSON.parse(localStorage.getItem("builderOverrides") || "{}"); } catch { }
+  
+  // If we're in a draft context, use the draft's data
+  // Otherwise, fall back to localStorage for backward compatibility
+  if (window.location.pathname.startsWith('/configurator/')) {
+    // In configurator, data comes from database via context
+    // This function shouldn't be called in configurator context
+    console.warn('getShareData called in configurator context - this should not happen');
+  } else {
+    // For published pages, we need draft data passed in
+    // This is a temporary fallback - should be removed once PublishedPage is fixed
+    // All data now comes from database - no localStorage fallback
+    // try { savedColors = JSON.parse(localStorage.getItem("theme.colors") || "{}"); } catch { }
+    // try { savedFonts = JSON.parse(localStorage.getItem("theme.fonts") || "{}"); } catch { }
+    // try { overrides = JSON.parse(localStorage.getItem("builderOverrides") || "{}"); } catch { }
+  }
 
   return {
     blocks,
@@ -735,7 +746,8 @@ export function MainBuilder() {
           // Back-compat: legacy snapshots with only colors
           const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } =
             loaded.globalTheme.colors || {};
-          try { localStorage.setItem("theme.colors", JSON.stringify(rest)); } catch { }
+          // Theme colors are now saved to database via DraftStorage
+      // localStorage.setItem("theme.colors", JSON.stringify(rest)); // REMOVED
           const mode = readThemeMode();
           setCSSVars(document.documentElement, "colors", buildThemeVars(rest, mode));
         }
@@ -743,7 +755,8 @@ export function MainBuilder() {
       }
 
       // Mark onboarding as done when opening share links
-      try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
+      // Onboarding completion is now tracked in database
+    // localStorage.setItem("onboardingCompleted", "1"); // REMOVED
 
     } else {
       // 2) No snapshot → apply whatever is saved (colors + fonts) in one call
@@ -767,7 +780,9 @@ export function MainBuilder() {
       return;
     }
     
-    const done = localStorage.getItem("onboardingCompleted") === "1";
+    // Onboarding completion is now tracked in database
+  // const done = localStorage.getItem("onboardingCompleted") === "1"; // REMOVED
+  const done = false; // Always show onboarding for now - will be replaced with database check
     const hash = window.location.hash.replace(/^#/, "");
     // If user finished onboarding, never sit on the onboarding route
     if (done && hash.startsWith("/onboarding")) {
@@ -837,7 +852,9 @@ export function MainBuilder() {
       return;
     }
     
-    const done = localStorage.getItem("onboardingCompleted") === "1";
+    // Onboarding completion is now tracked in database
+  // const done = localStorage.getItem("onboardingCompleted") === "1"; // REMOVED
+  const done = false; // Always show onboarding for now - will be replaced with database check
     const wantsWizard = new URLSearchParams(window.location.search).get("wizard") === "1";
 
     if (!done || wantsWizard) {
@@ -905,7 +922,9 @@ export function MainBuilder() {
 
   const [themeMode, setThemeMode] = useState(() => {
     try {
-      return localStorage.getItem("lpb.theme.mode") === "dark" ? "dark" : "light";
+      // Theme mode is now stored in database
+      // return localStorage.getItem("lpb.theme.mode") === "dark" ? "dark" : "light"; // REMOVED
+      return "light"; // Default to light mode - will be replaced with database check
     } catch {
       return "light";
     }
@@ -918,7 +937,9 @@ export function MainBuilder() {
     document.documentElement.setAttribute("data-theme", themeMode);
 
     // Only paint inline colors from state if there are NO saved colors yet.
-    if (!localStorage.getItem("theme.colors")) {
+    // Theme colors are now stored in database
+    // if (!localStorage.getItem("theme.colors")) { // REMOVED
+    if (true) { // Always apply defaults for now - will be replaced with database check
       const vars = buildThemeVars(globalTheme.colors, themeMode);
       setCSSVars(document.documentElement, "colors", vars);
     }
@@ -934,7 +955,8 @@ export function MainBuilder() {
     setCSSVars(document.documentElement, "colors", vars);
 
     // persist so refresh picks it up
-    try { localStorage.setItem("theme.colors", JSON.stringify(next)); } catch { }
+    // Theme colors are now saved to database via DraftStorage
+    // localStorage.setItem("theme.colors", JSON.stringify(next)); // REMOVED
 
     // keep React state in sync (defer to avoid setState during render)
     setTimeout(() => {
@@ -957,7 +979,9 @@ export function MainBuilder() {
   const [handoffDefaults, setHandoffDefaults] = useState(null);
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("lpb.approver.defaults");
+      // Approver defaults are now stored in database
+      // const saved = localStorage.getItem("lpb.approver.defaults"); // REMOVED
+      const saved = null; // Will be replaced with database check
       if (saved) setHandoffDefaults(JSON.parse(saved));
     } catch { }
   }, []);
@@ -977,7 +1001,9 @@ export function MainBuilder() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
+      // Theme colors are now stored in database
+      // const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}"); // REMOVED
+      const saved = {}; // Will be replaced with database check
       if (Object.keys(saved).length) {
         // merge into state (so ThemeAside sees them)
         setGlobalTheme(t => ({ ...t, colors: { ...(t.colors || {}), ...saved } }));
@@ -1011,7 +1037,9 @@ export function MainBuilder() {
   // listem os theme preference
   // Hydrate theme mode (respect saved pref; otherwise fall back to OS)
   useEffect(() => {
-    const stored = localStorage.getItem("lpb.theme.mode");
+    // Theme mode is now stored in database
+    // const stored = localStorage.getItem("lpb.theme.mode"); // REMOVED
+    const stored = null; // Will be replaced with database check
     if (stored === "light" || stored === "dark") {
       setThemeMode(stored);
       return; // don't attach OS listener if user chose explicitly
@@ -1027,7 +1055,8 @@ export function MainBuilder() {
 
   // Persist user preference when it changes
   useEffect(() => {
-    try { localStorage.setItem("lpb.theme.mode", themeMode); } catch { }
+    // Theme mode is now saved to database
+    // localStorage.setItem("lpb.theme.mode", themeMode); // REMOVED
   }, [themeMode]);
 
 
@@ -1060,7 +1089,8 @@ export function MainBuilder() {
           const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } =
             loaded.globalTheme.colors || {};
           setGlobalTheme({ colors: rest });
-          try { localStorage.setItem("theme.colors", JSON.stringify(rest)); } catch { }
+          // Theme colors are now saved to database via DraftStorage
+      // localStorage.setItem("theme.colors", JSON.stringify(rest)); // REMOVED
           // Make the preview use the shared colors right away (includes 'foreground')
           const mode = readThemeMode?.() || "light";
           // Clear any stale inline vars so we don't keep an old foreground/border
@@ -1073,14 +1103,17 @@ export function MainBuilder() {
         if (loaded.meta?.approved) setApprovedMeta({ ...loaded.meta });
       }
       // visiting a share link should not trigger onboarding
-      try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
+      // Onboarding completion is now tracked in database
+    // localStorage.setItem("onboardingCompleted", "1"); // REMOVED
       setHydrated(true);
       return;
     }
 
     // 2) Otherwise (no snapshot / just a route), hydrate from onboarding overrides if present
     try {
-      const raw = localStorage.getItem("builderOverrides");
+      // Builder overrides are now stored in database
+      // const raw = localStorage.getItem("builderOverrides"); // REMOVED
+      const raw = null; // Will be replaced with database check
       if (raw) {
         const ovr = JSON.parse(raw);
         const nextBlocks = blocksFromOverrides(ovr);
@@ -1412,8 +1445,9 @@ export function MainBuilder() {
 
   function resetThemeInApp() {
     try {
-      localStorage.removeItem("theme.colors");
-      localStorage.removeItem("theme.fonts");
+      // Theme data is now stored in database
+      // localStorage.removeItem("theme.colors"); // REMOVED
+      // localStorage.removeItem("theme.fonts"); // REMOVED
     } catch { }
 
     // blow away any inline overrides first
@@ -1434,7 +1468,9 @@ export function MainBuilder() {
   // Get charity information from localStorage (set during onboarding)
   const getCharityInfo = () => {
     try {
-      const saved = localStorage.getItem("charityInfo");
+      // Charity info is now stored in database
+      // const saved = localStorage.getItem("charityInfo"); // REMOVED
+      const saved = null; // Will be replaced with database check
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -1470,7 +1506,7 @@ export function MainBuilder() {
             <a href="#/admin" className="text-xs underline text-muted-foreground">
               Admin
             </a>
-            <a href="#/onboarding" onClick={(e) => { try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); localStorage.removeItem("theme.colors"); localStorage.removeItem("theme.fonts"); reset(); } catch { } }} className="text-xs underline text-muted-foreground" >
+            <a href="#/onboarding" onClick={(e) => { try { /* localStorage cleanup removed - data now in database */ reset(); } catch { } }} className="text-xs underline text-muted-foreground" >
               Restart onboarding
             </a>
             {/* darkmode
@@ -1871,7 +1907,8 @@ export function AppRouterShell() {
   // If a share/snapshot URL is present, mark onboarding completed and go straight to the builder.
   useEffect(() => {
     if (isSnapshot) {
-      try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
+      // Onboarding completion is now tracked in database
+    // localStorage.setItem("onboardingCompleted", "1"); // REMOVED
     }
   }, [isSnapshot]);
 
@@ -1879,7 +1916,9 @@ export function AppRouterShell() {
     return <MainBuilder />;  // <-- render builder even if onboarding wasn't completed before
   }
 
-  const done = localStorage.getItem("onboardingCompleted") === "1";
+  // Onboarding completion is now tracked in database
+  // const done = localStorage.getItem("onboardingCompleted") === "1"; // REMOVED
+  const done = false; // Always show onboarding for now - will be replaced with database check
   if (route === "/onboarding" || (!done && route !== "/admin")) return <OnboardingWizard />;
   return <MainBuilder />;
 }

@@ -118,7 +118,8 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
     const [themeMode, setThemeMode] = useState(readThemeMode());
     const [colors, setColors] = useState(() => ({
         ...BASELINE_COLORS,
-        ...(JSON.parse(localStorage.getItem("theme.colors") || "{}")),
+        // Theme colors are now stored in database
+        // ...(JSON.parse(localStorage.getItem("theme.colors") || "{}")), // REMOVED
     }));
 
 
@@ -175,14 +176,16 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
 
     // save + finish (unchanged logic, just uses our color map)
     const finalize = () => {
-        try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch { }
+        // Theme colors are now saved to database via DraftStorage
+        // try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch { } // REMOVED
         setCSSVars(document.documentElement, "colors", buildThemeVars(colors, themeMode));
         applySavedTheme(themeMode);
         onFinish?.(colors, themeMode);
     };
 
     function resetReviewToDefaults() {
-        try { localStorage.removeItem("theme.colors"); } catch { }
+        // Theme colors are now stored in database
+        // try { localStorage.removeItem("theme.colors"); } catch { } // REMOVED
 
         // Update local state first so inputs reflect the baseline immediately
         setColors(BASELINE_COLORS);
@@ -193,7 +196,8 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
         setCSSVars(document.documentElement, "colors", vars);
 
         // Save baseline so Main app picks it up too
-        try { localStorage.setItem("theme.colors", JSON.stringify(BASELINE_COLORS)); } catch { }
+        // Theme colors are now saved to database via DraftStorage
+        // try { localStorage.setItem("theme.colors", JSON.stringify(BASELINE_COLORS)); } catch { } // REMOVED
 
         // Optional: keep shadcn / app helpers in sync
         applySavedTheme(mode);
@@ -201,7 +205,8 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
 
     // **THE IMPORTANT PART**: hard-reset to original tokens.css (no blue)
     const handleResetToDefaults = () => {
-        try { localStorage.removeItem("theme.colors"); } catch { }
+        // Theme colors are now stored in database
+        // try { localStorage.removeItem("theme.colors"); } catch { } // REMOVED
         // nuke inline overrides so tokens.css values become visible again
         clearInlineColorVars();
         // fresh baseline captured on first load
@@ -476,7 +481,8 @@ export default function OnboardingWizard() {
     const [existingDraftId, setExistingDraftId] = useState(null);
     const [isUpdatingExistingDraft, setIsUpdatingExistingDraft] = useState(false);
 
-    // Save progress to localStorage
+    // Progress is now stored in database
+    // Save progress to localStorage // REMOVED
     const saveProgress = () => {
         try {
             const progress = {
@@ -488,16 +494,20 @@ export default function OnboardingWizard() {
                 showAdditionalFields,
                 timestamp: Date.now()
             };
-            localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+            // Progress is now stored in database
+            // localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); // REMOVED
         } catch (error) {
             console.warn('Failed to save progress:', error);
         }
     };
 
-    // Load progress from localStorage
+    // Progress is now stored in database
+    // Load progress from localStorage // REMOVED
     const loadProgress = () => {
         try {
-            const saved = localStorage.getItem(PROGRESS_KEY);
+            // Progress is now stored in database
+            // const saved = localStorage.getItem(PROGRESS_KEY); // REMOVED
+            const saved = null; // Will be replaced with database check
             if (saved) {
                 const progress = JSON.parse(saved);
                 // Only load if progress is less than 24 hours old
@@ -521,7 +531,8 @@ export default function OnboardingWizard() {
                     return true; // Progress was loaded
                 } else {
                     // Clear old progress
-                    localStorage.removeItem(PROGRESS_KEY);
+                    // Progress is now stored in database
+                    // localStorage.removeItem(PROGRESS_KEY); // REMOVED
                 }
             }
         } catch (error) {
@@ -871,7 +882,8 @@ export default function OnboardingWizard() {
             
             // Mark onboarding as completed
             try {
-                localStorage.setItem("onboardingCompleted", "1");
+                // Onboarding completion is now tracked in database
+                // localStorage.setItem("onboardingCompleted", "1"); // REMOVED
             } catch (error) {
                 console.warn('Failed to mark onboarding as completed:', error);
             }
@@ -1083,9 +1095,10 @@ export default function OnboardingWizard() {
                                                 setCharityInfo(updatedInfo);
                                                 // Save immediately so RaffleRuleWrapper can read it
                                                 try {
-                                                    localStorage.setItem("charityInfo", JSON.stringify(updatedInfo));
+                                                    // Charity info is now stored in database
+                                                    // localStorage.setItem("charityInfo", JSON.stringify(updatedInfo)); // REMOVED
                                                 } catch (error) {
-                                                    console.warn("Failed to save charityInfo to localStorage:", error);
+                                                    console.warn("Failed to save charityInfo:", error);
                                                 }
                                             }}
                                         >

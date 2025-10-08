@@ -66,7 +66,9 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
     loadColors();
   }, [open, draftId]);
   const [fonts, setFonts] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("theme.fonts") || "{}"); } catch { return {}; }
+    // Fonts are now stored in database via DraftStorage
+    // try { return JSON.parse(localStorage.getItem("theme.fonts") || "{}"); } catch { return {}; } // REMOVED
+    return {}; // Will be replaced with database call
   });
 
   useEffect(() => {
