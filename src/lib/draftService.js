@@ -39,11 +39,16 @@ class DraftService {
   }
 
   async getDraft(draftId) {
-    const response = await fetch(`${this.baseUrl}/drafts/${draftId}`, {
+    // Add cache-busting parameter to prevent browser caching
+    const cacheBuster = Date.now()
+    const response = await fetch(`${this.baseUrl}/drafts/${draftId}?t=${cacheBuster}`, {
       method: 'GET',
       credentials: 'include', // Include cookies for authentication
       headers: {
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG91b2lnY2tuZ2FsZnZ6bXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMjc3OTcsImV4cCI6MjA3NDkwMzc5N30.i67Sfnl2PA4Pj5OcToT28o2bqpmLYtPbXasuNuExve0'}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       }
     })
 
