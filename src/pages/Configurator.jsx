@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useDraft } from '../hooks/useDraft.js'
-import { useBuilderOverrides } from '../context/BuilderOverridesContext.jsx'
+import { BuilderOverridesProvider, useBuilderOverrides } from '../context/BuilderOverridesContext.jsx'
 import EditorSidebar from '../components/EditorSidebar.jsx'
 import ThemeAside from '../components/ThemeAside.jsx'
 import { SECTIONS } from '../sections/registry.js'
@@ -8,9 +8,8 @@ import { buildThemeVars, setCSSVars, applySavedTheme } from '../theme-utils.js'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-export default function Configurator() {
-  // Extract draftId from URL path
-  const draftId = window.location.pathname.split('/')[2] // /configurator/:draftId
+// Draft-specific configurator component with its own context
+function DraftConfigurator({ draftId }) {
   const [isAuthenticating, setIsAuthenticating] = useState(true)
   const [authError, setAuthError] = useState(null)
   
@@ -407,5 +406,17 @@ export default function Configurator() {
         sectionOverrides={overridesBySection}
       />
     </div>
+  )
+}
+
+// Main Configurator component that provides draft-specific context
+export default function Configurator() {
+  // Extract draftId from URL path
+  const draftId = window.location.pathname.split('/')[2] // /configurator/:draftId
+  
+  return (
+    <BuilderOverridesProvider>
+      <DraftConfigurator draftId={draftId} />
+    </BuilderOverridesProvider>
   )
 }
