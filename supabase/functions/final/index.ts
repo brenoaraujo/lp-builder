@@ -101,8 +101,29 @@ async function sendMagicLink(req: Request) {
         charityName: charityName,
         submitterName: clientEmail.split('@')[0], // Use email prefix as default name
         ascendRepresentative: 'Admin Team'
+      },
+      overridesBySection: {
+        hero: { visible: true, variant: "A" },
+        extraPrizes: { visible: true, variant: "A" },
+        winners: { visible: true, variant: "A" }
+        // WhoYouHelp is NOT included by default
+      },
+      theme: {
+        colors: {},
+        mode: 'light'
       }
-    } : {}
+    } : {
+      overridesBySection: {
+        hero: { visible: true, variant: "A" },
+        extraPrizes: { visible: true, variant: "A" },
+        winners: { visible: true, variant: "A" }
+        // WhoYouHelp is NOT included by default
+      },
+      theme: {
+        colors: {},
+        mode: 'light'
+      }
+    }
 
     const { error: versionError } = await supabase
       .from('draft_versions')
@@ -222,7 +243,7 @@ async function getAllDrafts(req: Request) {
 
     return new Response(
       JSON.stringify({ drafts: processedDrafts }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Error in getAllDrafts:', error)
@@ -244,7 +265,7 @@ async function getStats(req: Request) {
         thisMonth: 0,
         message: 'Database not set up yet - returning mock stats'
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Error in getStats:', error)
@@ -329,7 +350,7 @@ async function deleteDraft(req: Request, draftId: string) {
         JSON.stringify({ error: 'Failed to delete draft' }),
         { 
           status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } 
         }
       )
     }
@@ -344,7 +365,7 @@ async function deleteDraft(req: Request, draftId: string) {
       }),
       { 
         status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } 
       }
     )
   } catch (error) {
@@ -353,7 +374,7 @@ async function deleteDraft(req: Request, draftId: string) {
       JSON.stringify({ error: 'Internal server error' }),
       { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeadersNoCredentials, 'Content-Type': 'application/json' } 
       }
     )
   }

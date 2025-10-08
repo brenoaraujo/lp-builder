@@ -21,21 +21,31 @@ export class DraftStorage {
   }
 
   async setThemeColors(colors) {
-    if (!this.draftId) return
+    if (!this.draftId) {
+      console.warn('No draftId provided to DraftStorage.setThemeColors')
+      return
+    }
     
     try {
+      console.log('DraftStorage: Getting current draft for theme save...')
       const currentDraft = await draftService.getDraft(this.draftId)
-      const currentConfig = currentDraft.config
+      console.log('DraftStorage: Current draft version:', currentDraft.version)
       
-      await draftService.updateDraft(this.draftId, currentDraft.version, {
+      const currentConfig = currentDraft.config || {}
+      
+      const updatedConfig = {
         ...currentConfig,
         theme: {
           ...currentConfig.theme,
           colors
         }
-      })
+      }
+      
+      console.log('DraftStorage: Updating draft with new theme colors...')
+      await draftService.updateDraft(this.draftId, currentDraft.version, updatedConfig)
+      console.log('DraftStorage: Theme colors saved successfully')
     } catch (error) {
-      console.error('Failed to save theme colors:', error)
+      console.error('DraftStorage: Failed to save theme colors:', error)
       throw error
     }
   }

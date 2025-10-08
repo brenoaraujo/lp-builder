@@ -716,6 +716,11 @@ export function MainBuilder() {
 
   // [ADD] Single source of truth to hydrate theme on load (colors + fonts)
   useEffect(() => {
+    // Skip hash processing if we're on a configurator route
+    if (window.location.pathname.startsWith('/configurator/')) {
+      return;
+    }
+    
     const raw = location.hash.startsWith("#") ? location.hash.slice(1) : "";
     const isRouteHash = raw.startsWith("/"); // "#/...", "#/onboarding", etc.
 
@@ -757,6 +762,11 @@ export function MainBuilder() {
 
 
   useEffect(() => {
+    // Skip hash processing if we're on a configurator route
+    if (window.location.pathname.startsWith('/configurator/')) {
+      return;
+    }
+    
     const done = localStorage.getItem("onboardingCompleted") === "1";
     const hash = window.location.hash.replace(/^#/, "");
     // If user finished onboarding, never sit on the onboarding route
@@ -822,6 +832,11 @@ export function MainBuilder() {
 
   // Auto-open onboarding the first time
   useEffect(() => {
+    // Skip hash processing if we're on a configurator route
+    if (window.location.pathname.startsWith('/configurator/')) {
+      return;
+    }
+    
     const done = localStorage.getItem("onboardingCompleted") === "1";
     const wantsWizard = new URLSearchParams(window.location.search).get("wizard") === "1";
 
@@ -1838,9 +1853,10 @@ export function AppRouterShell() {
   const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
   const isSnapshot = !!hash && !hash.startsWith("/");
 
-  // Handle new server draft routes
+  // Handle new server draft routes - completely bypass main app logic
   if (route.startsWith("/configurator/")) {
     // Always go to configurator for magic links - it will handle authentication
+    // This completely bypasses all hash processing and main app state
     return <Configurator />;
   }
   
