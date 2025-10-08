@@ -135,11 +135,14 @@ export function readTokenDefaults() {
 
 /**
  * Back-compat alias (some code references this name).
- * Theme colors are now stored in database, not localStorage.
+ * If you later want a different baseline source, write it into
+ * localStorage(theme.baseline) as a JSON string.
  */
 export function readBaselineColors() {
-  // Theme colors are now stored in database via DraftStorage
-  // localStorage usage removed to prevent cross-contamination
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE.baseline) || "null");
+    if (saved && typeof saved === "object") return saved;
+  } catch { }
   return readTokenDefaults();
 }
 
@@ -213,9 +216,7 @@ export function buildThemeVars(input = {}, mode = "light") {
 export function applySavedTheme(modeOverride) {
   const root = ROOT();
   let saved = {};
-  // Theme colors are now stored in database via DraftStorage
-  // try { saved = JSON.parse(localStorage.getItem(STORAGE.colors) || "{}"); } catch { } // REMOVED
-  saved = {}; // Will be replaced with database call
+  try { saved = JSON.parse(localStorage.getItem(STORAGE.colors) || "{}"); } catch { }
 
   // If user has never saved colors, DO NOT force any color — we simply leave tokens.css in charge.
   // If they have saved colors, set the variables explicitly.
@@ -257,15 +258,15 @@ export function applyFonts(map = {}) {
   if ("headline" in map) setOrClear("--font-headline", map.headline);
   if ("numbers" in map) setOrClear("--font-numbers", map.numbers);
 
-  // Fonts are now stored in database via DraftStorage
-  // try {
-  //   const prev = JSON.parse(localStorage.getItem(STORAGE.fonts) || "{}"); // REMOVED
-  //   const next = { ...prev };
-  //   if ("primary" in map) next.primary = map.primary || null;
-  //   if ("headline" in map) next.headline = map.headline || null;
-  //   if ("numbers" in map) next.numbers = map.numbers || null;
-  //   localStorage.setItem(STORAGE.fonts, JSON.stringify(next)); // REMOVED
-  // } catch { }
+  // persist
+  try {
+    const prev = JSON.parse(localStorage.getItem(STORAGE.fonts) || "{}");
+    const next = { ...prev };
+    if ("primary" in map) next.primary = map.primary || null;
+    if ("headline" in map) next.headline = map.headline || null;
+    if ("numbers" in map) next.numbers = map.numbers || null;
+    localStorage.setItem(STORAGE.fonts, JSON.stringify(next));
+  } catch { }
 }
 
 /**
@@ -289,9 +290,7 @@ export function loadGoogleFont(family, axis = "wght@400;700") {
  */
 export function restoreFonts() {
   let saved = {};
-  // Fonts are now stored in database via DraftStorage
-  // try { saved = JSON.parse(localStorage.getItem(STORAGE.fonts) || "{}"); } catch { } // REMOVED
-  saved = {}; // Will be replaced with database call
+  try { saved = JSON.parse(localStorage.getItem(STORAGE.fonts) || "{}"); } catch { }
   // Auto-load Google font for any saved family names (best-effort)
   ["primary", "headline", "numbers"].forEach((k) => {
     const fam = saved?.[k];
@@ -309,9 +308,8 @@ export function restoreFonts() {
  */
 export function resetThemeToBaseline() {
   try {
-    // Theme data is now stored in database
-    // localStorage.removeItem(STORAGE.colors); // REMOVED
-    // localStorage.removeItem(STORAGE.fonts); // REMOVED
+    localStorage.removeItem(STORAGE.colors);
+    localStorage.removeItem(STORAGE.fonts);
   } catch { }
 
   // remove inline overrides so tokens.css rules win again
@@ -347,11 +345,8 @@ export function snapshotThemeNow() {
   // Prefer saved colors/fonts; if missing, read live tokens so the snapshot is explicit.
   let colors = {};
   let fonts = {};
-  // Theme data is now stored in database via DraftStorage
-  // try { colors = JSON.parse(localStorage.getItem("theme.colors") || "{}"); } catch {} // REMOVED
-  // try { fonts  = JSON.parse(localStorage.getItem("theme.fonts")  || "{}"); } catch {} // REMOVED
-  colors = {}; // Will be replaced with database call
-  fonts = {}; // Will be replaced with database call
+  try { colors = JSON.parse(localStorage.getItem("theme.colors") || "{}"); } catch {}
+  try { fonts  = JSON.parse(localStorage.getItem("theme.fonts")  || "{}"); } catch {}
   if (!colors || !Object.keys(colors).length) colors = readTokenDefaults();
   return { colors, fonts };
 }
@@ -379,9 +374,8 @@ export function applyThemeSnapshot(snap, { persist = false } = {}) {
   applyFonts(fonts || {}); // applyFonts already persists per-key if provided
 
   if (persist) {
-    // Theme data is now stored in database via DraftStorage
-    // try { localStorage.setItem("theme.colors", JSON.stringify(base)); } catch {} // REMOVED
-    // try { localStorage.setItem("theme.fonts",  JSON.stringify(fonts));  } catch {} // REMOVED
+    try { localStorage.setItem("theme.colors", JSON.stringify(base)); } catch {}
+    try { localStorage.setItem("theme.fonts",  JSON.stringify(fonts));  } catch {}
   }
 }
 

@@ -17,7 +17,6 @@ import { FeatureA, FeatureB, FeatureC } from "../sections/Feature.jsx";
 
 import AutoScaler from "../components/AutoScaler.jsx";
 import LogoUpload from "../components/LogoUpload.jsx";
-import { draftService } from "../lib/draftService.js";
 
 // [KEEP] theme helpers
 import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readBaselineColors, applySavedTheme, clearInlineColorVars } from "../theme-utils.js";
@@ -118,8 +117,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
     const [themeMode, setThemeMode] = useState(readThemeMode());
     const [colors, setColors] = useState(() => ({
         ...BASELINE_COLORS,
-        // Theme colors are now stored in database
-        // ...(JSON.parse(localStorage.getItem("theme.colors") || "{}")), // REMOVED
+        ...(JSON.parse(localStorage.getItem("theme.colors") || "{}")),
     }));
 
 
@@ -176,16 +174,14 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
 
     // save + finish (unchanged logic, just uses our color map)
     const finalize = () => {
-        // Theme colors are now saved to database via DraftStorage
-        // try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch { } // REMOVED
+        try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch { }
         setCSSVars(document.documentElement, "colors", buildThemeVars(colors, themeMode));
         applySavedTheme(themeMode);
-        onFinish?.(colors, themeMode);
+        onFinish?.();
     };
 
     function resetReviewToDefaults() {
-        // Theme colors are now stored in database
-        // try { localStorage.removeItem("theme.colors"); } catch { } // REMOVED
+        try { localStorage.removeItem("theme.colors"); } catch { }
 
         // Update local state first so inputs reflect the baseline immediately
         setColors(BASELINE_COLORS);
@@ -196,8 +192,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
         setCSSVars(document.documentElement, "colors", vars);
 
         // Save baseline so Main app picks it up too
-        // Theme colors are now saved to database via DraftStorage
-        // try { localStorage.setItem("theme.colors", JSON.stringify(BASELINE_COLORS)); } catch { } // REMOVED
+        try { localStorage.setItem("theme.colors", JSON.stringify(BASELINE_COLORS)); } catch { }
 
         // Optional: keep shadcn / app helpers in sync
         applySavedTheme(mode);
@@ -205,8 +200,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
 
     // **THE IMPORTANT PART**: hard-reset to original tokens.css (no blue)
     const handleResetToDefaults = () => {
-        // Theme colors are now stored in database
-        // try { localStorage.removeItem("theme.colors"); } catch { } // REMOVED
+        try { localStorage.removeItem("theme.colors"); } catch { }
         // nuke inline overrides so tokens.css values become visible again
         clearInlineColorVars();
         // fresh baseline captured on first load
@@ -378,7 +372,7 @@ function resolveByVariant(sectionKey, variant = "A") {
    Wizard Shell
    ========================================================================= */
 
-function StepHeader({ currentIndex, onStartOver }) {
+function StepHeader({ currentIndex }) {
     const pct = Math.round((currentIndex / (STEP_KEYS.length - 1)) * 100);
     return (
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b">
@@ -388,16 +382,6 @@ function StepHeader({ currentIndex, onStartOver }) {
                     <div className="text-sm sm:text-lg font-semibold truncate">Landing Page Builder</div>
                 </div>
                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                    {onStartOver && currentIndex > 0 && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onStartOver}
-                            className="text-xs text-muted-foreground hover:text-foreground"
-                        >
-                            Start Over
-                        </Button>
-                    )}
                     <div className="w-24 sm:w-48">
                         <Progress value={pct} />
                     </div>
@@ -468,89 +452,10 @@ export default function OnboardingWizard() {
         charityLogo: "",
         charitySite: "",
         submitterName: "",
-        clientEmail: "",
         ascendRepresentative: "",
         raffleType: "",
         campaignLaunchDate: ""
     });
-
-    // Progress saving key
-    const PROGRESS_KEY = 'onboarding-progress';
-    
-    // Check if user is coming from a magic link (configurator route)
-    const [existingDraftId, setExistingDraftId] = useState(null);
-    const [isUpdatingExistingDraft, setIsUpdatingExistingDraft] = useState(false);
-
-    // Progress is now stored in database
-    // Save progress to localStorage // REMOVED
-    const saveProgress = () => {
-        try {
-            const progress = {
-                stepIndex,
-                charityInfo,
-                overridesBySection,
-                currentExtraContentKey,
-                searchQuery,
-                showAdditionalFields,
-                timestamp: Date.now()
-            };
-            // Progress is now stored in database
-            // localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress)); // REMOVED
-        } catch (error) {
-            console.warn('Failed to save progress:', error);
-        }
-    };
-
-    // Progress is now stored in database
-    // Load progress from localStorage // REMOVED
-    const loadProgress = () => {
-        try {
-            // Progress is now stored in database
-            // const saved = localStorage.getItem(PROGRESS_KEY); // REMOVED
-            const saved = null; // Will be replaced with database check
-            if (saved) {
-                const progress = JSON.parse(saved);
-                // Only load if progress is less than 24 hours old
-                if (Date.now() - progress.timestamp < 24 * 60 * 60 * 1000) {
-                    setStepIndex(progress.stepIndex || 0);
-                    setCharityInfo(progress.charityInfo || charityInfo);
-                    setCurrentExtraContentKey(progress.currentExtraContentKey || null);
-                    setSearchQuery(progress.searchQuery || "");
-                    setShowAdditionalFields(progress.showAdditionalFields || false);
-                    
-                    // Restore overrides
-                    if (progress.overridesBySection) {
-                        Object.entries(progress.overridesBySection).forEach(([section, overrides]) => {
-                            if (overrides.visible !== undefined) setVisible(section, overrides.visible);
-                            if (overrides.variant !== undefined) setVariant(section, overrides.variant);
-                            if (overrides.display !== undefined) setDisplay(section, overrides.display);
-                            if (overrides.copy !== undefined) setCopy(section, overrides.copy);
-                        });
-                    }
-                    
-                    return true; // Progress was loaded
-                } else {
-                    // Clear old progress
-                    // Progress is now stored in database
-                    // localStorage.removeItem(PROGRESS_KEY); // REMOVED
-                }
-            }
-        } catch (error) {
-            console.warn('Failed to load progress:', error);
-            localStorage.removeItem(PROGRESS_KEY);
-        }
-        return false; // No progress was loaded
-    };
-
-    // Clear progress
-    const clearProgress = () => {
-        try {
-            localStorage.removeItem(PROGRESS_KEY);
-        } catch (error) {
-            console.warn('Failed to clear progress:', error);
-        }
-    };
-
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
@@ -612,7 +517,7 @@ export default function OnboardingWizard() {
             console.log('Searching Brandfetch for:', query);
 
             // Try Brandfetch API with correct format
-            const apiKey = import.meta.env.VITE_BRANDFETCH_API_KEY || 'BPpPQFtnKE9MXwkbc8cvF7G3EzpasSp/FH6NVyfX2bk=';
+            const apiKey = import.meta.env.VITE_BRANDFETCH_API_KEY;
             if (!apiKey) {
                 throw new Error('Brandfetch API key not configured');
             }
@@ -727,7 +632,6 @@ export default function OnboardingWizard() {
             charityLogo: brand.logo || '',
             charitySite: brand.domain,
             submitterName: charityInfo.submitterName,
-            clientEmail: charityInfo.clientEmail,
             ascendRepresentative: charityInfo.ascendRepresentative,
             raffleType: charityInfo.raffleType,
             campaignLaunchDate: charityInfo.campaignLaunchDate
@@ -747,59 +651,25 @@ export default function OnboardingWizard() {
         }
     };
 
-    // Load progress on mount and check for existing draft
+    // [KEEP] ensure defaults so previews don't show as blank
     useEffect(() => {
-        // Check if user is coming from a magic link (configurator route or onboarding with draftId)
-        const hash = window.location.hash;
-        const pathname = window.location.pathname;
-        const urlParams = new URLSearchParams(window.location.search);
-        const draftIdFromParams = urlParams.get('draftId');
-        
-        let draftId = null;
-        
-        // Check configurator route in PATH first (for magic links)
-        const pathMatch = pathname.match(/\/configurator\/([^\/\?]+)/);
-        if (pathMatch) {
-            draftId = pathMatch[1];
-        } else {
-            // Check configurator route in HASH (for regular navigation)
-            const configuratorMatch = hash.match(/#\/configurator\/([^?]+)/);
-            if (configuratorMatch) {
-                draftId = configuratorMatch[1];
-            } else if (draftIdFromParams) {
-                // Check URL search parameters
-                draftId = draftIdFromParams;
-            }
-        }
-        
-        console.log('Draft ID detection:', { pathname, hash, draftIdFromParams, draftId, pathMatch });
-        
-        if (draftId) {
-            setExistingDraftId(draftId);
-            setIsUpdatingExistingDraft(true);
-            
-            // Don't create a new version here - just mark that onboarding was started
-            // The actual draft update will happen when onboarding is completed
-        }
-        
-        const progressLoaded = loadProgress();
-        if (!progressLoaded) {
-            // Only reset defaults if no progress was loaded
-            // nuke inline overrides so tokens.css values become visible again
-            clearInlineColorVars();
+        // Reset colors and fonts to defaults when onboarding starts
+        try {
+            localStorage.removeItem("theme.colors");
+            localStorage.removeItem("theme.fonts");
+        } catch { }
 
-            // show core sections by default on first mount
-            ["hero", "extraPrizes", "winners"].forEach((k) => {
-                if (overridesBySection[k]?.visible === undefined) setVisible(k, true);
-            });
-        }
+        // nuke inline overrides so tokens.css values become visible again
+        clearInlineColorVars();
+
+        // show core sections by default on first mount
+        ["hero", "extraPrizes", "winners"].forEach((k) => {
+            if (overridesBySection[k]?.visible === undefined) setVisible(k, true);
+        });
+
+        // hide optional sections by default
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    // Save progress whenever key state changes
-    useEffect(() => {
-        saveProgress();
-    }, [stepIndex, charityInfo, overridesBySection, currentExtraContentKey, searchQuery, showAdditionalFields]);
 
     function next() {
         setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1));
@@ -807,103 +677,21 @@ export default function OnboardingWizard() {
     function back() {
         setStepIndex((i) => Math.max(i - 1, 0));
     }
-
-    function startOver() {
-        if (confirm('Are you sure you want to start over? This will clear all your progress.')) {
-            clearProgress();
-            setStepIndex(0);
-            setCharityInfo({
-                charityName: "",
-                charityLogo: "",
-                charitySite: "",
-                submitterName: "",
-                clientEmail: "",
-                ascendRepresentative: "",
-                raffleType: "",
-                campaignLaunchDate: ""
-            });
-            setSearchQuery("");
-            setShowAdditionalFields(false);
-            setCurrentExtraContentKey(null);
-            
-            // Reset overrides to defaults
-            ["hero", "extraPrizes", "winners"].forEach((k) => {
-                setVisible(k, true);
-            });
-        }
-    }
-    async function finish(colors, themeMode) {
+    function finish() {
         try {
-            // Validate required fields
-            if (!charityInfo.clientEmail || !charityInfo.clientEmail.trim()) {
-                alert('Please enter your email address to continue.');
-                return;
-            }
-
-            if (!charityInfo.charityName || !charityInfo.charityName.trim()) {
-                alert('Please enter a charity name to continue.');
-                return;
-            }
-
-            // Create draft with current configuration
-            const seedConfig = {
-                charityInfo,
-                overridesBySection,
-                theme: {
-                    colors: colors || {},
-                    mode: themeMode || 'light'
-                }
-            };
-
-            let result;
-            
-            console.log('Finish function - isUpdatingExistingDraft:', isUpdatingExistingDraft, 'existingDraftId:', existingDraftId);
-            
-            if (isUpdatingExistingDraft && existingDraftId) {
-                // Get current version first, then update
-                console.log('Updating existing draft:', existingDraftId);
-                const currentDraft = await draftService.getDraft(existingDraftId);
-                const currentVersion = currentDraft.version;
-                
-                result = await draftService.updateDraft(existingDraftId, currentVersion, {
-                    charityInfo,
-                    overridesBySection,
-                    theme: {
-                        colors: colors || {},
-                        mode: themeMode || 'light'
-                    }
-                });
-                result.draftId = existingDraftId;
-            } else {
-                // Create new draft
-                console.log('Creating new draft with email:', charityInfo.clientEmail);
-                result = await draftService.createDraft(charityInfo.clientEmail.trim(), seedConfig);
-            }
-            
-            // Mark onboarding as completed
-            try {
-                // Onboarding completion is now tracked in database
-                // localStorage.setItem("onboardingCompleted", "1"); // REMOVED
-            } catch (error) {
-                console.warn('Failed to mark onboarding as completed:', error);
-            }
-            
-            // Clear progress since onboarding is complete
-            clearProgress();
-            
-            // Redirect to configurator instead of reloading
-            console.log('Onboarding completed, redirecting to configurator...');
-            const configuratorUrl = `/configurator/${result.draftId}`;
-            window.location.href = configuratorUrl;
-        } catch (error) {
-            console.error('Failed to create draft:', error);
-            alert('Failed to create draft. Please try again.');
-        }
+            localStorage.setItem("onboardingCompleted", "1");
+            // Save charity information for use in the main app
+            localStorage.setItem("charityInfo", JSON.stringify(charityInfo));
+        } catch { }
+        const url = new URL(window.location.href);
+        url.searchParams.delete("wizard");
+        history.replaceState(null, "", url.toString());
+        location.replace("#/");
     }
 
     return (
         <div className="min-h-screen flex flex-col text-foreground onboarding bg-gradient-to-b from-white from-0% via-white via-50% to-slate-50 to-50%">
-            <StepHeader currentIndex={stepIndex} onStartOver={startOver} />
+            <StepHeader currentIndex={stepIndex} />
             <div className="flex-1 min-h-0 p-2 sm:p-4 flex justify-center box-border">
                 <div className="w-full max-w-[1100px] h-full box-border">
                     {/* ============ STEP CONTENT ============ */}
@@ -1071,21 +859,6 @@ export default function OnboardingWizard() {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="clientEmail" className="text-muted-foreground">Your Email Address *</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="clientEmail"
-                                                type="email"
-                                                placeholder="your.email@example.com"
-                                                value={charityInfo.clientEmail}
-                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, clientEmail: e.target.value }))}
-                                                className=""
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
                                     {/* Type of Raffle */}
                                     <div className="space-y-2">
                                         <Label htmlFor="raffleType" className="text-muted-foreground">Type of Raffle</Label>
@@ -1096,10 +869,9 @@ export default function OnboardingWizard() {
                                                 setCharityInfo(updatedInfo);
                                                 // Save immediately so RaffleRuleWrapper can read it
                                                 try {
-                                                    // Charity info is now stored in database
-                                                    // localStorage.setItem("charityInfo", JSON.stringify(updatedInfo)); // REMOVED
+                                                    localStorage.setItem("charityInfo", JSON.stringify(updatedInfo));
                                                 } catch (error) {
-                                                    console.warn("Failed to save charityInfo:", error);
+                                                    console.warn("Failed to save charityInfo to localStorage:", error);
                                                 }
                                             }}
                                         >
@@ -1229,12 +1001,6 @@ export default function OnboardingWizard() {
                                                 {charityInfo.ascendRepresentative && (
                                                     <div className="text-sm text-muted-foreground">
                                                         <span className="font-medium">Ascend Rep:</span> {charityInfo.ascendRepresentative}
-                                                    </div>
-                                                )}
-
-                                                {charityInfo.clientEmail && (
-                                                    <div className="text-sm text-muted-foreground">
-                                                        <span className="font-medium">Your Email:</span> {charityInfo.clientEmail}
                                                     </div>
                                                 )}
 
