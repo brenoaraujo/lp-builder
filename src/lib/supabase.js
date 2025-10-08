@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { getAdminClient } from './adminClient.js'
 
 // Supabase configuration
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -16,7 +17,10 @@ export const uploadFile = async (file, bucket = 'charity-logos', path = null) =>
     // Generate unique filename if no path provided
     const fileName = path || `${Date.now()}-${file.name}`
     
-    const { data, error } = await supabase.storage
+    // Use admin client for uploads (bypasses RLS)
+    const adminClient = getAdminClient();
+    
+    const { data, error } = await adminClient.storage
       .from(bucket)
       .upload(fileName, file, {
         cacheControl: '3600',
@@ -28,7 +32,7 @@ export const uploadFile = async (file, bucket = 'charity-logos', path = null) =>
     }
 
     // Get public URL
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = adminClient.storage
       .from(bucket)
       .getPublicUrl(data.path)
 
@@ -49,7 +53,10 @@ export const uploadFile = async (file, bucket = 'charity-logos', path = null) =>
 // Delete file utility
 export const deleteFile = async (path, bucket = 'charity-logos') => {
   try {
-    const { error } = await supabase.storage
+    // Use admin client for deletes (bypasses RLS)
+    const adminClient = getAdminClient();
+    
+    const { error } = await adminClient.storage
       .from(bucket)
       .remove([path])
 
