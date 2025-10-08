@@ -18,6 +18,12 @@ import { SECTIONS } from "./sections/registry.js";
 import EditorSidebar from "./components/EditorSidebar.jsx";
 import { useBuilderOverrides } from "./context/BuilderOverridesContext.jsx";
 
+// New imports for DB-based persistence
+import { useInviteToken } from "./hooks/useInviteToken.js";
+import { useInviteRow } from "./hooks/useInviteRow.js";
+import { BuilderOverridesProvider } from "./context/BuilderOverridesContext.jsx";
+import AdminPage from "./AdminPage.jsx";
+
 // Theme + utilities
 import { applySavedTheme, applyThemeSnapshot, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults, readThemeMode, loadGoogleFont, applyFonts, setCSSVarsImportant } from "./theme-utils.js"
 import { snapshotThemeNow } from "./theme-utils.js";
@@ -700,7 +706,8 @@ function blocksFromOverrides(ovr = {}) {
 /* Main App (builder + onboarding route)                              */
 /* ------------------------------------------------------------------ */
 
-export function MainBuilder() {
+// Inner component that uses useBuilderOverrides
+function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   const { overridesBySection, setSection } = useBuilderOverrides();
 
   const HAS_SNAPSHOT = useMemo(() => {
@@ -708,56 +715,27 @@ export function MainBuilder() {
     return !!raw && !raw.startsWith("/");
   }, []);
 
-  // [ADD] Single source of truth to hydrate theme on load (colors + fonts)
+  // Hydrate theme from database
   useEffect(() => {
-    const raw = location.hash.startsWith("#") ? location.hash.slice(1) : "";
-    const isRouteHash = raw.startsWith("/"); // "#/...", "#/onboarding", etc.
+    if (!inviteRow?.theme_json) return;
 
-    // 1) If URL hash carries a snapshot (NOT a route), hydrate from it
-    if (!isRouteHash && raw.length > 0) {
-      const loaded = decodeState(raw); // your own helper below in this file
-      if (loaded && typeof loaded === "object") {
-        // Newer snapshots may include full theme (colors + fonts)
-        if (loaded.theme && (loaded.theme.colors || loaded.theme.fonts)) {
-          applyThemeSnapshot(loaded.theme, { persist: true }); // apply + save
-        } else if (loaded.globalTheme?.colors) {
-          // Back-compat: legacy snapshots with only colors
-          const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } =
-            loaded.globalTheme.colors || {};
-          try { localStorage.setItem("theme.colors", JSON.stringify(rest)); } catch { }
-          const mode = readThemeMode();
-          setCSSVars(document.documentElement, "colors", buildThemeVars(rest, mode));
-        }
-        // Fonts from legacy snapshots are handled by applySavedTheme() below if they were saved earlier
-      }
-
-      // Mark onboarding as done when opening share links
-      try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
-
-    } else {
-      // 2) No snapshot → apply whatever is saved (colors + fonts) in one call
-      applySavedTheme(); // reads theme.colors + theme.fonts and applies both
+    const themeData = inviteRow.theme_json;
+    
+    // Apply colors if available
+    if (themeData.colors) {
+      const mode = readThemeMode();
+      setCSSVars(document.documentElement, "colors", buildThemeVars(themeData.colors, mode));
+      setGlobalTheme(prev => ({ ...prev, colors: themeData.colors }));
     }
 
-    // 3) Keep other tabs/windows in sync
-    const onStorage = (e) => {
-      if (e.key === "theme.colors" || e.key === "theme.fonts") {
-        applySavedTheme();
-      }
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [HAS_SNAPSHOT]);
-
-
-  useEffect(() => {
-    const done = localStorage.getItem("onboardingCompleted") === "1";
-    const hash = window.location.hash.replace(/^#/, "");
-    // If user finished onboarding, never sit on the onboarding route
-    if (done && hash.startsWith("/onboarding")) {
-      window.location.hash = "/";
+    // Apply fonts if available
+    if (themeData.fonts) {
+      applyFonts(themeData.fonts);
     }
-  }, []);
+  }, [inviteRow?.theme_json]);
+
+
+  // No longer needed - routing is handled by AppRouterShell
 
   function blocksFromOverrides(ovr) {
     const order = ["hero", "extraPrizes", "winners", "WhoYouHelp"]; // keep this consistent with your app
@@ -799,18 +777,7 @@ export function MainBuilder() {
   }
 
 
-  // Auto-open onboarding the first time
-  useEffect(() => {
-    const done = localStorage.getItem("onboardingCompleted") === "1";
-    const wantsWizard = new URLSearchParams(window.location.search).get("wizard") === "1";
-
-    if (!done || wantsWizard) {
-      if (location.hash !== "#/onboarding") location.hash = "/onboarding";
-    } else if (location.hash === "#/onboarding") {
-      // if user already finished and hits a stale wizard hash, kick them to builder
-      location.hash = "/";
-    }
-  }, []);
+  // No longer needed - routing is handled by AppRouterShell
 
   const [themeOpen, setThemeOpen] = useState(false);
 
@@ -881,12 +848,15 @@ export function MainBuilder() {
     // Always set the DOM attribute so readThemeMode() is reliable
     document.documentElement.setAttribute("data-theme", themeMode);
 
-    // Only paint inline colors from state if there are NO saved colors yet.
-    if (!localStorage.getItem("theme.colors")) {
+    // Only paint inline colors from state if there are NO saved colors yet AND no database theme
+    const hasDatabaseTheme = inviteRow?.theme_json?.colors && Object.keys(inviteRow.theme_json.colors).length > 0;
+    const hasLocalStorageTheme = localStorage.getItem("theme.colors");
+    
+    if (!hasLocalStorageTheme && !hasDatabaseTheme) {
       const vars = buildThemeVars(globalTheme.colors, themeMode);
       setCSSVars(document.documentElement, "colors", vars);
     }
-  }, [globalTheme, themeMode]);
+  }, [globalTheme, themeMode, inviteRow?.theme_json?.colors]);
 
   const persistColors = useCallback((partialColors) => {
     // merge with current
@@ -940,6 +910,11 @@ export function MainBuilder() {
   };
 
   useEffect(() => {
+    // Only load from localStorage if we don't have database theme data
+    if (inviteRow?.theme_json?.colors && Object.keys(inviteRow.theme_json.colors).length > 0) {
+      return;
+    }
+    
     try {
       const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
       if (Object.keys(saved).length) {
@@ -954,7 +929,7 @@ export function MainBuilder() {
         setCSSVars(document.documentElement, "colors", buildThemeVars(saved, mode));
       }
     } catch { }
-  }, []);
+  }, [inviteRow?.theme_json?.colors]);
 
   const [approvedMeta, setApprovedMeta] = useState(null);
   const approvedMode = !!approvedMeta?.approved;
@@ -970,9 +945,21 @@ export function MainBuilder() {
     setBlocks((arr) => arrayMove(arr, oldIndex, newIndex));
   };
 
-  // Hydrate from URL hash (supports old & new snapshots)
+  // Hydrate blocks from database
+  useEffect(() => {
+    if (!inviteRow?.overrides_json) {
+      setHydrated(true);
+      return;
+    }
 
-  // listem os theme preference
+    const overrides = inviteRow.overrides_json;
+    const nextBlocks = blocksFromOverrides(overrides);
+    if (nextBlocks.length > 0) {
+      setBlocks(nextBlocks);
+    }
+    setHydrated(true);
+  }, [inviteRow?.overrides_json]);
+
   // Hydrate theme mode (respect saved pref; otherwise fall back to OS)
   useEffect(() => {
     const stored = localStorage.getItem("lpb.theme.mode");
@@ -994,71 +981,7 @@ export function MainBuilder() {
     try { localStorage.setItem("lpb.theme.mode", themeMode); } catch { }
   }, [themeMode]);
 
-
-  useEffect(() => {
-    const rawHash = location.hash.startsWith("#") ? location.hash.slice(1) : "";
-    const isRouteHash = rawHash.startsWith("/"); // "#/", "#/onboarding", etc.
-
-    // 1) If the hash is a snapshot (NOT a route), hydrate from it first
-    if (!isRouteHash && rawHash.length > 0) {
-      const loaded = decodeState(rawHash);
-      if (!loaded) { setHydrated(true); return; }
-
-      if (Array.isArray(loaded)) {
-        setBlocks(loaded.map((b) => ({
-          id: b.id, type: b.type, variant: Number.isInteger(b.variant) ? b.variant : 0,
-          controls: b.controls || {}, copy: b.copy || {},
-          overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
-        })));
-      } else if (loaded && typeof loaded === "object") {
-        if (Array.isArray(loaded.blocks)) {
-          setBlocks(loaded.blocks.map((b) => ({
-            id: b.id, type: b.type, variant: Number.isInteger(b.variant) ? b.variant : 0,
-            controls: b.controls || {}, copy: b.copy || {},
-            overrides: b.overrides || { enabled: false, values: {}, valuesPP: {} },
-          })));
-        }
-        // If the snapshot contains theme colors, persist + apply them immediately
-        if (loaded.globalTheme?.colors) {
-          // keep all roles you use, just ignore the auto-muted pair
-          const { ["muted-background"]: _mb, ["muted-foreground"]: _mf, ...rest } =
-            loaded.globalTheme.colors || {};
-          setGlobalTheme({ colors: rest });
-          try { localStorage.setItem("theme.colors", JSON.stringify(rest)); } catch { }
-          // Make the preview use the shared colors right away (includes 'foreground')
-          const mode = readThemeMode?.() || "light";
-          // Clear any stale inline vars so we don't keep an old foreground/border
-          clearInlineColorVars();
-          setCSSVars(document.documentElement, "colors", buildThemeVars(rest, mode));
-        }
-        if (loaded.theme && (loaded.theme.colors || loaded.theme.fonts)) {
-          applyThemeSnapshot(loaded.theme, { persist: true });
-        }
-        if (loaded.meta?.approved) setApprovedMeta({ ...loaded.meta });
-      }
-      // visiting a share link should not trigger onboarding
-      try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
-      setHydrated(true);
-      return;
-    }
-
-    // 2) Otherwise (no snapshot / just a route), hydrate from onboarding overrides if present
-    try {
-      const raw = localStorage.getItem("builderOverrides");
-      if (raw) {
-        const ovr = JSON.parse(raw);
-        const nextBlocks = blocksFromOverrides(ovr);
-        if (nextBlocks.length > 0) setBlocks(nextBlocks);
-      }
-    } catch { }
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated || approvedMode) return;
-    const payload = encodeState(packSnapshot({ blocks, globalTheme }));
-    history.replaceState(null, "", `#${payload}`);
-  }, [blocks, globalTheme, hydrated, approvedMode]);
+  // No longer needed - persistence is handled by DB
 
 
   useEffect(() => {
@@ -1317,12 +1240,20 @@ export function MainBuilder() {
     if (approvedMode || !activeBlockId) return;
     if (activeBlockId === "Navbar") {
       setNavbarControls((prev) => ({ ...(prev || {}), [partId]: !!nextVisible }));
+      setSection("Navbar", { display: { [partId]: !!nextVisible } });
       return;
     }
     if (activeBlockId === "Footer") {
       setFooterControls((prev) => ({ ...(prev || {}), [partId]: !!nextVisible }));
+      setSection("Footer", { display: { [partId]: !!nextVisible } });
       return;
     }
+    // For regular blocks, find the block type and use setSection
+    const block = blocks.find(b => b.id === activeBlockId);
+    if (block) {
+      setSection(block.type, { display: { [partId]: !!nextVisible } });
+    }
+    // Also update local state for immediate UI feedback
     setBlocks((arr) =>
       arr.map((x) =>
         x.id === activeBlockId
@@ -1335,12 +1266,20 @@ export function MainBuilder() {
     if (approvedMode || !activeBlockId) return;
     if (activeBlockId === "Navbar") {
       setNavbarCopy((prev) => ({ ...(prev || {}), [partId]: text }));
+      setSection("Navbar", { copy: { [partId]: text } });
       return;
     }
     if (activeBlockId === "Footer") {
       setFooterCopy((prev) => ({ ...(prev || {}), [partId]: text }));
+      setSection("Footer", { copy: { [partId]: text } });
       return;
     }
+    // For regular blocks, find the block type and use setSection
+    const block = blocks.find(b => b.id === activeBlockId);
+    if (block) {
+      setSection(block.type, { copy: { [partId]: text } });
+    }
+    // Also update local state for immediate UI feedback
     setBlocks((arr) =>
       arr.map((x) =>
         x.id === activeBlockId ? { ...x, copy: { ...(x.copy || {}), [partId]: text } } : x
@@ -1395,14 +1334,10 @@ export function MainBuilder() {
   }
   
 
-  // Get charity information from localStorage (set during onboarding)
+  // Get charity information from database
   const getCharityInfo = () => {
-    try {
-      const saved = localStorage.getItem("charityInfo");
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
+    if (!inviteRow?.onboarding_json) return {};
+    return inviteRow.onboarding_json.charityInfo || {};
   };
 
   const FOOTER_DEFAULT_DATA = {
@@ -1431,7 +1366,7 @@ export function MainBuilder() {
           </div>
 
           <div className="flex items-center gap-2">
-            <a href="#/onboarding" onClick={(e) => { try { localStorage.removeItem("onboardingCompleted"); localStorage.removeItem("builderOverrides"); localStorage.removeItem("theme.colors"); localStorage.removeItem("theme.fonts"); reset(); } catch { } }} className="text-xs underline text-muted-foreground" >
+            <a href={`#/onboarding?invite=${inviteToken}`} className="text-xs underline text-muted-foreground" >
               Restart onboarding
             </a>
             {/* darkmode
@@ -1521,6 +1456,13 @@ export function MainBuilder() {
             blocks={blocks}
             setNavbarOverrides={(overrides) => setSection("Navbar", { theme: overrides })}
             setFooterOverrides={(overrides) => setSection("Footer", { theme: overrides })}
+            setBlockOverrides={(blockId, overrides) => {
+              // Find the block type from the blocks array
+              const block = blocks.find(b => b.id === blockId);
+              if (block) {
+                setSection(block.type, { theme: overrides });
+              }
+            }}
             mode="builder"
           />
         )}
@@ -1706,6 +1648,9 @@ export function MainBuilder() {
         onClose={() => setThemeOpen(false)}
         onColorsChange={persistColors}
         onFontsChange={persistFonts}
+        inviteToken={inviteToken}
+        inviteRow={row}
+        onUpdateInvite={updateInvite}
         sectionOverrides={(() => {
           const acc = blocks.reduce((acc, block) => {
             if (block.overrides?.values && Object.keys(block.overrides.values).length > 0) {
@@ -1796,9 +1741,26 @@ export function MainBuilder() {
       </Dialog>
 
     </div>
-
   );
+}
 
+export function MainBuilder({ inviteToken, inviteRow }) {
+  const { row, updateInvite } = useInviteRow(inviteToken);
+
+  return (
+    <BuilderOverridesProvider 
+      inviteToken={inviteToken} 
+      inviteRow={row} 
+      onUpdateInvite={updateInvite}
+    >
+      <MainBuilderContent 
+        inviteToken={inviteToken} 
+        inviteRow={inviteRow} 
+        row={row} 
+        updateInvite={updateInvite}
+      />
+    </BuilderOverridesProvider>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -1811,23 +1773,108 @@ export function MainBuilder() {
 
 export function AppRouterShell() {
   const route = useHashRoute();
-  const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
-  const isSnapshot = !!hash && !hash.startsWith("/");
+  const inviteToken = useInviteToken();
+  const { row: inviteRow, loading, error, updateInvite } = useInviteRow(inviteToken);
 
-  // If a share/snapshot URL is present, mark onboarding completed and go straight to the builder.
-  useEffect(() => {
-    if (isSnapshot) {
-      try { localStorage.setItem("onboardingCompleted", "1"); } catch { }
-    }
-  }, [isSnapshot]);
-
-  if (isSnapshot) {
-    return <MainBuilder />;  // <-- render builder even if onboarding wasn't completed before
+  // Handle admin route
+  if (route === "/admin") {
+    return <AdminPage />;
   }
 
-  const done = localStorage.getItem("onboardingCompleted") === "1";
-  if (route === "/onboarding" || !done) return <OnboardingWizard />;
-  return <MainBuilder />;
+  // Handle routes that require an invite token
+  if (route.startsWith("/onboarding") || route.startsWith("/app")) {
+    if (!inviteToken) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Link</h1>
+            <p className="text-gray-600 mb-4">This link is missing an invite token.</p>
+            <p className="text-sm text-gray-500">Please contact your administrator for a valid link.</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (error || !inviteRow) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Invite</h1>
+            <p className="text-gray-600 mb-4">This invite link is invalid or has expired.</p>
+            <p className="text-sm text-gray-500">Please contact your administrator for a new link.</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Check if invite is void or deleted
+    if (inviteRow.status === 'void') {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Invite No Longer Available</h1>
+            <p className="text-gray-600 mb-4">This invite has been cancelled.</p>
+            <p className="text-sm text-gray-500">Please contact your administrator for assistance.</p>
+          </div>
+        </div>
+      );
+    }
+
+        // Route based on status and current route
+        if (route.startsWith("/onboarding")) {
+      // Show onboarding if status is 'invited' or 'in_progress'
+      if (inviteRow.status === 'invited' || inviteRow.status === 'in_progress') {
+        return (
+          <BuilderOverridesProvider 
+            inviteToken={inviteToken} 
+            inviteRow={inviteRow} 
+            onUpdateInvite={updateInvite}
+          >
+            <OnboardingWizard 
+              inviteToken={inviteToken} 
+              inviteRow={inviteRow} 
+              onUpdateInvite={updateInvite}
+            />
+          </BuilderOverridesProvider>
+        );
+      } else {
+        // Redirect to app if onboarding is already completed
+        window.location.hash = `#/app?invite=${inviteToken}`;
+        return null;
+      }
+        } else if (route.startsWith("/app")) {
+      // Show builder if status is 'submitted' or 'handed_off'
+      if (inviteRow.status === 'submitted' || inviteRow.status === 'handed_off') {
+        return <MainBuilder inviteToken={inviteToken} inviteRow={inviteRow} />;
+      } else {
+        // Redirect to onboarding if not yet submitted
+        window.location.hash = `#/onboarding?invite=${inviteToken}`;
+        return null;
+      }
+    }
+  }
+
+  // Default fallback - show landing page or redirect
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Landing Page Builder</h1>
+        <p className="text-gray-600 mb-4">Welcome to the landing page builder.</p>
+        <p className="text-sm text-gray-500">Please use a valid invite link to access the builder.</p>
+      </div>
+    </div>
+  );
 }
 export default AppRouterShell;
 

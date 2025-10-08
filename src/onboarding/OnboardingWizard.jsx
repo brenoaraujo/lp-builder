@@ -2,11 +2,12 @@
 // [Onboarding] Full-screen wizard on route "#/onboarding".
 // Uses shadcn/ui primitives. Minimal changes from your version; just cleanup + fixes.
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 
 // [KEEP] Builder dependencies
 import { SECTIONS, SECTION_ORDER } from "./sectionCatalog.jsx";
 import { useBuilderOverrides } from "../context/BuilderOverridesContext.jsx";
+// Removed useInviteRow import - now using props instead
 import EditorForOnboarding from "./EditorForOnboarding.jsx";
 
 import EditableSection from "../components/EditableSection.jsx";
@@ -90,7 +91,7 @@ const FONT_OPTIONS = [
    Review Step (Design)
    ========================================================================= */
 
-export function ReviewStep({ onFinish, onBack, stepIndex }) {
+export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow, onUpdateInvite }) {
     // --- tiny helpers ---
 
     const BASELINE_COLORS = {
@@ -115,10 +116,49 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
 
 
     const [themeMode, setThemeMode] = useState(readThemeMode());
-    const [colors, setColors] = useState(() => ({
-        ...BASELINE_COLORS,
-        ...(JSON.parse(localStorage.getItem("theme.colors") || "{}")),
-    }));
+    const [colors, setColors] = useState(() => {
+        // Load from database first, then fallback to localStorage, then baseline
+        if (inviteRow?.theme_json?.colors && Object.keys(inviteRow.theme_json.colors).length > 0) {
+            return { ...BASELINE_COLORS, ...inviteRow.theme_json.colors };
+        }
+        return {
+            ...BASELINE_COLORS,
+            ...(JSON.parse(localStorage.getItem("theme.colors") || "{}")),
+        };
+    });
+
+    // Debounced save to database
+    const saveTimeoutRef = useRef(null);
+    
+    const debouncedSave = useCallback((newColors) => {
+        if (!inviteToken || !onUpdateInvite) return;
+        
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+        
+        saveTimeoutRef.current = setTimeout(async () => {
+            try {
+                await onUpdateInvite({
+                    theme_json: {
+                        colors: newColors,
+                        fonts: inviteRow?.theme_json?.fonts || {}
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to save theme colors:', error);
+            }
+        }, 1000); // 1 second debounce
+    }, [inviteToken, onUpdateInvite, inviteRow?.theme_json?.fonts]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, []);
 
 
     // live-apply when colors/mode change
@@ -139,7 +179,11 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
     // hex guard
     const setRole = (key) => (hex) => {
         const v = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex) ? hex : colors[key];
-        setColors((c) => ({ ...c, [key]: v }));
+        setColors((c) => {
+            const newColors = { ...c, [key]: v };
+            debouncedSave(newColors); // Save to database
+            return newColors;
+        });
     };
 
     // fonts UI bits (unchanged from your version)
@@ -155,9 +199,9 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
         if (!raw) return "";
         return raw.split(",")[0].trim().replace(/^['"]|['"]$/g, "");
     };
-    const [bodyFontName, setBodyFontName] = useState(() => readFontToken("--font-primary"));
-    const [headingFontName, setHeadingFontName] = useState(() => readFontToken("--font-headline"));
-    const [numbersFontName, setNumbersFontName] = useState(() => readFontToken("--font-numbers"));
+    const [bodyFontName, setBodyFontName] = useState(() => readFontToken("--font-primary") || "Inter");
+    const [headingFontName, setHeadingFontName] = useState(() => readFontToken("--font-headline") || "Inter");
+    const [numbersFontName, setNumbersFontName] = useState(() => readFontToken("--font-numbers") || "Inter");
     const [openBody, setOpenBody] = useState(false);
     const [openHeading, setOpenHeading] = useState(false);
     const [openNumbers, setOpenNumbers] = useState(false);
@@ -172,11 +216,26 @@ export function ReviewStep({ onFinish, onBack, stepIndex }) {
         if (token === "numbers") setNumbersFontName(chosen ?? readFontToken("--font-numbers"));
     }
 
-    // save + finish (unchanged logic, just uses our color map)
-    const finalize = () => {
+    // save + finish (save to both localStorage and database)
+    const finalize = async () => {
         try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch { }
         setCSSVars(document.documentElement, "colors", buildThemeVars(colors, themeMode));
         applySavedTheme(themeMode);
+        
+        // Save to database as well
+        if (inviteToken && onUpdateInvite) {
+            try {
+                await onUpdateInvite({
+                    theme_json: {
+                        colors: colors,
+                        fonts: inviteRow?.theme_json?.fonts || {}
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to save theme colors on finish:', error);
+            }
+        }
+        
         onFinish?.();
     };
 
@@ -434,7 +493,10 @@ const normalizeCopyParts = (list) =>
    Main: OnboardingWizard
    ========================================================================= */
 
-export default function OnboardingWizard() {
+export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvite }) {
+    // Use the props instead of the hook to avoid conflicts
+    const row = inviteRow;
+    const updateInvite = onUpdateInvite;
     const {
         overridesBySection,
         setVisible,
@@ -447,14 +509,16 @@ export default function OnboardingWizard() {
 
     const [stepIndex, setStepIndex] = useState(0);
     const [currentExtraContentKey, setCurrentExtraContentKey] = useState(null);
-    const [charityInfo, setCharityInfo] = useState({
-        charityName: "",
-        charityLogo: "",
-        charitySite: "",
-        submitterName: "",
-        ascendRepresentative: "",
-        raffleType: "",
-        campaignLaunchDate: ""
+    const [charityInfo, setCharityInfo] = useState(() => {
+        return row?.onboarding_json?.charityInfo || {
+            charityName: "",
+            charityLogo: "",
+            charitySite: "",
+            submitterName: "",
+            ascendRepresentative: "",
+            raffleType: "",
+            campaignLaunchDate: ""
+        };
     });
     const [searchQuery, setSearchQuery] = useState("");
     const [isSearching, setIsSearching] = useState(false);
@@ -677,16 +741,24 @@ export default function OnboardingWizard() {
     function back() {
         setStepIndex((i) => Math.max(i - 1, 0));
     }
-    function finish() {
+    async function finish() {
         try {
-            localStorage.setItem("onboardingCompleted", "1");
-            // Save charity information for use in the main app
-            localStorage.setItem("charityInfo", JSON.stringify(charityInfo));
-        } catch { }
-        const url = new URL(window.location.href);
-        url.searchParams.delete("wizard");
-        history.replaceState(null, "", url.toString());
-        location.replace("#/");
+            // Save onboarding data to database
+            await updateInvite({
+                onboarding_json: {
+                    ...row?.onboarding_json,
+                    charityInfo: charityInfo
+                },
+                status: 'submitted'
+            });
+            
+            // Navigate to app
+            window.location.hash = `#/app?invite=${inviteToken}`;
+        } catch (error) {
+            console.error('Failed to save onboarding data:', error);
+            // Still navigate even if save fails
+            window.location.hash = `#/app?invite=${inviteToken}`;
+        }
     }
 
     return (
@@ -863,15 +935,20 @@ export default function OnboardingWizard() {
                                     <div className="space-y-2">
                                         <Label htmlFor="raffleType" className="text-muted-foreground">Type of Raffle</Label>
                                         <Select
-                                            value={charityInfo.raffleType}
-                                            onValueChange={(value) => {
+                                            value={charityInfo.raffleType || ""}
+                                            onValueChange={async (value) => {
                                                 const updatedInfo = { ...charityInfo, raffleType: value };
                                                 setCharityInfo(updatedInfo);
-                                                // Save immediately so RaffleRuleWrapper can read it
+                                                // Save to database
                                                 try {
-                                                    localStorage.setItem("charityInfo", JSON.stringify(updatedInfo));
+                                                    await updateInvite({
+                                                        onboarding_json: {
+                                                            ...row?.onboarding_json,
+                                                            charityInfo: updatedInfo
+                                                        }
+                                                    });
                                                 } catch (error) {
-                                                    console.warn("Failed to save charityInfo to localStorage:", error);
+                                                    console.warn("Failed to save charityInfo to database:", error);
                                                 }
                                             }}
                                         >
@@ -1369,7 +1446,14 @@ export default function OnboardingWizard() {
 
 
                     {stepKey === "review" && (
-                        <ReviewStep onFinish={finish} onBack={back} stepIndex={stepIndex} />
+                        <ReviewStep 
+                            onFinish={finish} 
+                            onBack={back} 
+                            stepIndex={stepIndex}
+                            inviteToken={inviteToken}
+                            inviteRow={row}
+                            onUpdateInvite={updateInvite}
+                        />
                     )}
                 </div>
             </div>

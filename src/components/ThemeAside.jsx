@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
@@ -36,27 +36,58 @@ const FONT_OPTIONS = [
   { label: "Oswald", value: "Oswald", gf: { family: "Oswald", axis: "wght@400;700" } },
 ];
 
-export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange, sectionOverrides = {} }) {
-  // Load saved or token defaults
+export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange, sectionOverrides = {}, inviteToken, inviteRow, onUpdateInvite }) {
+  // Load from database or token defaults
   const initialColors = useMemo(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
-      return Object.keys(saved).length ? saved : readTokenDefaults();
-    } catch {
-      return readTokenDefaults();
+    if (inviteRow?.theme_json?.colors) {
+      return inviteRow.theme_json.colors;
     }
-  }, []);
+    return readTokenDefaults();
+  }, [inviteRow?.theme_json?.colors]);
 
   const [colors, setColors] = useState(initialColors);
   const [fonts, setFonts] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("theme.fonts") || "{}"); } catch { return {}; }
+    return inviteRow?.theme_json?.fonts || {};
   });
+
+  // Debounced save to database
+  const saveTimeoutRef = useRef(null);
+  
+  const debouncedSave = useCallback((newColors, newFonts) => {
+    if (!inviteToken || !onUpdateInvite) return;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await onUpdateInvite({
+          theme_json: {
+            colors: newColors,
+            fonts: newFonts
+          }
+        });
+      } catch (error) {
+        console.error('Failed to save theme:', error);
+      }
+    }, 1000); // 1 second debounce
+  }, [inviteToken, onUpdateInvite]);
 
   useEffect(() => {
    if (!open) return;
    // live preview of current font picks
    applyFonts(fonts);
  }, [open, fonts]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleSectionSelected = () => {
@@ -108,31 +139,35 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
     if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return;
     setColors((prev) => {
       let next = { ...prev, [key]: hex };
-    if (key === "background" && "foreground" in next) {
-      // let buildThemeVars pick a readable foreground for the new bg
-      const { foreground, ...rest } = next;
-      next = rest;
-    }
-    onColorsChange?.(next);
-    return next;
-      
+      if (key === "background" && "foreground" in next) {
+        // let buildThemeVars pick a readable foreground for the new bg
+        const { foreground, ...rest } = next;
+        next = rest;
+      }
+      onColorsChange?.(next);
+      debouncedSave(next, fonts);
+      return next;
     });
   };
+  
   function handlePickFont(token, v) {
     const picked = FONT_OPTIONS.find((f) => f.value === v);
     const next = { ...fonts, [token]: picked?.gf?.family || v };
     setFonts(next);
-    onFontsChange?.(next); // parent handles loading + applyFonts + persist
+    onFontsChange?.(next); // parent handles loading + applyFonts
+    debouncedSave(colors, next);
   }
 
 
   function handleReset() {
     resetThemeToBaseline();
     const fresh = readTokenDefaults();
+    const clearedFonts = { primary: null, headline: null, numbers: null };
     setColors(fresh);
+    setFonts(clearedFonts);
     onColorsChange?.(fresh);
-    onFontsChange?.({ primary: null, headline: null, numbers: null }); // clears overrides
-
+    onFontsChange?.(clearedFonts);
+    debouncedSave(fresh, clearedFonts);
   }
 
   function handleCancel() {

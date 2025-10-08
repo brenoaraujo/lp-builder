@@ -1,24 +1,52 @@
 // src/context/BuilderOverridesContext.jsx
-import React, { createContext, useContext, useMemo, useState, useEffect } from "react";
+import React, { createContext, useContext, useMemo, useState, useEffect, useCallback, useRef } from "react";
 
 const BuilderOverridesContext = createContext(null);
-const STORAGE_KEY = "builderOverrides";
 
-export function BuilderOverridesProvider({ children, initial }) {
+export function BuilderOverridesProvider({ children, inviteToken, inviteRow, onUpdateInvite }) {
   const [overridesBySection, setOverridesBySection] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return initial || {};
+    return inviteRow?.overrides_json || {};
   });
 
-  // Persist changes
+  // Debounced save to database
+  const saveTimeoutRef = useRef(null);
+  
+  const debouncedSave = useCallback((newOverrides) => {
+    if (!inviteToken || !onUpdateInvite) return;
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await onUpdateInvite({ overrides_json: newOverrides });
+      } catch (error) {
+        console.error('Failed to save overrides:', error);
+      }
+    }, 1000); // 1 second debounce
+  }, [inviteToken, onUpdateInvite]);
+
+  // Update overrides when inviteRow changes
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(overridesBySection));
-    } catch {}
-  }, [overridesBySection]);
+    if (inviteRow?.overrides_json) {
+      setOverridesBySection(inviteRow.overrides_json);
+    }
+  }, [inviteRow?.overrides_json]);
+
+  // Persist changes to database
+  useEffect(() => {
+    debouncedSave(overridesBySection);
+  }, [overridesBySection, debouncedSave]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const api = useMemo(() => ({
     overridesBySection,

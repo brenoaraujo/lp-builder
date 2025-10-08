@@ -519,7 +519,18 @@ const orderedCopyList = (() => {
                               },
                               valuesPP: activeBlock.overrides?.valuesPP || {}
                             });
+                          } else if (setBlockOverrides) {
+                            // Use the new setBlockOverrides prop for database persistence
+                            setBlockOverrides(activeBlock.id, {
+                              enabled: true,
+                              values: {
+                                ...(activeBlock.overrides?.values || {}),
+                                [colorKey]: value
+                              },
+                              valuesPP: activeBlock.overrides?.valuesPP || {}
+                            });
                           } else {
+                            // Fallback to local state if setBlockOverrides not available
                             setBlocks(prev => prev.map(block => 
                               block.id === activeBlock.id 
                                 ? {
@@ -569,7 +580,11 @@ const orderedCopyList = (() => {
                             setNavbarOverrides({ enabled: false, values: {}, valuesPP: {} });
                           } else if (activeBlock.type === 'Footer' && setFooterOverrides) {
                             setFooterOverrides({ enabled: false, values: {}, valuesPP: {} });
+                          } else if (setBlockOverrides) {
+                            // Use the new setBlockOverrides prop for database persistence
+                            setBlockOverrides(activeBlock.id, { enabled: false, values: {}, valuesPP: {} });
                           } else {
+                            // Fallback to local state if setBlockOverrides not available
                             setBlocks(prev => prev.map(block => 
                               block.id === activeBlock.id 
                                 ? {
