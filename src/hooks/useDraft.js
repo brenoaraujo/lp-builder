@@ -21,6 +21,13 @@ export function useDraft(draftId, shouldLoad = true) {
       console.log('useDraft: Loading draft data for:', draftId)
       const data = await draftService.getDraft(draftId)
       
+      console.log('useDraft: Received data for draft', draftId, ':', {
+        config: data.config,
+        version: data.version,
+        hasOverrides: !!data.config?.overridesBySection,
+        overridesKeys: data.config?.overridesBySection ? Object.keys(data.config.overridesBySection) : []
+      })
+      
       setConfig(data.config)
       setVersion(data.version)
       setCollaborators(data.collaborators)

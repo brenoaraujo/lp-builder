@@ -95,6 +95,12 @@ function DraftConfigurator({ draftId }) {
   // Load config into builder context when available
   useEffect(() => {
     if (config) {
+      console.log('Configurator: Loading config for draft', draftId, ':', {
+        hasTheme: !!config.theme,
+        hasOverrides: !!config.overridesBySection,
+        overridesKeys: config.overridesBySection ? Object.keys(config.overridesBySection) : []
+      })
+      
       // Apply theme
       if (config.theme) {
         const { colors, mode } = config.theme
@@ -105,12 +111,13 @@ function DraftConfigurator({ draftId }) {
 
       // Apply section overrides
       if (config.overridesBySection) {
+        console.log('Configurator: Setting section overrides for draft', draftId, ':', config.overridesBySection)
         Object.entries(config.overridesBySection).forEach(([key, value]) => {
           setSection(key, value)
         })
       }
     }
-  }, [config, setSection])
+  }, [config, setSection, draftId])
 
   const handleSave = async () => {
     try {
