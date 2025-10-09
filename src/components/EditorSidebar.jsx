@@ -182,7 +182,7 @@ export default function EditorSidebar({
   closePanel, handleDelete, handleMoveUp, handleMoveDown,
   onTogglePartFromSidebar, onCopyChangeFromSidebar,
   variantIndex, setVariantForId, variantForId, setBlocks, blocks,
-  setNavbarOverrides, setFooterOverrides,
+  setNavbarOverrides, setFooterOverrides, setBlockOverrides,
   images, onImageChange,
   previewRef = null,
   mode = "builder",

@@ -66,6 +66,14 @@ export function BuilderOverridesProvider({ children, inviteToken, inviteRow, onU
       setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), variant } })),
     setVisible: (key, visible) =>
       setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), visible } })),
+    setTheme: (key, themeOverrides) =>
+      setOverridesBySection(prev => ({
+        ...prev,
+        [key]: { 
+          ...(prev[key] || {}), 
+          theme: themeOverrides 
+        }
+      })),
     addExtraContentSection: () => {
       const existingKeys = Object.keys(overridesBySection).filter(key => key.startsWith('extraContent_'));
       const nextIndex = existingKeys.length + 1;

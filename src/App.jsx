@@ -800,6 +800,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   // Builder state
   const [hydrated, setHydrated] = useState(false);
   const didAutoSelectOnce = useRef(false);
+  const isInitialLoad = useRef(true);
 
   const [blocks, setBlocks] = useState([
     { id: uid(), type: "hero", variant: 0, controls: {}, copy: {}, overrides: { enabled: false, values: {}, valuesPP: {} } },
@@ -965,6 +966,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   useEffect(() => {
     if (!inviteRow?.overrides_json) {
       setHydrated(true);
+      isInitialLoad.current = false;
       return;
     }
 
@@ -974,7 +976,73 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       setBlocks(nextBlocks);
     }
     setHydrated(true);
+    isInitialLoad.current = false;
   }, [inviteRow?.overrides_json]);
+
+  // Sync blocks array changes to BuilderOverridesContext for persistence
+  const previousBlocksRef = useRef(null);
+  useEffect(() => {
+    if (!hydrated || isInitialLoad.current) return; // Don't sync during initial load
+    
+    // Only sync if blocks actually changed
+    if (JSON.stringify(previousBlocksRef.current) === JSON.stringify(blocks)) {
+      return;
+    }
+    
+    previousBlocksRef.current = blocks;
+    
+    blocks.forEach(block => {
+      setSection(block.type, {
+        visible: true,
+        variant: ['A', 'B', 'C'][block.variant] || 'A',
+        copy: block.copy || {},
+        display: block.controls || {},
+        theme: block.overrides || { enabled: false, values: {}, valuesPP: {} }
+      });
+    });
+  }, [blocks, hydrated, setSection]);
+
+  // Sync Navbar controls and copy to BuilderOverridesContext
+  const previousNavbarRef = useRef(null);
+  useEffect(() => {
+    if (!hydrated || isInitialLoad.current) return; // Don't sync during initial load
+    
+    const navbarData = { controls: navbarControls, copy: navbarCopy };
+    if (JSON.stringify(previousNavbarRef.current) === JSON.stringify(navbarData)) {
+      return;
+    }
+    
+    previousNavbarRef.current = navbarData;
+    
+    setSection("Navbar", {
+      visible: true,
+      variant: 'A',
+      copy: navbarCopy || {},
+      display: navbarControls || {},
+      theme: overridesBySection.Navbar?.theme || { enabled: false, values: {}, valuesPP: {} }
+    });
+  }, [navbarControls, navbarCopy, hydrated, setSection, overridesBySection.Navbar?.theme]);
+
+  // Sync Footer controls and copy to BuilderOverridesContext
+  const previousFooterRef = useRef(null);
+  useEffect(() => {
+    if (!hydrated || isInitialLoad.current) return; // Don't sync during initial load
+    
+    const footerData = { controls: footerControls, copy: footerCopy };
+    if (JSON.stringify(previousFooterRef.current) === JSON.stringify(footerData)) {
+      return;
+    }
+    
+    previousFooterRef.current = footerData;
+    
+    setSection("Footer", {
+      visible: true,
+      variant: 'A',
+      copy: footerCopy || {},
+      display: footerControls || {},
+      theme: overridesBySection.Footer?.theme || { enabled: false, values: {}, valuesPP: {} }
+    });
+  }, [footerControls, footerCopy, hydrated, setSection, overridesBySection.Footer?.theme]);
 
   // Hydrate theme mode (respect saved pref; otherwise fall back to OS)
   useEffect(() => {
