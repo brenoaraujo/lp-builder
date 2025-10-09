@@ -99,7 +99,8 @@ export function FeatureA() {
                     <div
                         data-portrait="No"
                         data-ratio="73:41"
-                        
+                        data-image="feature-image"
+                        data-default-image=""
                         data-label="Feature Image"
                         className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary"
                     >
@@ -129,7 +130,8 @@ export function FeatureB() {
                 <div
                     data-portrait="No"
                     data-ratio="73:41"
-                    
+                    data-image="feature-image"
+                    data-default-image=""
                     data-label="Feature Image"
                     className="relative w-[500px] h-80 rounded-lg overflow-hidden bg-Colors-secondary"
                 >

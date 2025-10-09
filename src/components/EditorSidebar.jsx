@@ -15,6 +15,7 @@ import {
 import AutoScaler from "@/components/AutoScaler.jsx";
 import EditableSection from "@/components/EditableSection.jsx";
 import SectionActionsMenu from "./SectionActionsMenu.jsx";
+import ImageManager from "./ImageManager.jsx";
 import { buildThemeVars, readTokenDefaults, setCSSVars, setCSSVarsImportant, readThemeMode } from "../theme-utils.js";
 
 /* Section Color Overrides Component - Enhanced for partial overrides */
@@ -182,6 +183,8 @@ export default function EditorSidebar({
   onTogglePartFromSidebar, onCopyChangeFromSidebar,
   variantIndex, setVariantForId, variantForId, setBlocks, blocks,
   setNavbarOverrides, setFooterOverrides,
+  images, onImageChange,
+  previewRef = null,
   mode = "builder",
   hideVariantPicker = false,
   hideAdvancedActions = false,
@@ -484,6 +487,23 @@ const orderedCopyList = (() => {
                   <div className="text-xs text-gray-500">No copy-editable parts in this section.</div>
                 )}
               </div>
+
+              {/* Images section */}
+              {images && onImageChange && (
+                <>
+                  <Separator className="my-3" />
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500 my-4">Images</div>
+                    <ImageManager
+                      sectionId={activeBlock?.type}
+                      images={images}
+                      onImageChange={onImageChange}
+                      compact={true}
+                      previewRef={previewRef}
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Section Color Overrides - Advanced Settings */}
               {!hideAdvancedActions && mode === "builder" && (

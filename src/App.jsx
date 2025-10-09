@@ -21,6 +21,7 @@ import { useBuilderOverrides } from "./context/BuilderOverridesContext.jsx";
 // New imports for DB-based persistence
 import { useInviteToken } from "./hooks/useInviteToken.js";
 import { useInviteRow } from "./hooks/useInviteRow.js";
+import { useImageManager } from "./hooks/useImageManager.js";
 import { BuilderOverridesProvider } from "./context/BuilderOverridesContext.jsx";
 import AdminPage from "./AdminPage.jsx";
 
@@ -671,7 +672,7 @@ const OVERRIDES_KEY = "lpb.overrides";
 function blocksFromOverrides(ovr = {}) {
   const out = [];
   const push = (type, variantKey, sect) => {
-    const variant = variantKey === "B" ? 1 : 0;
+    const variant = variantKey === "B" ? 1 : variantKey === "C" ? 2 : 0;
     out.push({
       id: crypto?.randomUUID?.() ?? `${type}_${Date.now()}`,
       type,
@@ -693,7 +694,8 @@ function blocksFromOverrides(ovr = {}) {
     }
   });
   
-  if (ovr.WhoYouHelp?.visible !== false) push("WhoYouHelp", ovr.WhoYouHelp?.variant || "A", ovr.WhoYouHelp);
+  // Only add WhoYouHelp if it was explicitly added during onboarding
+  if (ovr.WhoYouHelp?.visible === true) push("WhoYouHelp", ovr.WhoYouHelp?.variant || "A", ovr.WhoYouHelp);
   return out.length ? out : [{
     id: crypto?.randomUUID?.() ?? `hero_${Date.now()}`,
     type: "hero", variant: 0, controls: {}, copy: {},
@@ -709,6 +711,7 @@ function blocksFromOverrides(ovr = {}) {
 // Inner component that uses useBuilderOverrides
 function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   const { overridesBySection, setSection } = useBuilderOverrides();
+  const { images, updateImage } = useImageManager(row, updateInvite);
 
   const HAS_SNAPSHOT = useMemo(() => {
     const raw = location.hash.startsWith("#") ? location.hash.slice(1) : "";
@@ -738,12 +741,12 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   // No longer needed - routing is handled by AppRouterShell
 
   function blocksFromOverrides(ovr) {
-    const order = ["hero", "extraPrizes", "winners", "WhoYouHelp"]; // keep this consistent with your app
-    const toIndex = (v) => (v === "B" ? 1 : 0);       // "A" → 0, "B" → 1
+    const order = ["hero", "extraPrizes", "winners"]; // Removed WhoYouHelp from default order
+    const toIndex = (v) => (v === "B" ? 1 : v === "C" ? 2 : 0);       // "A" → 0, "B" → 1, "C" → 2
 
     const blocks = [];
     
-    // First, add sections in the standard order
+    // First, add sections in the standard order (only if they exist in overrides)
     order.forEach((k) => {
       if (ovr?.[k]?.visible !== false) {
         const s = ovr[k] || {};
@@ -757,6 +760,19 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         });
       }
     });
+    
+    // Then, add WhoYouHelp only if it was explicitly added during onboarding
+    if (ovr?.WhoYouHelp?.visible === true) { // Changed from !== false to === true
+      const s = ovr.WhoYouHelp || {};
+      blocks.push({
+        id: crypto?.randomUUID?.() ?? `b_WhoYouHelp_${Date.now()}`,
+        type: "WhoYouHelp",
+        variant: toIndex(s.variant || "A"),
+        controls: s.display || {},
+        copy: s.copy || {},
+        overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
+      });
+    }
     
     // Then, add all extra content sections
     Object.keys(ovr).forEach((k) => {
@@ -1463,6 +1479,8 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                 setSection(block.type, { theme: overrides });
               }
             }}
+            images={images}
+            onImageChange={updateImage}
             mode="builder"
           />
         )}

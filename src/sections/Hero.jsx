@@ -87,6 +87,8 @@ export function HeroA({ preview = false }) {
           <div
             data-portrait="No"
             data-ratio="5:4"
+            data-image="hero-image"
+            data-default-image="/images/img-hero.png"
             className="w-[620px] h-[583px]  rounded-lg overflow-hidden "
             style={{ backgroundImage: "url(/images/img-hero.png)", backgroundSize: "cover", backgroundPosition: "center" }}
           />
@@ -184,7 +186,7 @@ export function HeroB({ preview = false }) {
   const backgroundImage = `url(${imagePath})`;
 
   return (
-    <section data-section="hero" className="p-6 bg-Colors-background h-full" style={{ backgroundImage, backgroundSize: "contain", backgroundPosition: "top center",  backgroundRepeat: "no-repeat" }}>
+    <section data-section="hero" className="p-6 bg-Colors-background h-full" data-image="hero-image"  data-default-image="/images/img-hero-full-light.png" style={{ backgroundImage, backgroundSize: "contain", backgroundPosition: "top center",  backgroundRepeat: "no-repeat" }}>
       <div className="w-[1440px] py-24  inline-flex flex-col justify-start items-center gap-4 overflow-hidden mt-120 ">
         <div className="w-full h-full max-w-[1280px] inline-flex justify-start items-center gap-6" >
           <div className="w-full inline-flex flex-col justify-start items-center ">

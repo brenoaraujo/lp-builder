@@ -24,6 +24,8 @@ export default function EditorForOnboarding({
   overrides = {},
   onTogglePart,
   onCopyChange,
+  onImageChange,
+  images = {},
   onSaveNext,
   hideHiddenCopy = false,
 }) {
@@ -43,7 +45,7 @@ export default function EditorForOnboarding({
   const targetWidth = Math.max(360, Math.min(1440, previewWidth || 0));
 
   const virtualId = React.useMemo(() => `onb_${sectionKey}`, [sectionKey]);
-  const variantIndex = variantKey === "B" ? 1 : 0;
+  const variantIndex = variantKey === "B" ? 1 : variantKey === "C" ? 2 : 0;
 
   const [virtualBlock, setVirtualBlock] = React.useState(() => ({
     id: virtualId,
@@ -58,7 +60,7 @@ export default function EditorForOnboarding({
   const [copyList, setCopyList] = React.useState([]);
 
   React.useEffect(() => {
-    setVirtualBlock((b) => ({ ...b, variant: variantKey === "B" ? 1 : 0 }));
+    setVirtualBlock((b) => ({ ...b, variant: variantKey === "B" ? 1 : variantKey === "C" ? 2 : 0 }));
   }, [variantKey]);
 
   const _onTogglePart = React.useCallback((id, v) => {
@@ -114,6 +116,9 @@ export default function EditorForOnboarding({
             });
           }}
           blocks={[virtualBlock]}
+          images={images}
+          onImageChange={onImageChange}
+          previewRef={previewRef}
           mode="onboarding"
           hideVariantPicker
           hideAdvancedActions

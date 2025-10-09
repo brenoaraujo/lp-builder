@@ -7,6 +7,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 // [KEEP] Builder dependencies
 import { SECTIONS, SECTION_ORDER } from "./sectionCatalog.jsx";
 import { useBuilderOverrides } from "../context/BuilderOverridesContext.jsx";
+import { useImageManager } from "../hooks/useImageManager.js";
 // Removed useInviteRow import - now using props instead
 import EditorForOnboarding from "./EditorForOnboarding.jsx";
 
@@ -506,6 +507,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         addExtraContentSection,
         getExtraContentSections,
     } = useBuilderOverrides();
+    const { images, updateImage } = useImageManager(row, updateInvite);
 
     const [stepIndex, setStepIndex] = useState(0);
     const [currentExtraContentKey, setCurrentExtraContentKey] = useState(null);
@@ -731,7 +733,10 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
             if (overridesBySection[k]?.visible === undefined) setVisible(k, true);
         });
 
-        // hide optional sections by default
+        // hide optional sections by default (including WhoYouHelp)
+        if (overridesBySection.WhoYouHelp?.visible === undefined) {
+            setVisible("WhoYouHelp", false);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -1130,6 +1135,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                     overrides={overridesBySection.hero}
                                     onTogglePart={(id, visible) => setDisplay("hero", id, visible)}
                                     onCopyChange={(id, text) => setCopy("hero", id, text)}
+                                    onImageChange={updateImage}
+                                    images={images}
                                     onSaveNext={() =>
                                         setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                     }
@@ -1190,6 +1197,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 overrides={overridesBySection.extraPrizes}
                                 onTogglePart={(id, v) => setDisplay("extraPrizes", id, v)}
                                 onCopyChange={(id, t) => setCopy("extraPrizes", id, t)}
+                                onImageChange={updateImage}
+                                images={images}
                                 onSaveNext={() =>
                                     setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                 }
@@ -1249,6 +1258,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 overrides={overridesBySection.winners}
                                 onTogglePart={(id, v) => setDisplay("winners", id, v)}
                                 onCopyChange={(id, t) => setCopy("winners", id, t)}
+                                onImageChange={updateImage}
+                                images={images}
                                 onSaveNext={() =>
                                     setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                 }
@@ -1387,6 +1398,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 overrides={overridesBySection[currentExtraContentKey]}
                                 onTogglePart={(id, v) => setDisplay(currentExtraContentKey, id, v)}
                                 onCopyChange={(id, t) => setCopy(currentExtraContentKey, id, t)}
+                                onImageChange={updateImage}
+                                images={images}
                                 onSaveNext={() =>
                                     setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                 }
