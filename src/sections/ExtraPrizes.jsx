@@ -250,6 +250,7 @@ export function ExtraPrizesB() {
             data-portrait="No"
             data-ratio="5:4"
             className="w-[654px] h-[600px]  rounded-lg inline-flex flex-col justify-start items-start overflow-hidden relative"
+            data-image="extra-prize-image"  data-default-image="/images/img-extra.png"
             style={{ backgroundImage: "url(/images/img-extra.png)", backgroundSize: "cover", backgroundPosition: "center" }}
           />
         </div>

@@ -18,5 +18,23 @@ html, body, #root { height: 100%; }
 @layer base {
   * {
     @apply border-border outline-ring/50; }
+  
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
   body {
     @apply bg-background text-foreground; } }

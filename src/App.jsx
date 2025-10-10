@@ -57,6 +57,8 @@ import {
 import { X, Plus, ChevronDown, ArrowRight, Pencil, GripVertical, Paintbrush } from "lucide-react";
 import SectionActionsMenu from "./components/SectionActionsMenu";
 import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
 
 // Robust imports for AutoScaler + EditableSection
 import * as AutoScalerMod from "@/components/AutoScaler";
@@ -1826,6 +1828,8 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         </DialogContent>
       </Dialog>
 
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   );
 }
@@ -1864,7 +1868,11 @@ export function AppRouterShell() {
 
   // Handle admin route
   if (route === "/admin") {
-    return <AdminPage />;
+    return (
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <AdminPage />
+      </ThemeProvider>
+    );
   }
 
   // Handle routes that require an invite token
@@ -1922,17 +1930,19 @@ export function AppRouterShell() {
       // Show onboarding if status is 'invited' or 'in_progress'
       if (inviteRow.status === 'invited' || inviteRow.status === 'in_progress') {
         return (
-          <BuilderOverridesProvider 
-            inviteToken={inviteToken} 
-            inviteRow={inviteRow} 
-            onUpdateInvite={updateInvite}
-          >
-            <OnboardingWizard 
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <BuilderOverridesProvider 
               inviteToken={inviteToken} 
               inviteRow={inviteRow} 
               onUpdateInvite={updateInvite}
-            />
-          </BuilderOverridesProvider>
+            >
+              <OnboardingWizard 
+                inviteToken={inviteToken} 
+                inviteRow={inviteRow} 
+                onUpdateInvite={updateInvite}
+              />
+            </BuilderOverridesProvider>
+          </ThemeProvider>
         );
       } else {
         // Redirect to app if onboarding is already completed
@@ -1942,7 +1952,11 @@ export function AppRouterShell() {
         } else if (route.startsWith("/app")) {
       // Show builder if status is 'submitted' or 'handed_off'
       if (inviteRow.status === 'submitted' || inviteRow.status === 'handed_off') {
-        return <MainBuilder inviteToken={inviteToken} inviteRow={inviteRow} />;
+        return (
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <MainBuilder inviteToken={inviteToken} inviteRow={inviteRow} />
+          </ThemeProvider>
+        );
       } else {
         // Redirect to onboarding if not yet submitted
         window.location.hash = `#/onboarding?invite=${inviteToken}`;

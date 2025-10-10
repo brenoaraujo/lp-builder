@@ -4,10 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Copy, Trash2, ExternalLink, Search } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Copy, Trash2, ExternalLink, Search, FileText, Info } from 'lucide-react';
+import { toast } from 'sonner';
 import { createInvite, listInvites, updateInviteByToken, softDeleteInvite } from './db/invites.js';
 import { getAdminClient } from './lib/adminClient.js';
+import AdminInviteDetails from './components/AdminInviteDetails.jsx';
 
 // Admin-specific functions using service key
 async function adminListInvites() {
@@ -62,8 +66,6 @@ async function adminSoftDeleteInvite(token) {
   }
 }
 
-import { toast } from 'sonner';
-
 export default function AdminPage() {
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -75,6 +77,84 @@ export default function AdminPage() {
     contact_name: '',
     contact_email: ''
   });
+  
+  // Details modal state
+  const [detailsInvite, setDetailsInvite] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [inviteToDelete, setInviteToDelete] = useState(null);
+
+  // Helper functions
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString();
+  };
+
+  const getRaffleType = (invite) => {
+    return invite.onboarding_json?.charityInfo?.raffleType || 'N/A';
+  };
+
+  const getCharityName = (invite) => {
+    // Use user-provided charity name from onboarding if available, otherwise fall back to production name
+    return invite.onboarding_json?.charityInfo?.charityName || invite.charity_name;
+  };
+
+  const getStatusVariant = (status) => {
+    switch (status) {
+      case 'invited': return 'invited';
+      case 'in_progress': return 'in_progress';
+      case 'submitted': return 'submitted';
+      case 'handed_off': return 'handed_off';
+      case 'void': return 'void';
+      default: return 'default';
+    }
+  };
+
+  // Action handlers
+  const openDetails = (invite) => {
+    setDetailsInvite(invite);
+    setDetailsOpen(true);
+  };
+
+  const handlePreview = (invite) => {
+    const url = `${window.location.origin}/#/onboarding?invite=${invite.public_token}`;
+    window.open(url, '_blank');
+  };
+
+  const handleCopy = async (invite) => {
+    const url = `${window.location.origin}/#/onboarding?invite=${invite.public_token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(`Invite link for ${invite.charity_name} copied to clipboard`);
+    } catch (error) {
+      toast.error('Failed to copy invite link');
+    }
+  };
+
+  const handleDelete = (invite) => {
+    setInviteToDelete(invite);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!inviteToDelete) return;
+
+    try {
+      const result = await adminSoftDeleteInvite(inviteToDelete.public_token);
+      if (result.success) {
+        toast.success('Invite deleted successfully');
+        loadInvites();
+      } else {
+        toast.error('Failed to delete invite: ' + result.error);
+      }
+    } catch (error) {
+      toast.error('Error deleting invite: ' + error.message);
+    } finally {
+      setDeleteDialogOpen(false);
+      setInviteToDelete(null);
+    }
+  };
 
   // Load invites
   const loadInvites = async () => {
@@ -134,49 +214,6 @@ export default function AdminPage() {
     }
   };
 
-  // Update invite status
-  const handleStatusChange = async (inviteId, newStatus) => {
-    try {
-      const result = await updateInviteById(inviteId, { status: newStatus });
-      if (result.success) {
-        toast.success('Status updated successfully');
-        loadInvites();
-      } else {
-        toast.error('Failed to update status: ' + result.error);
-      }
-    } catch (error) {
-      toast.error('Error updating status: ' + error.message);
-    }
-  };
-
-  // Soft delete invite
-  const handleDeleteInvite = async (inviteId, publicToken) => {
-    if (!confirm('Are you sure you want to delete this invite? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const result = await adminSoftDeleteInvite(publicToken);
-      if (result.success) {
-        toast.success('Invite deleted successfully');
-        loadInvites();
-      } else {
-        toast.error('Failed to delete invite: ' + result.error);
-      }
-    } catch (error) {
-      toast.error('Error deleting invite: ' + error.message);
-    }
-  };
-
-  // Copy invite link
-  const copyInviteLink = (token) => {
-    const link = `${window.location.origin}${window.location.pathname}#/onboarding?invite=${token}`;
-    navigator.clipboard.writeText(link).then(() => {
-      toast.success('Invite link copied to clipboard');
-    }).catch(() => {
-      toast.error('Failed to copy link');
-    });
-  };
 
   // Load invites on mount and when filters change
   useEffect(() => {
@@ -315,83 +352,137 @@ export default function AdminPage() {
           </Select>
         </div>
 
-        {/* Invites List */}
-        <div className="space-y-4">
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-gray-600 mt-2">Loading invites...</p>
-            </div>
-          ) : invites.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
+        {/* Invites Table */}
+        <Card>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-gray-600 mt-2">Loading invites...</p>
+              </div>
+            ) : invites.length === 0 ? (
+              <div className="text-center py-8">
                 <p className="text-gray-600">No invites found</p>
-              </CardContent>
-            </Card>
-          ) : (
-            invites.map((invite) => (
-              <Card key={invite.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-2">
-                        <h3 className="text-lg font-semibold">{invite.charity_name}</h3>
-                        <Select
-                          value={invite.status}
-                          onValueChange={(value) => handleStatusChange(invite.id, value)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="invited">Invited</SelectItem>
-                            <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="submitted">Submitted</SelectItem>
-                            <SelectItem value="handed_off">Handed Off</SelectItem>
-                            <SelectItem value="void">Void</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <p><strong>Contact:</strong> {invite.contact_name} ({invite.contact_email})</p>
-                        <p><strong>Created:</strong> {new Date(invite.created_at).toLocaleString()}</p>
-                        <p><strong>Updated:</strong> {new Date(invite.updated_at).toLocaleString()}</p>
-                        <p><strong>Token:</strong> <code className="bg-gray-100 px-1 rounded">{invite.public_token}</code></p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyInviteLink(invite.public_token)}
-                      >
-                        <Copy className="w-4 h-4 mr-1" />
-                        Copy Link
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(`#/onboarding?invite=${invite.public_token}`, '_blank')}
-                      >
-                        <ExternalLink className="w-4 h-4 mr-1" />
-                        Open
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteInvite(invite.id, invite.public_token)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Charity</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Raffle Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Last Updated</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invites.map((invite) => (
+                    <TableRow 
+                      key={invite.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => openDetails(invite)}
+                    >
+                      <TableCell className="font-medium">
+                        {getCharityName(invite)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-medium">{invite.contact_name}</div>
+                          <div className="text-sm text-muted-foreground">{invite.contact_email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{getRaffleType(invite)}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusVariant(invite.status)}>
+                          {invite.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatDate(invite.updated_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openDetails(invite)}
+                            title="View Details"
+                          >
+                            <Info className="w-4 h-4 mr-1" />
+                            Details
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePreview(invite)}
+                            title="Preview Invite"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            Preview
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopy(invite)}
+                            title="Copy Link"
+                          >
+                            <Copy className="w-4 h-4 mr-1" />
+                            Copy
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(invite)}
+                            className="text-red-600 hover:text-red-700"
+                            title="Delete Invite"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
+      
+      {/* Details Modal */}
+      <AdminInviteDetails 
+        invite={detailsInvite}
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+      />
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Invite</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the invite for <strong>{inviteToDelete?.charity_name}</strong>? 
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

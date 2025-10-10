@@ -131,9 +131,11 @@ export function FeatureB() {
                     data-portrait="No"
                     data-ratio="73:41"
                     data-image="feature-image"
-                    data-default-image=""
+                    data-default-image="/images/feature.png"
                     data-label="Feature Image"
                     className="relative w-[500px] h-80 rounded-lg overflow-hidden bg-Colors-secondary"
+                    style={{ backgroundImage: "url(/images/feature.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                   
                 >
                   
                 </div>

@@ -10,13 +10,19 @@ export function useImageManager(inviteRow, onUpdateInvite) {
   const [images, setImages] = useState(() => {
     return inviteRow?.images_json || inviteRow?.overrides_json?.images || {};
   });
+  
+  const previousImagesRef = useRef(null);
 
   // Update local state when inviteRow changes
   useEffect(() => {
-    if (inviteRow?.images_json) {
-      setImages(inviteRow.images_json);
-    } else if (inviteRow?.overrides_json?.images) {
-      setImages(inviteRow.overrides_json.images);
+    const newImages = inviteRow?.images_json || inviteRow?.overrides_json?.images || {};
+    const newImagesString = JSON.stringify(newImages);
+    const previousImagesString = JSON.stringify(previousImagesRef.current);
+    
+    // Only update if the images have actually changed
+    if (newImagesString !== previousImagesString) {
+      setImages(newImages);
+      previousImagesRef.current = newImages;
     }
   }, [inviteRow?.images_json, inviteRow?.overrides_json?.images]);
 
@@ -37,7 +43,6 @@ export function useImageManager(inviteRow, onUpdateInvite) {
           await onUpdateInvite({ images_json: newImages });
         } catch (error) {
           // Fallback: save to overrides_json.images
-          console.log('images_json column not found, using overrides_json.images fallback');
           await onUpdateInvite({ 
             overrides_json: {
               ...inviteRow?.overrides_json,
