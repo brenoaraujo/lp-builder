@@ -22,6 +22,7 @@ import { useBuilderOverrides } from "./context/BuilderOverridesContext.jsx";
 import { useInviteToken } from "./hooks/useInviteToken.js";
 import { useInviteRow } from "./hooks/useInviteRow.js";
 import { useImageManager } from "./hooks/useImageManager.js";
+import ImageManager from "./components/ImageManager.jsx";
 import { BuilderOverridesProvider } from "./context/BuilderOverridesContext.jsx";
 import AdminPage from "./AdminPage.jsx";
 
@@ -414,6 +415,7 @@ function SortableBlock({
   onRemove, onVariantPick, overrides, onSetOverrides,
   availableThemeKeys = [], readOnly = false,
   onSelect, selected, variantOpen, onVariantOpenChange, contentOpen, onContentOpenChange,
+  images = {}, onImageChange,
 }) {
   const {
     attributes,
@@ -519,19 +521,27 @@ function SortableBlock({
       >
         <AutoScaler designWidth={1440} targetWidth={targetWidth} maxHeight={9999}>
           <div data-scope={type}>
-            <EditableSection
-              discoverKey={`${id}:${type}:${safeIndex}`}
-              controls={controls}
-              copyValues={copyValues}
-              onPartsDiscovered={(found) => onPartsDiscovered?.(id, found)}
-              onCopyDiscovered={(found) => {
-                const arr = Array.isArray(found) ? found : found && typeof found === "object" ? Object.values(found) : [];
-                setCopyParts(arr);
-                onCopyDiscovered?.(arr);
-              }}
+            <ImageManager
+              sectionId={type}
+              images={images}
+              onImageChange={onImageChange}
+              compact={false}
+              hideControls={true}
             >
-              <Comp />
-            </EditableSection>
+              <EditableSection
+                discoverKey={`${id}:${type}:${safeIndex}`}
+                controls={controls}
+                copyValues={copyValues}
+                onPartsDiscovered={(found) => onPartsDiscovered?.(id, found)}
+                onCopyDiscovered={(found) => {
+                  const arr = Array.isArray(found) ? found : found && typeof found === "object" ? Object.values(found) : [];
+                  setCopyParts(arr);
+                  onCopyDiscovered?.(arr);
+                }}
+              >
+                <Comp />
+              </EditableSection>
+            </ImageManager>
           </div>
         </AutoScaler>
       </div>
@@ -1571,19 +1581,27 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
               ].join(" ")}
             >
               <AutoScaler designWidth={1440} targetWidth={800} maxHeight={9999}>
-                <EditableSection
+                <ImageManager
                   sectionId="Navbar"
-                  label="Navbar"
-                  variant={NAVBAR_VARIANT}
-                  discoverKey={`Navbar:${NAVBAR_VARIANT}:${activeBlockId === "Navbar"}`}
-                  controls={navbarControls}
-                  copyValues={navbarCopy}
-                  onPartsDiscovered={(list) => handlePartsDiscovered("Navbar", list)}
-                  onCopyDiscovered={(list) => handleCopyDiscovered("Navbar", list)}
-                  fixedPosition="top"
+                  images={images}
+                  onImageChange={updateImage}
+                  compact={false}
+                  hideControls={true}
                 >
-                  <NavbarCmp />
-                </EditableSection>
+                  <EditableSection
+                    sectionId="Navbar"
+                    label="Navbar"
+                    variant={NAVBAR_VARIANT}
+                    discoverKey={`Navbar:${NAVBAR_VARIANT}:${activeBlockId === "Navbar"}`}
+                    controls={navbarControls}
+                    copyValues={navbarCopy}
+                    onPartsDiscovered={(list) => handlePartsDiscovered("Navbar", list)}
+                    onCopyDiscovered={(list) => handleCopyDiscovered("Navbar", list)}
+                    fixedPosition="top"
+                  >
+                    <NavbarCmp />
+                  </EditableSection>
+                </ImageManager>
               </AutoScaler>
             </div>
             
@@ -1645,6 +1663,8 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                             onVariantOpenChange={(open) => setVariantForId(open ? b.id : (variantForId === b.id ? null : variantForId))}
                             contentOpen={contentForId === b.id}
                             onContentOpenChange={(open) => setContentForId(open ? b.id : (contentForId === b.id ? null : contentForId))}
+                            images={images}
+                            onImageChange={updateImage}
                           />
 
                           {/* Inline "+ Section" handle */}
@@ -1677,20 +1697,28 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
               ].join(" ")}
             >
               <AutoScaler designWidth={1440} targetWidth={800}>
-                <EditableSection
+                <ImageManager
                   sectionId="Footer"
-                  label="Footer"
-                  variant={FOOTER_VARIANT}
-                  data={FOOTER_DEFAULT_DATA}
-                  discoverKey={`Footer:${FOOTER_VARIANT}:${activeBlockId === "Footer"}`}
-                  controls={footerControls}
-                  copyValues={footerCopy}
-                  onPartsDiscovered={(list) => handlePartsDiscovered("Footer", list)}
-                  onCopyDiscovered={(list) => handleCopyDiscovered("Footer", list)}
-                  fixedPosition="bottom"
+                  images={images}
+                  onImageChange={updateImage}
+                  compact={false}
+                  hideControls={true}
                 >
-                  <FooterCmp data={FOOTER_DEFAULT_DATA} />
-                </EditableSection>
+                  <EditableSection
+                    sectionId="Footer"
+                    label="Footer"
+                    variant={FOOTER_VARIANT}
+                    data={FOOTER_DEFAULT_DATA}
+                    discoverKey={`Footer:${FOOTER_VARIANT}:${activeBlockId === "Footer"}`}
+                    controls={footerControls}
+                    copyValues={footerCopy}
+                    onPartsDiscovered={(list) => handlePartsDiscovered("Footer", list)}
+                    onCopyDiscovered={(list) => handleCopyDiscovered("Footer", list)}
+                    fixedPosition="bottom"
+                  >
+                    <FooterCmp data={FOOTER_DEFAULT_DATA} />
+                  </EditableSection>
+                </ImageManager>
               </AutoScaler>
             </div>
             {toastMsg && (

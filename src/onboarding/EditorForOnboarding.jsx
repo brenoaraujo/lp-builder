@@ -28,6 +28,7 @@ export default function EditorForOnboarding({
   images = {},
   onSaveNext,
   hideHiddenCopy = false,
+  raffleType = null,
 }) {
 
 
@@ -153,7 +154,7 @@ export default function EditorForOnboarding({
                     setCopyList(arr);
                   }}
                 >
-                  <Comp />
+                  <Comp raffleType={raffleType} />
                 </EditableSection>
               </div>
             </AutoScaler>

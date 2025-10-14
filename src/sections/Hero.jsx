@@ -14,7 +14,7 @@ const COUNTDOWN = [
 
 /* --------------------------------- Hero A --------------------------------- */
 
-export function HeroA({ preview = false }) {
+export function HeroA({ preview = false, raffleType = null }) {
   return (
     <section data-section="hero" className="p-6 bg-Colors-background">
       <div className="w-[1440px] mx-auto py-24 bg-Colors-background flex flex-col items-center gap-12 overflow-hidden">
@@ -33,8 +33,8 @@ export function HeroA({ preview = false }) {
               >
                 Be the change and enter for a chance to win!
               </h1>
-              <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]}>
-              <div className="flex flex-col" data-display="yes" data-label="Jackpot">
+              <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]} raffleType={raffleType} forceRender={!!raffleType}>
+              <div className="flex flex-col" data-display="true" data-label="Jackpot">
                 <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4" data-copy data-label="Jackpot Headline">
                   Winner's Estimated Take Home Prize
                 </span>
@@ -181,7 +181,7 @@ export function HeroA({ preview = false }) {
 
 /* --------------------------------- Hero B --------------------------------- */
 
-export function HeroB({ preview = false }) {
+export function HeroB({ preview = false, raffleType = null }) {
   const imagePath = useImageVariant("/images/img-hero-full-light.png", "hero");
   const backgroundImage = `url(${imagePath})`;
 
@@ -203,9 +203,9 @@ export function HeroB({ preview = false }) {
                 </div>
               </div>
             </div>
-            <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]}>
+            <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]} raffleType={raffleType} forceRender={!!raffleType}>
             {!preview && (
-              <div className="flex flex-col justify-center items-center" data-display="no" data-label="Jackpot">
+              <div className="flex flex-col justify-center items-center" data-display="false" data-label="Jackpot">
                 <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal" data-copy data-label="Jackpot Headline">
                   Winner's Estimated Take Home Prize
                 </div>

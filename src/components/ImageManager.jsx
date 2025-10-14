@@ -15,8 +15,10 @@ export default function ImageManager({
   images, 
   onImageChange, 
   compact = false,
+  hideControls = false,
   className = "",
-  previewRef = null
+  previewRef = null,
+  children
 }) {
   const [discoveredImages, setDiscoveredImages] = useState([]);
   const sectionRef = useRef(null);
@@ -102,8 +104,12 @@ export default function ImageManager({
     });
   }, [discoveredImages, images]);
 
+  if (hideControls) {
+    return <div ref={sectionRef} className={className}>{children}</div>;
+  }
+
   if (discoveredImages.length === 0) {
-    return null;
+    return children ? <div ref={sectionRef} className={className}>{children}</div> : null;
   }
 
   return (
@@ -122,6 +128,7 @@ export default function ImageManager({
           />
         </div>
       ))}
+      {children}
     </div>
   );
 }

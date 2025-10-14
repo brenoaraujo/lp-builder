@@ -19,6 +19,7 @@ import { FeatureA, FeatureB, FeatureC } from "../sections/Feature.jsx";
 
 import AutoScaler from "../components/AutoScaler.jsx";
 import LogoUpload from "../components/LogoUpload.jsx";
+import ImageManager from "../components/ImageManager.jsx";
 
 // [KEEP] theme helpers
 import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readBaselineColors, applySavedTheme, clearInlineColorVars } from "../theme-utils.js";
@@ -114,6 +115,9 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
 
     // pull builder overrides for the preview (as you had)
     const { overridesBySection } = useBuilderOverrides();
+    
+    // Get images for the preview
+    const { images, updateImage } = useImageManager(inviteRow, onUpdateInvite);
 
 
     const [themeMode, setThemeMode] = useState(readThemeMode());
@@ -370,7 +374,15 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
             <div className="bg-white h-96 lg:h-auto">
                 <AutoScaler designWidth={1440} targetWidth={520} maxHeight={1820}>
                     <div className="pointer-events-none select-none">
-                        <ComposedPreview overrides={overridesBySection} />
+                        <ImageManager
+                            sectionId="review-preview"
+                            images={images}
+                            onImageChange={updateImage}
+                            compact={false}
+                            hideControls={true}
+                        >
+                            <ComposedPreview overrides={overridesBySection} />
+                        </ImageManager>
                     </div>
                 </AutoScaler>
             </div>
@@ -1137,6 +1149,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                     onCopyChange={(id, text) => setCopy("hero", id, text)}
                                     onImageChange={updateImage}
                                     images={images}
+                                    raffleType={charityInfo.raffleType}
                                     onSaveNext={() =>
                                         setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                     }
@@ -1199,6 +1212,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 onCopyChange={(id, t) => setCopy("extraPrizes", id, t)}
                                 onImageChange={updateImage}
                                 images={images}
+                                raffleType={charityInfo.raffleType}
                                 onSaveNext={() =>
                                     setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                 }
@@ -1260,6 +1274,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 onCopyChange={(id, t) => setCopy("winners", id, t)}
                                 onImageChange={updateImage}
                                 images={images}
+                                raffleType={charityInfo.raffleType}
                                 onSaveNext={() =>
                                     setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                 }
@@ -1400,6 +1415,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 onCopyChange={(id, t) => setCopy(currentExtraContentKey, id, t)}
                                 onImageChange={updateImage}
                                 images={images}
+                                raffleType={charityInfo.raffleType}
                                 onSaveNext={() =>
                                     setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
                                 }

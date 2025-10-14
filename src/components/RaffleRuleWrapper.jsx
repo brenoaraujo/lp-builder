@@ -3,7 +3,12 @@ import { useInviteRow } from '../hooks/useInviteRow.js';
 import { useInviteToken } from '../hooks/useInviteToken.js';
 
 // Simple wrapper component for raffle type rules
-const RaffleRuleWrapper = ({ children, hideFor = ["Sweepstakes", "Prize Raffle"] }) => {
+const RaffleRuleWrapper = ({ 
+    children, 
+    hideFor = ["Sweepstakes", "Prize Raffle"],
+    raffleType: propRaffleType = null,  // NEW: accept raffle type as prop
+    forceRender = false  // NEW: render hidden instead of null
+}) => {
     const [raffleType, setRaffleType] = useState(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const inviteToken = useInviteToken();
@@ -30,14 +35,20 @@ const RaffleRuleWrapper = ({ children, hideFor = ["Sweepstakes", "Prize Raffle"]
         setIsLoaded(true);
     }, [getRaffleType]);
     
-    // Don't render anything until we've loaded the raffle type
-    if (!isLoaded) {
+    // Use prop if provided, otherwise use hooks
+    const effectiveRaffleType = propRaffleType || raffleType;
+    
+    // Don't render anything until we've loaded the raffle type (unless prop is provided)
+    if (!isLoaded && !propRaffleType) {
         return null;
     }
     
-    const shouldHide = raffleType && hideFor.includes(raffleType);
+    const shouldHide = effectiveRaffleType && hideFor.includes(effectiveRaffleType);
     
     if (shouldHide) {
+        if (forceRender) {
+            return <div style={{ display: 'none' }}>{children}</div>;
+        }
         return null;
     }
     
