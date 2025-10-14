@@ -527,9 +527,44 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
     } = useBuilderOverrides();
     const { images, updateImage } = useImageManager(row, updateInvite);
 
+    // Function to determine the correct step to return to based on completion
+    const getCorrectStepIndex = useCallback(() => {
+        const savedStepIndex = row?.onboarding_json?.progress?.stepIndex || 0;
+        const savedOverrides = row?.onboarding_json?.sectionOverrides || {};
+        const savedCharityInfo = row?.onboarding_json?.charityInfo || {};
+        
+        // Check completion status for each step
+        const stepCompletion = {
+            welcome: true, // Always completed if we're here
+            charityInfo: !!(savedCharityInfo.charityName && savedCharityInfo.raffleType),
+            hero: !!(savedOverrides.hero?.variant),
+            heroEdit: !!(savedOverrides.hero?.variant), // Same as hero
+            extraPrizes: !!(savedOverrides.extraPrizes?.variant),
+            extraPrizesEdit: !!(savedOverrides.extraPrizes?.variant), // Same as extraPrizes
+            winners: !!(savedOverrides.winners?.variant),
+            winnersEdit: !!(savedOverrides.winners?.variant), // Same as winners
+            extraContentConfirmation: true, // Always available if we get here
+            feature: !!(savedOverrides.feature?.variant),
+            featureEdit: !!(savedOverrides.feature?.variant), // Same as feature
+            addMoreSections: true, // Always available
+            review: true // Always available
+        };
+        
+        // Find the first incomplete step
+        for (let i = 0; i < STEP_KEYS.length; i++) {
+            const stepKey = STEP_KEYS[i];
+            if (!stepCompletion[stepKey]) {
+                return i;
+            }
+        }
+        
+        // If all steps are completed, return to review
+        return STEP_KEYS.length - 1;
+    }, [row?.onboarding_json]);
+
     const [stepIndex, setStepIndex] = useState(() => {
-        // Restore step index from saved progress
-        return row?.onboarding_json?.progress?.stepIndex || 0;
+        // Use completion-based logic instead of just saved step index
+        return getCorrectStepIndex();
     });
     const [currentExtraContentKey, setCurrentExtraContentKey] = useState(null);
     const [charityInfo, setCharityInfo] = useState(() => {
@@ -812,7 +847,18 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                 }
             });
         }
-    }, [row?.onboarding_json?.sectionOverrides, setVariant, setDisplay, setCopy]);
+        
+        // Recalculate the correct step index after restoring overrides
+        const correctStepIndex = getCorrectStepIndex();
+        console.log('🔄 Onboarding step restoration:', {
+            savedStepIndex: row?.onboarding_json?.progress?.stepIndex,
+            correctStepIndex,
+            stepKey: STEP_KEYS[correctStepIndex],
+            savedOverrides: Object.keys(savedOverrides || {}),
+            charityInfo: row?.onboarding_json?.charityInfo
+        });
+        setStepIndex(correctStepIndex);
+    }, [row?.onboarding_json?.sectionOverrides, setVariant, setDisplay, setCopy, getCorrectStepIndex]);
 
     // Auto-save when section overrides change (debounced)
     const saveTimeoutRef = useRef(null);
