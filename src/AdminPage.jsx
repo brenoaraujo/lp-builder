@@ -226,11 +226,20 @@ export default function AdminPage() {
 
   const handleAdminLogin = () => {
     const expectedPasscode = import.meta.env.VITE_ADMIN_PASSCODE;
+    
+    // Debug logging
+    console.log('🔍 Admin Login Debug:', {
+      enteredPasscode: adminPasscode,
+      expectedPasscode: expectedPasscode,
+      hasExpectedPasscode: !!expectedPasscode,
+      allEnvVars: import.meta.env
+    });
+    
     if (adminPasscode === expectedPasscode) {
       setIsAuthenticated(true);
       toast.success('Admin access granted');
     } else {
-      toast.error('Invalid passcode');
+      toast.error(`Invalid passcode. Expected: ${expectedPasscode || 'undefined'}, Got: ${adminPasscode}`);
     }
   };
 
@@ -256,6 +265,14 @@ export default function AdminPage() {
             <Button onClick={handleAdminLogin} className="w-full">
               Access Admin Panel
             </Button>
+            
+            {/* Debug info - remove after fixing */}
+            <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+              <div>Debug Info:</div>
+              <div>Expected: {import.meta.env.VITE_ADMIN_PASSCODE || 'undefined'}</div>
+              <div>Entered: {adminPasscode || 'empty'}</div>
+              <div>Has env var: {import.meta.env.VITE_ADMIN_PASSCODE ? 'yes' : 'no'}</div>
+            </div>
           </CardContent>
         </Card>
       </div>
