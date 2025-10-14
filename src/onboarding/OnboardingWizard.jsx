@@ -444,7 +444,7 @@ function resolveByVariant(sectionKey, variant = "A") {
    Wizard Shell
    ========================================================================= */
 
-function StepHeader({ currentIndex }) {
+function StepHeader({ currentIndex, isSaving }) {
     const pct = Math.round((currentIndex / (STEP_KEYS.length - 1)) * 100);
     return (
         <div className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b">
@@ -452,6 +452,12 @@ function StepHeader({ currentIndex }) {
                 <div className="flex items-center gap-1 sm:gap-2 min-w-0">
                     <img src="https://cdn.brandfetch.io/idOQ3T8fjd/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1689300855088" alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
                     <div className="text-sm sm:text-lg font-semibold truncate">Landing Page Builder</div>
+                    {isSaving && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <div className="w-3 h-3 border border-muted-foreground border-t-transparent rounded-full animate-spin"></div>
+                            Saving...
+                        </div>
+                    )}
                 </div>
                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                     <div className="w-24 sm:w-48">
@@ -521,7 +527,10 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
     } = useBuilderOverrides();
     const { images, updateImage } = useImageManager(row, updateInvite);
 
-    const [stepIndex, setStepIndex] = useState(0);
+    const [stepIndex, setStepIndex] = useState(() => {
+        // Restore step index from saved progress
+        return row?.onboarding_json?.progress?.stepIndex || 0;
+    });
     const [currentExtraContentKey, setCurrentExtraContentKey] = useState(null);
     const [charityInfo, setCharityInfo] = useState(() => {
         return row?.onboarding_json?.charityInfo || {
@@ -539,10 +548,40 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
     const [searchResults, setSearchResults] = useState([]);
     const [showAdditionalFields, setShowAdditionalFields] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const stepKey = STEP_KEYS[stepIndex];
 
-    const advance = (steps = 1) =>
-        setStepIndex((i) => Math.min(i + steps, STEP_KEYS.length - 1));
+    // Auto-save progress when step changes
+    const saveProgress = useCallback(async (newStepIndex) => {
+        if (!inviteToken || !updateInvite) return;
+        
+        setIsSaving(true);
+        try {
+            await updateInvite({
+                onboarding_json: {
+                    ...row?.onboarding_json,
+                    progress: {
+                        stepIndex: newStepIndex,
+                        lastSaved: new Date().toISOString()
+                    },
+                    // Also save current section overrides
+                    sectionOverrides: overridesBySection,
+                    // Save charity info
+                    charityInfo: charityInfo
+                }
+            });
+        } catch (error) {
+            console.warn('Failed to save onboarding progress:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    }, [inviteToken, updateInvite, row?.onboarding_json, overridesBySection, charityInfo]);
+
+    const advance = (steps = 1) => {
+        const newIndex = Math.min(stepIndex + steps, STEP_KEYS.length - 1);
+        setStepIndex(newIndex);
+        saveProgress(newIndex);
+    };
 
     // Simple raffle type check
     const shouldHideForRaffleType = (raffleType) => {
@@ -752,11 +791,58 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Restore saved section overrides when component loads
+    useEffect(() => {
+        const savedOverrides = row?.onboarding_json?.sectionOverrides;
+        if (savedOverrides && Object.keys(savedOverrides).length > 0) {
+            // Restore each section's overrides
+            Object.entries(savedOverrides).forEach(([sectionKey, sectionData]) => {
+                if (sectionData.variant) {
+                    setVariant(sectionKey, sectionData.variant);
+                }
+                if (sectionData.display) {
+                    Object.entries(sectionData.display).forEach(([partId, visible]) => {
+                        setDisplay(sectionKey, partId, visible);
+                    });
+                }
+                if (sectionData.copy) {
+                    Object.entries(sectionData.copy).forEach(([partId, text]) => {
+                        setCopy(sectionKey, partId, text);
+                    });
+                }
+            });
+        }
+    }, [row?.onboarding_json?.sectionOverrides, setVariant, setDisplay, setCopy]);
+
+    // Auto-save when section overrides change (debounced)
+    const saveTimeoutRef = useRef(null);
+    useEffect(() => {
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+        
+        saveTimeoutRef.current = setTimeout(() => {
+            if (Object.keys(overridesBySection).length > 0) {
+                saveProgress(stepIndex);
+            }
+        }, 2000); // 2 second debounce for overrides changes
+        
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, [overridesBySection, stepIndex, saveProgress]);
+
     function next() {
-        setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1));
+        const newIndex = Math.min(stepIndex + 1, STEP_KEYS.length - 1);
+        setStepIndex(newIndex);
+        saveProgress(newIndex);
     }
     function back() {
-        setStepIndex((i) => Math.max(i - 1, 0));
+        const newIndex = Math.max(stepIndex - 1, 0);
+        setStepIndex(newIndex);
+        saveProgress(newIndex);
     }
     async function finish() {
         try {
@@ -780,7 +866,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
 
     return (
         <div className="min-h-screen flex flex-col text-foreground onboarding bg-gradient-to-b from-white from-0% via-white via-50% to-slate-50 to-50%">
-            <StepHeader currentIndex={stepIndex} />
+            <StepHeader currentIndex={stepIndex} isSaving={isSaving} />
             <div className="flex-1 min-h-0 p-2 sm:p-4 flex justify-center box-border">
                 <div className="w-full max-w-[1100px] h-full box-border">
                     {/* ============ STEP CONTENT ============ */}
