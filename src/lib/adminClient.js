@@ -14,7 +14,8 @@ export function getAdminClient() {
       hasAnonKey: !!anonKey,
       hasUrl: !!url,
       usingServiceKey: !!serviceKey,
-      serviceKeyPrefix: serviceKey ? serviceKey.substring(0, 20) + '...' : 'none'
+      serviceKeyPrefix: serviceKey ? serviceKey.substring(0, 20) + '...' : 'none',
+      serviceKeyRole: serviceKey ? 'service_role' : 'anon'
     });
     
     // Use service key if available, otherwise fall back to anon key
@@ -32,6 +33,8 @@ export function getAdminClient() {
         }
       }
     );
+    
+    console.log('🔑 Admin client created with key type:', serviceKey ? 'SERVICE_KEY' : 'ANON_KEY');
   }
   return adminClient;
 }

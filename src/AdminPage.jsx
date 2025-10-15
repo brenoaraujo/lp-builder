@@ -42,6 +42,10 @@ async function adminSoftDeleteInvite(token) {
     console.log('🗑️ Attempting to delete invite with token:', token);
     const adminClient = getAdminClient();
     
+    // Test the admin client by checking its auth state
+    const { data: { user }, error: authError } = await adminClient.auth.getUser();
+    console.log('🔑 Admin client auth state:', { user: !!user, authError: !!authError });
+    
     // First, let's check if the invite exists
     const { data: existingInvite, error: fetchError } = await adminClient
       .from('invites')
@@ -70,6 +74,12 @@ async function adminSoftDeleteInvite(token) {
 
     if (error) {
       console.error('❌ Delete error:', error);
+      console.error('❌ Delete error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       throw error;
     }
 
