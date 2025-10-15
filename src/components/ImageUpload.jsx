@@ -28,6 +28,12 @@ export default function ImageUpload({
 
   const handleFileSelect = async (event) => {
     const file = event.target.files?.[0];
+    
+    // Reset the file input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
     if (!file) return;
 
     // Validate file type
@@ -92,6 +98,7 @@ export default function ImageUpload({
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <input
+          key={`file-input-${imageId}`}
           ref={fileInputRef}
           type="file"
           accept="image/*"
@@ -148,6 +155,7 @@ export default function ImageUpload({
   return (
     <div className={`space-y-2 ${className}`}>
       <input
+        key={`file-input-${imageId}`}
         ref={fileInputRef}
         type="file"
         accept="image/*"

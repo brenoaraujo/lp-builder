@@ -489,6 +489,83 @@ const STEP_KEYS = [
     "review",         // review
 ];
 
+// Scalable step configuration - defines completion requirements for each step
+const STEP_CONFIG = {
+    welcome: {
+        type: 'info',
+        completionCheck: () => true, // Always completed if we're here
+        prerequisites: []
+    },
+    charityInfo: {
+        type: 'form',
+        completionCheck: (charityInfo) => !!(charityInfo?.charityName && charityInfo?.raffleType),
+        prerequisites: []
+    },
+    hero: {
+        type: 'section-choice',
+        sectionKey: 'hero',
+        completionCheck: (overrides) => !!(overrides?.hero?.variant),
+        prerequisites: ['charityInfo']
+    },
+    heroEdit: {
+        type: 'section-edit',
+        sectionKey: 'hero',
+        completionCheck: (overrides) => !!(overrides?.hero?.variant),
+        prerequisites: ['hero']
+    },
+    extraPrizes: {
+        type: 'section-choice',
+        sectionKey: 'extraPrizes',
+        completionCheck: (overrides) => !!(overrides?.extraPrizes?.variant),
+        prerequisites: ['hero']
+    },
+    extraPrizesEdit: {
+        type: 'section-edit',
+        sectionKey: 'extraPrizes',
+        completionCheck: (overrides) => !!(overrides?.extraPrizes?.variant),
+        prerequisites: ['extraPrizes']
+    },
+    winners: {
+        type: 'section-choice',
+        sectionKey: 'winners',
+        completionCheck: (overrides) => !!(overrides?.winners?.variant),
+        prerequisites: ['extraPrizes']
+    },
+    winnersEdit: {
+        type: 'section-edit',
+        sectionKey: 'winners',
+        completionCheck: (overrides) => !!(overrides?.winners?.variant),
+        prerequisites: ['winners']
+    },
+    extraContentConfirmation: {
+        type: 'info',
+        completionCheck: () => true,
+        prerequisites: ['winners']
+    },
+    feature: {
+        type: 'section-choice',
+        sectionKey: 'feature',
+        completionCheck: (overrides) => !!(overrides?.feature?.variant),
+        prerequisites: ['extraContentConfirmation']
+    },
+    featureEdit: {
+        type: 'section-edit',
+        sectionKey: 'feature',
+        completionCheck: (overrides) => !!(overrides?.feature?.variant),
+        prerequisites: ['feature']
+    },
+    addMoreSections: {
+        type: 'info',
+        completionCheck: () => true,
+        prerequisites: ['feature']
+    },
+    review: {
+        type: 'info',
+        completionCheck: () => true,
+        prerequisites: ['addMoreSections']
+    }
+};
+
 // [KEEP] tiny helpers
 const toArray = (x) =>
     Array.isArray(x) ? x : x && typeof x === "object" ? Object.values(x) : [];
@@ -527,9 +604,83 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
     } = useBuilderOverrides();
     const { images, updateImage } = useImageManager(row, updateInvite);
 
+    // Scalable function to check if prerequisites are met for a step
+    const arePrerequisitesMet = useCallback((stepKey, savedOverrides, savedCharityInfo) => {
+        const config = STEP_CONFIG[stepKey];
+        if (!config || !config.prerequisites.length) return true;
+        
+        return config.prerequisites.every(prereqStep => {
+            const prereqConfig = STEP_CONFIG[prereqStep];
+            if (!prereqConfig) return true;
+            
+            if (prereqConfig.type === 'form') {
+                return prereqConfig.completionCheck(savedCharityInfo);
+            } else if (prereqConfig.type === 'section-choice' || prereqConfig.type === 'section-edit') {
+                return prereqConfig.completionCheck(savedOverrides);
+            } else {
+                return prereqConfig.completionCheck();
+            }
+        });
+    }, []);
+
+    // Scalable function to determine the correct step to return to based on completion
+    const getCorrectStepIndex = useCallback(() => {
+        const savedStepIndex = row?.onboarding_json?.progress?.stepIndex || 0;
+        const savedOverrides = row?.onboarding_json?.sectionOverrides || {};
+        const savedCharityInfo = row?.onboarding_json?.charityInfo || {};
+        
+        // If no saved progress, start from beginning
+        if (!savedStepIndex && !Object.keys(savedOverrides).length && !savedCharityInfo.charityName) {
+            return 0;
+        }
+        
+        // If user was on a high step, check if they can continue from there
+        if (savedStepIndex > 0) {
+            const currentStepKey = STEP_KEYS[savedStepIndex];
+            const config = STEP_CONFIG[currentStepKey];
+            
+            if (config) {
+                // Check if current step's prerequisites are met
+                if (arePrerequisitesMet(currentStepKey, savedOverrides, savedCharityInfo)) {
+                    // If prerequisites are met, allow them to continue from saved position
+                    return Math.min(savedStepIndex, STEP_KEYS.length - 1);
+                }
+            }
+        }
+        
+        // Find the first step where prerequisites are met but step is not completed
+        for (let i = 0; i < STEP_KEYS.length; i++) {
+            const stepKey = STEP_KEYS[i];
+            const config = STEP_CONFIG[stepKey];
+            
+            if (!config) continue;
+            
+            // Check if prerequisites are met
+            if (arePrerequisitesMet(stepKey, savedOverrides, savedCharityInfo)) {
+                // Check if step is completed
+                let isCompleted = false;
+                if (config.type === 'form') {
+                    isCompleted = config.completionCheck(savedCharityInfo);
+                } else if (config.type === 'section-choice' || config.type === 'section-edit') {
+                    isCompleted = config.completionCheck(savedOverrides);
+                } else {
+                    isCompleted = config.completionCheck();
+                }
+                
+                // If not completed, this is where they should be
+                if (!isCompleted) {
+                    return i;
+                }
+            }
+        }
+        
+        // If all steps are completed, return to review
+        return STEP_KEYS.length - 1;
+    }, [row?.onboarding_json, arePrerequisitesMet]);
+
     const [stepIndex, setStepIndex] = useState(() => {
-        // Restore step index from saved progress
-        return row?.onboarding_json?.progress?.stepIndex || 0;
+        // Use completion-based logic but respect user's progress
+        return getCorrectStepIndex();
     });
     const [currentExtraContentKey, setCurrentExtraContentKey] = useState(null);
     const [charityInfo, setCharityInfo] = useState(() => {
@@ -552,12 +703,35 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
     const stepKey = STEP_KEYS[stepIndex];
 
     // Auto-save progress when step changes
+    // Function to update status to in-progress when user starts onboarding
+    const updateStatusToInProgress = useCallback(async () => {
+        console.log('🔄 updateStatusToInProgress called:', { inviteToken: !!inviteToken, updateInvite: !!updateInvite, currentStatus: row?.status });
+        if (!inviteToken || !updateInvite || row?.status !== 'invited') {
+            console.log('❌ Status update skipped:', { inviteToken: !!inviteToken, updateInvite: !!updateInvite, currentStatus: row?.status });
+            return;
+        }
+        
+        try {
+            console.log('✅ Updating status to in_progress...');
+            await updateInvite({
+                status: 'in_progress'
+            });
+            console.log('✅ Status updated successfully to in_progress');
+        } catch (error) {
+            console.warn('❌ Failed to update invite status:', error);
+        }
+    }, [inviteToken, updateInvite, row?.status]);
+
     const saveProgress = useCallback(async (newStepIndex) => {
         if (!inviteToken || !updateInvite) return;
         
         setIsSaving(true);
         try {
+            // Update status to "in-progress" if it's still "invited" and user has started onboarding
+            const shouldUpdateStatus = row?.status === 'invited' && newStepIndex > 0;
+            
             await updateInvite({
+                ...(shouldUpdateStatus && { status: 'in_progress' }),
                 onboarding_json: {
                     ...row?.onboarding_json,
                     progress: {
@@ -575,10 +749,11 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         } finally {
             setIsSaving(false);
         }
-    }, [inviteToken, updateInvite, row?.onboarding_json, overridesBySection, charityInfo]);
+    }, [inviteToken, updateInvite, row?.onboarding_json, overridesBySection, charityInfo, row?.status]);
 
     const advance = (steps = 1) => {
         const newIndex = Math.min(stepIndex + steps, STEP_KEYS.length - 1);
+        console.log('🚀 Advance: Moving from step', stepIndex, 'to', newIndex, '(', STEP_KEYS[newIndex], ')');
         setStepIndex(newIndex);
         saveProgress(newIndex);
     };
@@ -757,6 +932,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         setSearchQuery(brand.name);
         setIsDropdownOpen(false);
         setShowAdditionalFields(true); // Show additional fields when brand is selected
+        // Update status to in-progress when user selects a charity
+        updateStatusToInProgress();
     };
 
     const handleEnterKey = () => {
@@ -765,6 +942,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
             setSearchResults([]);
             setIsDropdownOpen(false);
             setShowAdditionalFields(true); // Show additional fields when user presses enter
+            // Update status to in-progress when user starts filling out charity info
+            updateStatusToInProgress();
         }
     };
 
@@ -791,7 +970,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Restore saved section overrides when component loads
+    // Restore saved section overrides when component loads (only once)
     useEffect(() => {
         const savedOverrides = row?.onboarding_json?.sectionOverrides;
         if (savedOverrides && Object.keys(savedOverrides).length > 0) {
@@ -812,7 +991,50 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                 }
             });
         }
-    }, [row?.onboarding_json?.sectionOverrides, setVariant, setDisplay, setCopy]);
+    }, [setVariant, setDisplay, setCopy]);
+
+    // Separate effect for step restoration (only run once on mount)
+    useEffect(() => {
+        const correctStepIndex = getCorrectStepIndex();
+        
+        // Only update if the step index is different to prevent infinite loops
+        if (correctStepIndex !== stepIndex) {
+            // Debug: Show step completion status for all steps
+            const savedOverrides = row?.onboarding_json?.sectionOverrides || {};
+            const stepStatus = STEP_KEYS.map(stepKey => {
+                const config = STEP_CONFIG[stepKey];
+                if (!config) return { stepKey, status: 'no-config' };
+                
+                let isCompleted = false;
+                if (config.type === 'form') {
+                    isCompleted = config.completionCheck(row?.onboarding_json?.charityInfo);
+                } else if (config.type === 'section-choice' || config.type === 'section-edit') {
+                    isCompleted = config.completionCheck(savedOverrides);
+                } else {
+                    isCompleted = config.completionCheck();
+                }
+                
+                const prerequisitesMet = arePrerequisitesMet(stepKey, savedOverrides, row?.onboarding_json?.charityInfo);
+                
+                return {
+                    stepKey,
+                    type: config.type,
+                    isCompleted,
+                    prerequisitesMet,
+                    prerequisites: config.prerequisites
+                };
+            });
+
+            console.log('🔄 Onboarding step restoration (Scalable):', {
+                savedStepIndex: row?.onboarding_json?.progress?.stepIndex,
+                currentStepIndex: stepIndex,
+                correctStepIndex,
+                stepKey: STEP_KEYS[correctStepIndex],
+                stepStatus
+            });
+            setStepIndex(correctStepIndex);
+        }
+    }, []); // Only run once on mount
 
     // Auto-save when section overrides change (debounced)
     const saveTimeoutRef = useRef(null);
@@ -1207,9 +1429,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="hero"
-                                onPicked={() =>
-                                    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
-                                }
+                                onPicked={() => advance(1)}
                             />
                         </div>
                     )}
@@ -1258,7 +1478,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="extraPrizes"
-                                onPicked={() => setStepIndex((i) => i + 1)}
+                                onPicked={() => advance(1)}
                             />
 
                             {/* Skip section button */}
@@ -1305,7 +1525,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             />
 
                             {/* Skip section button */}
-                            <div className="flex justify-center">
+                            <div className="flex justify-start">
                                 <Button
                                     variant="outline"
                                     onClick={() => {
@@ -1335,7 +1555,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="winners"
-                                onPicked={() => setStepIndex((i) => i + 1)}
+                                onPicked={() => advance(1)}
                             />
                         </div>
                     )}
@@ -1598,6 +1818,7 @@ function VariantCarousel({ sectionKey, onPicked }) {
     if (variants.length === 0) return null;
 
     const choose = (key) => {
+        console.log('🎯 VariantCarousel: Choosing variant', { sectionKey, key });
         setVariant(sectionKey, key);
         onPicked?.(key);
     };

@@ -42,6 +42,21 @@ async function adminSoftDeleteInvite(token) {
     console.log('🗑️ Attempting to delete invite with token:', token);
     const adminClient = getAdminClient();
     
+    // First, let's check if the invite exists
+    const { data: existingInvite, error: fetchError } = await adminClient
+      .from('invites')
+      .select('*')
+      .eq('public_token', token)
+      .single();
+    
+    if (fetchError) {
+      console.error('❌ Error fetching invite:', fetchError);
+      throw fetchError;
+    }
+    
+    console.log('📋 Found invite:', existingInvite);
+    
+    // Now try to update it
     const { data, error } = await adminClient
       .from('invites')
       .update({

@@ -13,12 +13,24 @@ export function getAdminClient() {
       hasServiceKey: !!serviceKey,
       hasAnonKey: !!anonKey,
       hasUrl: !!url,
-      usingServiceKey: !!serviceKey
+      usingServiceKey: !!serviceKey,
+      serviceKeyPrefix: serviceKey ? serviceKey.substring(0, 20) + '...' : 'none'
     });
+    
+    // Use service key if available, otherwise fall back to anon key
+    const key = serviceKey || anonKey;
     
     adminClient = createClient(
       url,
-      serviceKey || anonKey
+      key,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+          // When using service key, we don't need to authenticate
+          ...(serviceKey ? {} : {})
+        }
+      }
     );
   }
   return adminClient;
