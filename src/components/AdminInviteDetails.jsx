@@ -14,8 +14,28 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
   if (!invite) return null;
 
   const charityInfo = invite.onboarding_json?.charityInfo || {};
-  const overrides = invite.overrides_json || {};
-  const images = invite.images_json || {};
+
+  // For overrides: check overrides_json first, fallback to onboarding_json.sectionOverrides
+  const overrides = invite.overrides_json && Object.keys(invite.overrides_json).length > 0
+    ? invite.overrides_json
+    : invite.onboarding_json?.sectionOverrides || {};
+
+  // For images: check images_json first, fallback to onboarding_json images
+  const images = invite.images_json && Object.keys(invite.images_json).length > 0
+    ? invite.images_json
+    : invite.onboarding_json?.images || {};
+
+  // Debug logging to help troubleshoot data sources
+  console.log('📊 Admin details data sources:', {
+    hasOverridesJson: !!(invite.overrides_json && Object.keys(invite.overrides_json).length > 0),
+    hasOnboardingSectionOverrides: !!(invite.onboarding_json?.sectionOverrides && Object.keys(invite.onboarding_json.sectionOverrides).length > 0),
+    hasImagesJson: !!(invite.images_json && Object.keys(invite.images_json).length > 0),
+    hasOnboardingImages: !!(invite.onboarding_json?.images && Object.keys(invite.onboarding_json.images).length > 0),
+    usingOverrides: overrides === invite.overrides_json ? 'overrides_json' : 'onboarding_json.sectionOverrides',
+    usingImages: images === invite.images_json ? 'images_json' : 'onboarding_json.images',
+    sectionsFound: Object.keys(overrides),
+    imagesFound: Object.keys(images)
+  });
 
   // Use user-provided charity name from onboarding if available, otherwise fall back to production name
   const getCharityName = () => {
