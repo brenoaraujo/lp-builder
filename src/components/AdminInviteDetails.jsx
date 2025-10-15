@@ -80,18 +80,36 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
   };
 
   const renderSectionAccordion = (sectionKey, sectionData) => {
-    // Images are stored with IDs like "hero-image", "feature-image", etc.
+    // Images are stored with IDs like "hero-image-1760553768983.jpeg" (with timestamps)
     // We need to find all images that belong to this section
     const sectionImages = {};
+    
+    // Convert section key to kebab-case for matching
+    // e.g., "whoYouHelp" -> "who-you-help"
+    const kebabSectionKey = sectionKey.replace(/([A-Z])/g, '-$1').toLowerCase();
+    
     Object.entries(images).forEach(([imageId, imageUrl]) => {
-      if (imageId.includes(sectionKey.toLowerCase()) || 
-          (sectionKey === 'hero' && imageId === 'hero-image') ||
-          (sectionKey === 'feature' && imageId === 'feature-image') ||
-          (sectionKey === 'winners' && imageId.startsWith('winner')) ||
-          (sectionKey === 'whoYouHelp' && imageId === 'who-you-help-image')) {
+      // Normalize imageId by removing timestamps and extensions for comparison
+      const normalizedImageId = imageId.toLowerCase();
+      
+      // Check if the normalized imageId contains the kebab-case section key
+      if (normalizedImageId.includes(kebabSectionKey) || 
+          normalizedImageId.includes(sectionKey.toLowerCase()) ||
+          // Specific section matches
+          (sectionKey === 'hero' && normalizedImageId.startsWith('hero-image')) ||
+          (sectionKey === 'feature' && normalizedImageId.startsWith('feature-image')) ||
+          (sectionKey === 'extraPrizes' && normalizedImageId.includes('extra-prize')) ||
+          (sectionKey === 'winners' && normalizedImageId.startsWith('winner')) ||
+          (sectionKey === 'whoYouHelp' && normalizedImageId.includes('who-you-help'))) {
         sectionImages[imageId] = imageUrl;
       }
     });
+    
+    // Debug logging to help troubleshoot image matching
+    if (Object.keys(images).length > 0) {
+      console.log('📸 Images in invite:', Object.keys(images));
+      console.log('🔍 Matching images for section:', sectionKey, '→', Object.keys(sectionImages));
+    }
     
     return (
       <AccordionItem key={sectionKey} value={sectionKey}>
