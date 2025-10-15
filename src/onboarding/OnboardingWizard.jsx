@@ -1429,7 +1429,10 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="hero"
-                                onPicked={() => advance(1)}
+                                onPicked={() => {
+                                    // Give React time to update state
+                                    setTimeout(() => advance(1), 0);
+                                }}
                             />
                         </div>
                     )}
@@ -1478,7 +1481,10 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="extraPrizes"
-                                onPicked={() => advance(1)}
+                                onPicked={() => {
+                                    // Give React time to update state
+                                    setTimeout(() => advance(1), 0);
+                                }}
                             />
 
                             {/* Skip section button */}
@@ -1555,7 +1561,10 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="winners"
-                                onPicked={() => advance(1)}
+                                onPicked={() => {
+                                    // Give React time to update state
+                                    setTimeout(() => advance(1), 0);
+                                }}
                             />
                         </div>
                     )}
