@@ -2,8 +2,11 @@
 ALTER TABLE invites 
 ADD COLUMN IF NOT EXISTS images_json jsonb DEFAULT '{}'::jsonb;
 
+-- Drop and recreate the view to avoid column order conflicts
+DROP VIEW IF EXISTS invites_public;
+
 -- Update the invites_public view to include the new column
-CREATE OR REPLACE VIEW invites_public AS
+CREATE VIEW invites_public AS
 SELECT 
   public_token,
   status,
@@ -17,3 +20,7 @@ SELECT
   updated_at
 FROM invites
 WHERE is_deleted = false;
+
+-- Grant access to the view
+GRANT SELECT ON invites_public TO anon;
+GRANT SELECT ON invites_public TO authenticated;
