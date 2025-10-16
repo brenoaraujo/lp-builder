@@ -629,16 +629,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         const savedOverrides = row?.onboarding_json?.sectionOverrides || {};
         const savedCharityInfo = row?.onboarding_json?.charityInfo || {};
         
-        console.log('🔍 getCorrectStepIndex called with:', {
-            savedStepIndex,
-            savedOverridesKeys: Object.keys(savedOverrides),
-            savedCharityInfoKeys: Object.keys(savedCharityInfo),
-            hasCharityName: !!savedCharityInfo.charityName
-        });
-        
         // If no saved progress, start from beginning
         if (!savedStepIndex && !Object.keys(savedOverrides).length && !savedCharityInfo.charityName) {
-            console.log('📍 No saved progress, starting from beginning (step 0)');
             return 0;
         }
         
@@ -647,31 +639,16 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
             const currentStepKey = STEP_KEYS[savedStepIndex];
             const config = STEP_CONFIG[currentStepKey];
             
-            console.log('📍 Checking if can continue from saved step:', {
-                savedStepIndex,
-                currentStepKey,
-                hasConfig: !!config
-            });
-            
             if (config) {
                 // Check if current step's prerequisites are met
-                const prereqsMet = arePrerequisitesMet(currentStepKey, savedOverrides, savedCharityInfo);
-                console.log('📍 Prerequisites for saved step:', {
-                    stepKey: currentStepKey,
-                    prereqsMet
-                });
-                
-                if (prereqsMet) {
+                if (arePrerequisitesMet(currentStepKey, savedOverrides, savedCharityInfo)) {
                     // If prerequisites are met, allow them to continue from saved position
-                    const result = Math.min(savedStepIndex, STEP_KEYS.length - 1);
-                    console.log('📍 Continuing from saved step:', result);
-                    return result;
+                    return Math.min(savedStepIndex, STEP_KEYS.length - 1);
                 }
             }
         }
         
         // Find the first step where prerequisites are met but step is not completed
-        console.log('📍 Finding first incomplete step...');
         for (let i = 0; i < STEP_KEYS.length; i++) {
             const stepKey = STEP_KEYS[i];
             const config = STEP_CONFIG[stepKey];
@@ -679,8 +656,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
             if (!config) continue;
             
             // Check if prerequisites are met
-            const prereqsMet = arePrerequisitesMet(stepKey, savedOverrides, savedCharityInfo);
-            if (prereqsMet) {
+            if (arePrerequisitesMet(stepKey, savedOverrides, savedCharityInfo)) {
                 // Check if step is completed
                 let isCompleted = false;
                 if (config.type === 'form') {
@@ -691,24 +667,14 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     isCompleted = config.completionCheck();
                 }
                 
-                console.log('📍 Step analysis:', {
-                    stepIndex: i,
-                    stepKey,
-                    type: config.type,
-                    prereqsMet,
-                    isCompleted
-                });
-                
                 // If not completed, this is where they should be
                 if (!isCompleted) {
-                    console.log('📍 Found first incomplete step:', i, stepKey);
                     return i;
                 }
             }
         }
         
         // If all steps are completed, return to review
-        console.log('📍 All steps completed, returning to review');
         return STEP_KEYS.length - 1;
     }, [row?.onboarding_json, arePrerequisitesMet]);
 
@@ -730,24 +696,23 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         };
     });
     const [isSaving, setIsSaving] = useState(false);
-    
-    // Refs to prevent infinite loops during restoration
-    const hasRestoredOverridesRef = useRef(false);
-    const isRestoringRef = useRef(true);
-    
     const stepKey = STEP_KEYS[stepIndex];
 
     // Auto-save progress when step changes
     // Function to update status to in-progress when user starts onboarding
     const updateStatusToInProgress = useCallback(async () => {
+        console.log('🔄 updateStatusToInProgress called:', { inviteToken: !!inviteToken, updateInvite: !!updateInvite, currentStatus: row?.status });
         if (!inviteToken || !updateInvite || row?.status !== 'invited') {
-            return; // Skip if already in progress or other status
+            console.log('❌ Status update skipped:', { inviteToken: !!inviteToken, updateInvite: !!updateInvite, currentStatus: row?.status });
+            return;
         }
         
         try {
+            console.log('✅ Updating status to in_progress...');
             await updateInvite({
                 status: 'in_progress'
             });
+            console.log('✅ Status updated successfully to in_progress');
         } catch (error) {
             console.warn('❌ Failed to update invite status:', error);
         }
@@ -756,19 +721,12 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
     const saveProgress = useCallback(async (newStepIndex) => {
         if (!inviteToken || !updateInvite) return;
         
-        console.log('💾 saveProgress called with:', {
-            newStepIndex,
-            overridesBySection: Object.keys(overridesBySection),
-            charityInfo: Object.keys(charityInfo),
-            currentStatus: row?.status
-        });
-        
         setIsSaving(true);
         try {
             // Update status to "in-progress" if it's still "invited" and user has started onboarding
             const shouldUpdateStatus = row?.status === 'invited' && newStepIndex > 0;
             
-            const dataToSave = {
+            await updateInvite({
                 ...(shouldUpdateStatus && { status: 'in_progress' }),
                 onboarding_json: {
                     ...row?.onboarding_json,
@@ -781,19 +739,9 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     // Save charity info
                     charityInfo: charityInfo
                 }
-            };
-            
-            console.log('💾 Saving data:', {
-                shouldUpdateStatus,
-                stepIndex: newStepIndex,
-                sectionOverrides: Object.keys(overridesBySection),
-                charityInfoKeys: Object.keys(charityInfo)
             });
-            
-            await updateInvite(dataToSave);
-            console.log('✅ Progress saved successfully');
         } catch (error) {
-            console.warn('❌ Failed to save onboarding progress:', error);
+            console.warn('Failed to save onboarding progress:', error);
         } finally {
             setIsSaving(false);
         }
@@ -803,7 +751,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         const newIndex = Math.min(stepIndex + steps, STEP_KEYS.length - 1);
         console.log('🚀 Advance: Moving from step', stepIndex, 'to', newIndex, '(', STEP_KEYS[newIndex], ')');
         setStepIndex(newIndex);
-        // Note: Removed saveProgress call - let debounced auto-save handle it after context updates
+        saveProgress(newIndex);
     };
 
     // Simple raffle type check
@@ -842,59 +790,11 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Restore saved section overrides when component loads (only once)
-    useEffect(() => {
-        // Only restore once
-        if (hasRestoredOverridesRef.current) return;
-        
-        const savedOverrides = row?.onboarding_json?.sectionOverrides;
-        if (savedOverrides && Object.keys(savedOverrides).length > 0) {
-            console.log('🔄 Restoring saved overrides:', Object.keys(savedOverrides));
-            
-            // Batch all state updates together
-            Object.entries(savedOverrides).forEach(([sectionKey, sectionData]) => {
-                if (sectionData.variant) {
-                    setVariant(sectionKey, sectionData.variant);
-                }
-                if (sectionData.display) {
-                    Object.entries(sectionData.display).forEach(([partId, visible]) => {
-                        setDisplay(sectionKey, partId, visible);
-                    });
-                }
-                if (sectionData.copy) {
-                    Object.entries(sectionData.copy).forEach(([partId, text]) => {
-                        setCopy(sectionKey, partId, text);
-                    });
-                }
-            });
-            
-            hasRestoredOverridesRef.current = true;
-            console.log('✅ Overrides restored');
-            
-            // Mark restoration as complete after a short delay
-            setTimeout(() => {
-                isRestoringRef.current = false;
-                console.log('✅ Restoration complete, auto-save enabled');
-            }, 100);
-        } else {
-            // No data to restore, enable auto-save immediately
-            isRestoringRef.current = false;
-            console.log('✅ No overrides to restore, auto-save enabled');
-        }
-    }, []); // Empty dependency array - only run on mount
+    // Note: Section overrides restoration is now handled by BuilderOverridesContext
+    // which initializes from onboarding_json.sectionOverrides when skipSync=true
 
     // Separate effect for step restoration (only run once on mount)
     useEffect(() => {
-        console.log('🔍 Starting step restoration analysis...');
-        console.log('📊 Raw data from database:', {
-            row: row ? 'exists' : 'null',
-            onboarding_json: row?.onboarding_json ? 'exists' : 'null',
-            sectionOverrides: row?.onboarding_json?.sectionOverrides ? Object.keys(row.onboarding_json.sectionOverrides) : 'none',
-            charityInfo: row?.onboarding_json?.charityInfo ? Object.keys(row.onboarding_json.charityInfo) : 'none',
-            progress: row?.onboarding_json?.progress ? row.onboarding_json.progress : 'none',
-            currentStepIndex: stepIndex
-        });
-        
         const correctStepIndex = getCorrectStepIndex();
         
         // Only update if the step index is different to prevent infinite loops
@@ -930,30 +830,15 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                 currentStepIndex: stepIndex,
                 correctStepIndex,
                 stepKey: STEP_KEYS[correctStepIndex],
-                stepStatus: stepStatus.map(s => ({
-                    step: s.stepKey,
-                    type: s.type,
-                    completed: s.isCompleted,
-                    prereqsMet: s.prerequisitesMet,
-                    prereqs: s.prerequisites
-                }))
+                stepStatus
             });
-            console.log('🚀 Updating step index from', stepIndex, 'to', correctStepIndex);
             setStepIndex(correctStepIndex);
-        } else {
-            console.log('✅ Step index is already correct:', stepIndex);
         }
     }, []); // Only run once on mount
 
     // Auto-save when section overrides change (debounced)
     const saveTimeoutRef = useRef(null);
     useEffect(() => {
-        // Skip auto-save during restoration
-        if (isRestoringRef.current) {
-            console.log('⏸️ Auto-save skipped during restoration');
-            return;
-        }
-        
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
         }
@@ -962,7 +847,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
             if (Object.keys(overridesBySection).length > 0) {
                 saveProgress(stepIndex);
             }
-        }, 1000); // 1 second debounce for overrides changes
+        }, 2000); // 2 second debounce for overrides changes
         
         return () => {
             if (saveTimeoutRef.current) {
@@ -989,6 +874,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     ...row?.onboarding_json,
                     charityInfo: charityInfo
                 },
+                // IMPORTANT: Copy section overrides to overrides_json for main app
+                overrides_json: overridesBySection,
                 status: 'submitted'
             });
             
@@ -1149,7 +1036,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                 <Input
                                                     id="ascendEmail"
                                                     type="email"
-                                                    placeholder="representative@ascendfs.com"
+                                                    placeholder="representative@charity.com"
                                                     value={charityInfo.ascendEmail || ""}
                                                     onChange={(e) => setCharityInfo(prev => ({ ...prev, ascendEmail: e.target.value }))}
                                                 />
@@ -1291,12 +1178,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             <VariantCarousel
                                 sectionKey="hero"
                                 onPicked={() => {
-                                    console.log('🎯 Hero variant selected, scheduling advance...');
                                     // Give React time to update state
-                                    setTimeout(() => {
-                                        console.log('🎯 Hero variant advance executing...');
-                                        advance(1);
-                                    }, 0);
+                                    setTimeout(() => advance(1), 0);
                                 }}
                             />
                         </div>
@@ -1324,11 +1207,9 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                     onImageChange={updateImage}
                                     images={images}
                                     raffleType={charityInfo.raffleType}
-                                    onSaveNext={() => {
-                                        const newIndex = Math.min(stepIndex + 1, STEP_KEYS.length - 1);
-                                        setStepIndex(newIndex);
-                                        saveProgress(newIndex);
-                                    }}
+                                    onSaveNext={() =>
+                                        setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
+                                    }
                                 />
                             </div>
                         </div>
@@ -1392,11 +1273,9 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 onImageChange={updateImage}
                                 images={images}
                                 raffleType={charityInfo.raffleType}
-                                onSaveNext={() => {
-                                    const newIndex = Math.min(stepIndex + 1, STEP_KEYS.length - 1);
-                                    setStepIndex(newIndex);
-                                    saveProgress(newIndex);
-                                }}
+                                onSaveNext={() =>
+                                    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
+                                }
                             />
 
                             {/* Skip section button */}
@@ -1459,11 +1338,9 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 onImageChange={updateImage}
                                 images={images}
                                 raffleType={charityInfo.raffleType}
-                                onSaveNext={() => {
-                                    const newIndex = Math.min(stepIndex + 1, STEP_KEYS.length - 1);
-                                    setStepIndex(newIndex);
-                                    saveProgress(newIndex);
-                                }}
+                                onSaveNext={() =>
+                                    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
+                                }
                             />
                         </div>
                     )}
@@ -1602,11 +1479,9 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 onImageChange={updateImage}
                                 images={images}
                                 raffleType={charityInfo.raffleType}
-                                onSaveNext={() => {
-                                    const newIndex = Math.min(stepIndex + 1, STEP_KEYS.length - 1);
-                                    setStepIndex(newIndex);
-                                    saveProgress(newIndex);
-                                }}
+                                onSaveNext={() =>
+                                    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
+                                }
                             />
                         </div>
                     )}
@@ -1700,14 +1575,7 @@ function VariantCarousel({ sectionKey, onPicked }) {
     if (variants.length === 0) return null;
 
     const choose = (key) => {
-        console.log('🎯 VariantCarousel: Choosing variant', { sectionKey, key, currentActive: active });
-        
-        // Don't re-select if already selected
-        if (active === key) {
-            console.log('⏭️ Already selected, skipping');
-            return;
-        }
-        
+        console.log('🎯 VariantCarousel: Choosing variant', { sectionKey, key });
         setVariant(sectionKey, key);
         onPicked?.(key);
     };

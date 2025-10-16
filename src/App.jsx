@@ -1963,6 +1963,8 @@ export function AppRouterShell() {
               inviteToken={inviteToken} 
               inviteRow={inviteRow} 
               onUpdateInvite={updateInvite}
+              skipAutoSave={true}
+              skipSync={true}
             >
               <OnboardingWizard 
                 inviteToken={inviteToken} 
