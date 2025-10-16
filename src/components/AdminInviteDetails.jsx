@@ -57,7 +57,7 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
 
   const downloadImage = (imageUrl, filename) => {
     if (!imageUrl) return;
-    
+
     const link = document.createElement('a');
     link.href = imageUrl;
     link.download = filename || 'image';
@@ -85,12 +85,12 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
   const renderColorSwatch = (color) => {
     if (!color) return null;
     return (
-      <div 
+      <div
         className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
         onClick={() => copyToClipboard(color, 'Color')}
       >
-        <div 
-          className="w-4 h-4 rounded border" 
+        <div
+          className="w-4 h-4 rounded border"
           style={{ backgroundColor: color }}
         />
         <span className="text-sm font-mono">{color}</span>
@@ -103,34 +103,34 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
     // Images are stored with IDs like "hero-image-1760553768983.jpeg" (with timestamps)
     // We need to find all images that belong to this section
     const sectionImages = {};
-    
+
     // Convert section key to kebab-case for matching
     // e.g., "whoYouHelp" -> "who-you-help"
     const kebabSectionKey = sectionKey.replace(/([A-Z])/g, '-$1').toLowerCase();
-    
+
     Object.entries(images).forEach(([imageId, imageUrl]) => {
       // Normalize imageId by removing timestamps and extensions for comparison
       const normalizedImageId = imageId.toLowerCase();
-      
+
       // Check if the normalized imageId contains the kebab-case section key
-      if (normalizedImageId.includes(kebabSectionKey) || 
-          normalizedImageId.includes(sectionKey.toLowerCase()) ||
-          // Specific section matches
-          (sectionKey === 'hero' && normalizedImageId.startsWith('hero-image')) ||
-          (sectionKey === 'feature' && normalizedImageId.startsWith('feature-image')) ||
-          (sectionKey === 'extraPrizes' && normalizedImageId.includes('extra-prize')) ||
-          (sectionKey === 'winners' && normalizedImageId.startsWith('winner')) ||
-          (sectionKey === 'whoYouHelp' && normalizedImageId.includes('who-you-help'))) {
+      if (normalizedImageId.includes(kebabSectionKey) ||
+        normalizedImageId.includes(sectionKey.toLowerCase()) ||
+        // Specific section matches
+        (sectionKey === 'hero' && normalizedImageId.startsWith('hero-image')) ||
+        (sectionKey === 'feature' && normalizedImageId.startsWith('feature-image')) ||
+        (sectionKey === 'extraPrizes' && normalizedImageId.includes('extra-prize')) ||
+        (sectionKey === 'winners' && normalizedImageId.startsWith('winner')) ||
+        (sectionKey === 'whoYouHelp' && normalizedImageId.includes('who-you-help'))) {
         sectionImages[imageId] = imageUrl;
       }
     });
-    
+
     // Debug logging to help troubleshoot image matching
     if (Object.keys(images).length > 0) {
       console.log('📸 Images in invite:', Object.keys(images));
       console.log('🔍 Matching images for section:', sectionKey, '→', Object.keys(sectionImages));
     }
-    
+
     return (
       <AccordionItem key={sectionKey} value={sectionKey}>
         <AccordionTrigger className="text-left">
@@ -146,7 +146,7 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
             <TableBody>
               {/* Layout */}
               <TableRow>
-                <TableHead className="w-1/3">Layout</TableHead>
+                <TableHead className="w-[160px]">Layout</TableHead>
                 <TableCell>{getVariantLabel(sectionData.variant)}</TableCell>
               </TableRow>
 
@@ -154,7 +154,7 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
               {sectionData.copy && Object.entries(sectionData.copy)
                 .filter(([key]) => !key.includes('action'))
                 .map(([key, value]) => (
-                  <TableRow 
+                  <TableRow
                     key={key}
                     className={value ? "cursor-pointer hover:bg-muted/50" : ""}
                     onClick={value ? () => copyToClipboard(value, key.replace(/([A-Z])/g, ' $1').trim()) : undefined}
@@ -198,7 +198,7 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
               ))}
 
               {/* Theme Colors */}
-              {sectionData.theme?.enabled && sectionData.theme?.values && 
+              {sectionData.theme?.enabled && sectionData.theme?.values &&
                 Object.entries(sectionData.theme.values).map(([key, value]) => (
                   <TableRow key={key}>
                     <TableHead className="capitalize">
@@ -218,9 +218,9 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                   </TableHead>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <img 
-                        src={imageUrl} 
-                        alt={imageKey} 
+                      <img
+                        src={imageUrl}
+                        alt={imageKey}
                         className="w-12 h-12 object-cover border rounded"
                       />
                       <Button
@@ -248,81 +248,57 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
         {/* Custom SheetContent without backdrop */}
         <SheetPrimitive.Content
           className={cn(
-            "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+            "fixed z-50 gap-4 w-[620px] bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
             "inset-y-0 right-0 h-full border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
           )}
           style={{ maxWidth: '620px', minWidth: '390px' }}
         >
-          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </SheetPrimitive.Close>
-        <SheetHeader>
-          <SheetTitle className="text-xl">{getCharityName()}</SheetTitle>
-        </SheetHeader>
-        
-        <ScrollArea className="h-[calc(100vh-120px)]">
-          <div className="p-6">
-            <Accordion type="multiple" defaultValue={["details"]} className="space-y-2">
-            {/* Details Section */}
-            <AccordionItem value="details">
-              <AccordionTrigger>Details</AccordionTrigger>
-              <AccordionContent>
-                <Table>
-                  <TableBody>
-                    <TableRow>
-                      <TableHead className="w-1/3">Charity Name</TableHead>
-                      <TableCell>{getCharityName()}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Status</TableHead>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(invite.status)}>
-                          {invite.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => copyToClipboard(charityInfo.submitterName || invite.contact_name, 'Contact Name')}
-                    >
-                      <TableHead>Contact Name</TableHead>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span>{charityInfo.submitterName || invite.contact_name}</span>
-                          <Copy className="w-3 h-3 text-muted-foreground" />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => copyToClipboard(invite.contact_email, 'Contact Email')}
-                    >
-                      <TableHead>Contact Email</TableHead>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span>{invite.contact_email}</span>
-                          <Copy className="w-3 h-3 text-muted-foreground" />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Raffle Type</TableHead>
-                      <TableCell>{charityInfo.raffleType || 'Not specified'}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Ascend Representative</TableHead>
-                      <TableCell>{charityInfo.ascendRepresentative || 'Not specified'}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Charity Website</TableHead>
-                      <TableCell className="break-all">{charityInfo.charitySite || 'Not provided'}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Campaign Launch Date</TableHead>
-                      <TableCell>{charityInfo.campaignLaunchDate || 'Not specified'}</TableCell>
-                    </TableRow>
-                    <TableRow>
+          <div className="flex  justify-between">
+
+            <SheetHeader>
+              <SheetTitle className="text-xl mb-0">{getCharityName()}</SheetTitle>
+              <p className="text-sm text-muted-foreground">{charityInfo.charitySite || 'Not provided'}</p>
+            </SheetHeader>
+            <SheetPrimitive.Close className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </SheetPrimitive.Close>
+          </div>
+
+          <ScrollArea className="h-[calc(100vh-120px)]">
+            <div className="py-6">
+              <Accordion type="multiple" defaultValue={[]} className="space-y-2">
+                {/* Invite Section */}
+                <AccordionItem value="invite">
+                  <AccordionTrigger>Invite</AccordionTrigger>
+                  <AccordionContent>
+                    <Table>
+                      <TableBody>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => copyToClipboard(charityInfo.submitterName || invite.contact_name, 'Contact Name')}
+                        >
+                          <TableHead className="w-[160px]">Contact Name</TableHead>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span>{charityInfo.submitterName || invite.contact_name}</span>
+                              <Copy className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => copyToClipboard(invite.contact_email, 'Contact Email')}
+                        >
+                          <TableHead>Contact Email</TableHead>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span>{invite.contact_email}</span>
+                              <Copy className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        {/*<TableRow>
                       <TableHead>Invite Token</TableHead>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -338,83 +314,141 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                           </Button>
                         </div>
                       </TableCell>
-                    </TableRow>
-                    {charityInfo.charityLogo && (
-                      <TableRow>
-                        <TableHead>Charity Logo</TableHead>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <img 
-                              src={charityInfo.charityLogo} 
-                              alt="Charity Logo" 
-                              className="w-16 h-16 object-contain border rounded"
-                            />
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => downloadImage(charityInfo.charityLogo, 'charity-logo')}
-                            >
-                              <Download className="w-3 h-3 mr-1" />
-                              Download
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    <TableRow>
-                      <TableHead>Created</TableHead>
-                      <TableCell>{formatDate(invite.created_at)}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead>Last Updated</TableHead>
-                      <TableCell>{formatDate(invite.updated_at)}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </AccordionContent>
-            </AccordionItem>
+                    </TableRow>*/}
+                        <TableRow>
+                          <TableHead>Created</TableHead>
+                          <TableCell>{formatDate(invite.created_at)}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableHead>Last Updated</TableHead>
+                          <TableCell>{formatDate(invite.updated_at)}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </AccordionContent>
+                </AccordionItem>
 
-            {/* Section Accordions */}
-            {Object.entries(overrides).map(([sectionKey, sectionData]) => 
-              renderSectionAccordion(sectionKey, sectionData)
-            )}
+                {/* Charity Section */}
+                <AccordionItem value="charity">
+                  <AccordionTrigger>Logo</AccordionTrigger>
+                  <AccordionContent>
+                    <Table>
+                      <TableBody>
 
-            {/* Global Theme */}
-            {invite.theme_json && (
-              <AccordionItem value="theme">
-                <AccordionTrigger>Global Theme</AccordionTrigger>
-                <AccordionContent>
-                  <Table>
-                    <TableBody>
-                      {/* Colors */}
-                      {invite.theme_json.colors && Object.entries(invite.theme_json.colors).map(([key, value]) => (
-                        <TableRow key={key}>
-                          <TableHead className="capitalize">
-                            {key.replace(/([A-Z])/g, ' $1').trim()} Color
-                          </TableHead>
+                        {charityInfo.charityLogo && (
+                          <TableRow>
+
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={charityInfo.charityLogo}
+                                  alt="Charity Logo"
+                                  className="w-16 h-16 object-contain border rounded"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => downloadImage(charityInfo.charityLogo, 'charity-logo')}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Download
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Campaign Section */}
+                <AccordionItem value="campaign">
+                  <AccordionTrigger>Campaign</AccordionTrigger>
+                  <AccordionContent>
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <TableHead className="w-[160px]">Status</TableHead>
                           <TableCell>
-                            {renderColorSwatch(value)}
+                            <Badge variant={getStatusVariant(invite.status)}>
+                              {invite.status}
+                            </Badge>
                           </TableCell>
                         </TableRow>
-                      ))}
-                      
-                      {/* Fonts */}
-                      {invite.theme_json.fonts && Object.entries(invite.theme_json.fonts).map(([key, value]) => (
-                        <TableRow key={key}>
-                          <TableHead className="capitalize">
-                            {key.replace(/([A-Z])/g, ' $1').trim()} Font
-                          </TableHead>
-                          <TableCell>{value || 'Default'}</TableCell>
+                        <TableRow>
+                          <TableHead>Raffle Type</TableHead>
+                          <TableCell>{charityInfo.raffleType || 'Not specified'}</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </AccordionContent>
-              </AccordionItem>
-            )}
-          </Accordion>
-        </div>
-        </ScrollArea>
+                        <TableRow>
+                          <TableHead>Launch Date</TableHead>
+                          <TableCell>{charityInfo.campaignLaunchDate || 'Not specified'}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Ascend Representative Section */}
+                <AccordionItem value="ascend">
+                  <AccordionTrigger>Ascend Client Services Representative</AccordionTrigger>
+                  <AccordionContent>
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <TableHead className="w-[160px]">Name</TableHead>
+                          <TableCell>{charityInfo.ascendRepresentative || 'Not specified'}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableHead>Email</TableHead>
+                          <TableCell>{charityInfo.ascendEmail || 'Not specified'}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Section Accordions */}
+                {Object.entries(overrides).map(([sectionKey, sectionData]) =>
+                  renderSectionAccordion(sectionKey, sectionData)
+                )}
+
+                {/* Global Theme */}
+                {invite.theme_json && (
+                  <AccordionItem value="theme">
+                    <AccordionTrigger>Global Theme</AccordionTrigger>
+                    <AccordionContent>
+                      <Table>
+                        <TableBody>
+                          {/* Colors */}
+                          {invite.theme_json.colors && Object.entries(invite.theme_json.colors).map(([key, value]) => (
+                            <TableRow key={key}>
+                              <TableHead className="capitalize">
+                                {key.replace(/([A-Z])/g, ' $1').trim()} Color
+                              </TableHead>
+                              <TableCell>
+                                {renderColorSwatch(value)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+
+                          {/* Fonts */}
+                          {invite.theme_json.fonts && Object.entries(invite.theme_json.fonts).map(([key, value]) => (
+                            <TableRow key={key}>
+                              <TableHead className="capitalize">
+                                {key.replace(/([A-Z])/g, ' $1').trim()} Font
+                              </TableHead>
+                              <TableCell>{value || 'Default'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+              </Accordion>
+            </div>
+          </ScrollArea>
         </SheetPrimitive.Content>
       </SheetPortal>
     </Sheet>

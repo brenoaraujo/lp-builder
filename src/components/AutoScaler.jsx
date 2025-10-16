@@ -16,7 +16,7 @@ export default function AutoScaler({
     if (!innerRef.current) return;
     const fullHeight = innerRef.current.scrollHeight;
     setScaledHeight(Math.min(Math.ceil(fullHeight * scale), maxHeight));
-  }, [scale, children]);
+  }, [scale, maxHeight]);
 
   // Recalculate if inner content resizes
   useEffect(() => {

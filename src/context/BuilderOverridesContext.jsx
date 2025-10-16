@@ -48,59 +48,109 @@ export function BuilderOverridesProvider({ children, inviteToken, inviteRow, onU
     };
   }, []);
 
-  const api = useMemo(() => ({
-    overridesBySection,
-    setSection: (key, next) =>
-      setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), ...next } })),
-    setCopy: (key, label, value) =>
-      setOverridesBySection(prev => ({
-        ...prev,
-        [key]: { ...(prev[key] || {}), copy: { ...(prev[key]?.copy || {}), [label]: value } }
-      })),
-    setDisplay: (key, label, value) =>
-      setOverridesBySection(prev => ({
-        ...prev,
-        [key]: { ...(prev[key] || {}), display: { ...(prev[key]?.display || {}), [label]: value } }
-      })),
-    setVariant: (key, variant) =>
-      setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), variant } })),
-    setVisible: (key, visible) =>
-      setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), visible } })),
-    setTheme: (key, themeOverrides) =>
-      setOverridesBySection(prev => ({
-        ...prev,
-        [key]: { 
-          ...(prev[key] || {}), 
-          theme: themeOverrides 
-        }
-      })),
-    addExtraContentSection: () => {
-      const existingKeys = Object.keys(overridesBySection).filter(key => key.startsWith('extraContent_'));
+  // Individual useCallback hooks to prevent unnecessary recreation
+  const setSection = useCallback((key, next) =>
+    setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), ...next } })),
+    []
+  );
+
+  const setCopy = useCallback((key, label, value) =>
+    setOverridesBySection(prev => ({
+      ...prev,
+      [key]: { ...(prev[key] || {}), copy: { ...(prev[key]?.copy || {}), [label]: value } }
+    })),
+    []
+  );
+
+  const setDisplay = useCallback((key, label, value) =>
+    setOverridesBySection(prev => ({
+      ...prev,
+      [key]: { ...(prev[key] || {}), display: { ...(prev[key]?.display || {}), [label]: value } }
+    })),
+    []
+  );
+
+  const setVariant = useCallback((key, variant) =>
+    setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), variant } })),
+    []
+  );
+
+  const setVisible = useCallback((key, visible) =>
+    setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), visible } })),
+    []
+  );
+
+  const setTheme = useCallback((key, themeOverrides) =>
+    setOverridesBySection(prev => ({
+      ...prev,
+      [key]: { 
+        ...(prev[key] || {}), 
+        theme: themeOverrides 
+      }
+    })),
+    []
+  );
+
+  const addExtraContentSection = useCallback(() => {
+    setOverridesBySection(prev => {
+      const existingKeys = Object.keys(prev).filter(key => key.startsWith('extraContent_'));
       const nextIndex = existingKeys.length + 1;
       const newKey = `extraContent_${nextIndex}`;
-      setOverridesBySection(prev => ({
+      return {
         ...prev,
         [newKey]: { visible: true, variant: 'A', copy: {}, display: {} }
-      }));
-      return newKey;
-    },
-    removeExtraContentSection: (key) => {
-      setOverridesBySection(prev => {
-        const { [key]: removed, ...rest } = prev;
-        return rest;
+      };
+    });
+    // Return the key by reading from state after update
+    const existingKeys = Object.keys(overridesBySection).filter(key => key.startsWith('extraContent_'));
+    const nextIndex = existingKeys.length + 1;
+    return `extraContent_${nextIndex}`;
+  }, [overridesBySection]);
+
+  const removeExtraContentSection = useCallback((key) => {
+    setOverridesBySection(prev => {
+      const { [key]: removed, ...rest } = prev;
+      return rest;
+    });
+  }, []);
+
+  const getExtraContentSections = useCallback(() => {
+    return Object.keys(overridesBySection)
+      .filter(key => key.startsWith('extraContent_'))
+      .sort((a, b) => {
+        const aIndex = parseInt(a.split('_')[1]);
+        const bIndex = parseInt(b.split('_')[1]);
+        return aIndex - bIndex;
       });
-    },
-    getExtraContentSections: () => {
-      return Object.keys(overridesBySection)
-        .filter(key => key.startsWith('extraContent_'))
-        .sort((a, b) => {
-          const aIndex = parseInt(a.split('_')[1]);
-          const bIndex = parseInt(b.split('_')[1]);
-          return aIndex - bIndex;
-        });
-    },
-    reset: () => setOverridesBySection({}),
-  }), [overridesBySection]);
+  }, [overridesBySection]);
+
+  const reset = useCallback(() => setOverridesBySection({}), []);
+
+  const api = useMemo(() => ({
+    overridesBySection,
+    setSection,
+    setCopy,
+    setDisplay,
+    setVariant,
+    setVisible,
+    setTheme,
+    addExtraContentSection,
+    removeExtraContentSection,
+    getExtraContentSections,
+    reset
+  }), [
+    overridesBySection,
+    setSection,
+    setCopy,
+    setDisplay,
+    setVariant,
+    setVisible,
+    setTheme,
+    addExtraContentSection,
+    removeExtraContentSection,
+    getExtraContentSections,
+    reset
+  ]);
 
   return (
     <BuilderOverridesContext.Provider value={api}>

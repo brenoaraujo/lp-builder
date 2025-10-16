@@ -452,8 +452,8 @@ export default function AdminPage() {
                             onClick={() => handleCopy(invite)}
                             title="Copy Link"
                           >
-                            <Copy className="w-4 h-4 mr-1" />
-                            Copy
+                            <Copy className="w-4 h-4" />
+                            
                           </Button>
                           <Button
                             variant="outline"

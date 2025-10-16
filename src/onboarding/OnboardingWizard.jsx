@@ -629,8 +629,16 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         const savedOverrides = row?.onboarding_json?.sectionOverrides || {};
         const savedCharityInfo = row?.onboarding_json?.charityInfo || {};
         
+        console.log('🔍 getCorrectStepIndex called with:', {
+            savedStepIndex,
+            savedOverridesKeys: Object.keys(savedOverrides),
+            savedCharityInfoKeys: Object.keys(savedCharityInfo),
+            hasCharityName: !!savedCharityInfo.charityName
+        });
+        
         // If no saved progress, start from beginning
         if (!savedStepIndex && !Object.keys(savedOverrides).length && !savedCharityInfo.charityName) {
+            console.log('📍 No saved progress, starting from beginning (step 0)');
             return 0;
         }
         
@@ -639,16 +647,31 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
             const currentStepKey = STEP_KEYS[savedStepIndex];
             const config = STEP_CONFIG[currentStepKey];
             
+            console.log('📍 Checking if can continue from saved step:', {
+                savedStepIndex,
+                currentStepKey,
+                hasConfig: !!config
+            });
+            
             if (config) {
                 // Check if current step's prerequisites are met
-                if (arePrerequisitesMet(currentStepKey, savedOverrides, savedCharityInfo)) {
+                const prereqsMet = arePrerequisitesMet(currentStepKey, savedOverrides, savedCharityInfo);
+                console.log('📍 Prerequisites for saved step:', {
+                    stepKey: currentStepKey,
+                    prereqsMet
+                });
+                
+                if (prereqsMet) {
                     // If prerequisites are met, allow them to continue from saved position
-                    return Math.min(savedStepIndex, STEP_KEYS.length - 1);
+                    const result = Math.min(savedStepIndex, STEP_KEYS.length - 1);
+                    console.log('📍 Continuing from saved step:', result);
+                    return result;
                 }
             }
         }
         
         // Find the first step where prerequisites are met but step is not completed
+        console.log('📍 Finding first incomplete step...');
         for (let i = 0; i < STEP_KEYS.length; i++) {
             const stepKey = STEP_KEYS[i];
             const config = STEP_CONFIG[stepKey];
@@ -656,7 +679,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
             if (!config) continue;
             
             // Check if prerequisites are met
-            if (arePrerequisitesMet(stepKey, savedOverrides, savedCharityInfo)) {
+            const prereqsMet = arePrerequisitesMet(stepKey, savedOverrides, savedCharityInfo);
+            if (prereqsMet) {
                 // Check if step is completed
                 let isCompleted = false;
                 if (config.type === 'form') {
@@ -667,14 +691,24 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     isCompleted = config.completionCheck();
                 }
                 
+                console.log('📍 Step analysis:', {
+                    stepIndex: i,
+                    stepKey,
+                    type: config.type,
+                    prereqsMet,
+                    isCompleted
+                });
+                
                 // If not completed, this is where they should be
                 if (!isCompleted) {
+                    console.log('📍 Found first incomplete step:', i, stepKey);
                     return i;
                 }
             }
         }
         
         // If all steps are completed, return to review
+        console.log('📍 All steps completed, returning to review');
         return STEP_KEYS.length - 1;
     }, [row?.onboarding_json, arePrerequisitesMet]);
 
@@ -690,33 +724,30 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
             charitySite: "",
             submitterName: "",
             ascendRepresentative: "",
+            ascendEmail: "",
             raffleType: "",
             campaignLaunchDate: ""
         };
     });
-    const [searchQuery, setSearchQuery] = useState("");
-    const [isSearching, setIsSearching] = useState(false);
-    const [searchResults, setSearchResults] = useState([]);
-    const [showAdditionalFields, setShowAdditionalFields] = useState(false);
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    
+    // Refs to prevent infinite loops during restoration
+    const hasRestoredOverridesRef = useRef(false);
+    const isRestoringRef = useRef(true);
+    
     const stepKey = STEP_KEYS[stepIndex];
 
     // Auto-save progress when step changes
     // Function to update status to in-progress when user starts onboarding
     const updateStatusToInProgress = useCallback(async () => {
-        console.log('🔄 updateStatusToInProgress called:', { inviteToken: !!inviteToken, updateInvite: !!updateInvite, currentStatus: row?.status });
         if (!inviteToken || !updateInvite || row?.status !== 'invited') {
-            console.log('❌ Status update skipped:', { inviteToken: !!inviteToken, updateInvite: !!updateInvite, currentStatus: row?.status });
-            return;
+            return; // Skip if already in progress or other status
         }
         
         try {
-            console.log('✅ Updating status to in_progress...');
             await updateInvite({
                 status: 'in_progress'
             });
-            console.log('✅ Status updated successfully to in_progress');
         } catch (error) {
             console.warn('❌ Failed to update invite status:', error);
         }
@@ -725,12 +756,19 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
     const saveProgress = useCallback(async (newStepIndex) => {
         if (!inviteToken || !updateInvite) return;
         
+        console.log('💾 saveProgress called with:', {
+            newStepIndex,
+            overridesBySection: Object.keys(overridesBySection),
+            charityInfo: Object.keys(charityInfo),
+            currentStatus: row?.status
+        });
+        
         setIsSaving(true);
         try {
             // Update status to "in-progress" if it's still "invited" and user has started onboarding
             const shouldUpdateStatus = row?.status === 'invited' && newStepIndex > 0;
             
-            await updateInvite({
+            const dataToSave = {
                 ...(shouldUpdateStatus && { status: 'in_progress' }),
                 onboarding_json: {
                     ...row?.onboarding_json,
@@ -743,9 +781,19 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     // Save charity info
                     charityInfo: charityInfo
                 }
+            };
+            
+            console.log('💾 Saving data:', {
+                shouldUpdateStatus,
+                stepIndex: newStepIndex,
+                sectionOverrides: Object.keys(overridesBySection),
+                charityInfoKeys: Object.keys(charityInfo)
             });
+            
+            await updateInvite(dataToSave);
+            console.log('✅ Progress saved successfully');
         } catch (error) {
-            console.warn('Failed to save onboarding progress:', error);
+            console.warn('❌ Failed to save onboarding progress:', error);
         } finally {
             setIsSaving(false);
         }
@@ -755,7 +803,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         const newIndex = Math.min(stepIndex + steps, STEP_KEYS.length - 1);
         console.log('🚀 Advance: Moving from step', stepIndex, 'to', newIndex, '(', STEP_KEYS[newIndex], ')');
         setStepIndex(newIndex);
-        saveProgress(newIndex);
+        // Note: Removed saveProgress call - let debounced auto-save handle it after context updates
     };
 
     // Simple raffle type check
@@ -763,188 +811,12 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
         return raffleType === "Sweepstakes" || raffleType === "Prize Raffle";
     };
 
-    // Handle click outside and keyboard events for dropdown
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            const dropdown = document.getElementById('charity-search-dropdown');
-            const input = document.getElementById('charitySearch');
-            
-            if (dropdown && input && !dropdown.contains(event.target) && !input.contains(event.target)) {
-                setIsDropdownOpen(false);
-                setSearchResults([]);
-            }
-        };
 
-        const handleKeyDown = (event) => {
-            if (event.key === 'Escape') {
-                setIsDropdownOpen(false);
-                setSearchResults([]);
-            }
-            if (event.key === 'Tab' && isDropdownOpen) {
-                setIsDropdownOpen(false);
-                setSearchResults([]);
-            }
-        };
-
-        if (isDropdownOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            document.addEventListener('keydown', handleKeyDown);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [isDropdownOpen]);
-
-    // Brandfetch search function with proper error handling
-    const searchBrandfetch = async (query) => {
-        if (!query.trim()) {
-            setSearchResults([]);
-            return;
-        }
-
-        setIsSearching(true);
-        try {
-            console.log('Searching Brandfetch for:', query);
-
-            // Try Brandfetch API with correct format
-            const apiKey = import.meta.env.VITE_BRANDFETCH_API_KEY;
-            if (!apiKey) {
-                throw new Error('Brandfetch API key not configured');
-            }
-
-            const response = await fetch(`https://api.brandfetch.io/v2/search/${encodeURIComponent(query)}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('API Response:', data);
-
-                // Handle different possible response structures
-                let brands = [];
-                if (data.brands) {
-                    brands = data.brands;
-                } else if (data.results) {
-                    brands = data.results;
-                } else if (Array.isArray(data)) {
-                    brands = data;
-                } else if (data.data) {
-                    brands = data.data;
-                }
-
-                // Ensure each brand has a logo URL with preference for high-quality logos
-                const brandsWithLogos = brands.map(brand => {
-                    // Try to get the best quality logo available
-                    let logoUrl = brand.logo || brand.image || brand.icon;
-
-                    // If we have a logo URL, try to get a higher quality version
-                    if (logoUrl) {
-                        // Remove size parameters to get original quality
-                        logoUrl = logoUrl.replace(/[?&](w|h|size|sz)=\d+/g, '');
-                        // Some APIs use different size parameters
-                        logoUrl = logoUrl.replace(/[?&](width|height)=\d+/g, '');
-                    }
-
-                    // Fallback to Clearbit if no logo found
-                    if (!logoUrl && brand.domain) {
-                        const cleanDomain = brand.domain.replace(/^https?:\/\//, '').replace(/^www\./, '');
-                        logoUrl = `https://logo.clearbit.com/${cleanDomain}`;
-                    }
-
-                    return {
-                        ...brand,
-                        logo: logoUrl
-                    };
-                });
-
-                setSearchResults(brandsWithLogos);
-                setIsDropdownOpen(brandsWithLogos.length > 0);
-            } else {
-                const errorText = await response.text();
-                console.error('API Error:', response.status, errorText);
-                throw new Error(`API request failed: ${response.status} ${errorText}`);
-            }
-        } catch (error) {
-            console.error('Brandfetch API Error:', error);
-
-            // Enhanced fallback for development/production
-            const mockResults = [
-                {
-                    name: query,
-                    domain: `https://${query.toLowerCase().replace(/\s+/g, '')}.org`,
-                    logo: `https://logo.clearbit.com/${query.toLowerCase().replace(/\s+/g, '')}.org`
-                }
-            ];
-            setSearchResults(mockResults);
-            setIsDropdownOpen(mockResults.length > 0);
-        } finally {
-            setIsSearching(false);
-        }
-    };
-
-    // Debounced search function
-    const [searchTimeout, setSearchTimeout] = useState(null);
-    const handleSearchInput = (value) => {
-        setSearchQuery(value);
-
-        // Clear existing timeout
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-
-        // Set new timeout for search
-        const timeout = setTimeout(() => {
-            searchBrandfetch(value);
-        }, 500); // 500ms delay
-
-        setSearchTimeout(timeout);
-    };
-
-    const handleInputFocus = () => {
-        if (searchResults.length > 0) {
-            setIsDropdownOpen(true);
-        }
-    };
-
-    const selectBrand = (brand) => {
-        console.log('Selected brand:', brand);
-        console.log('Brand logo URL:', brand.logo);
-
-        setCharityInfo({
-            charityName: brand.name,
-            charityLogo: brand.logo || '',
-            charitySite: brand.domain,
-            submitterName: charityInfo.submitterName,
-            ascendRepresentative: charityInfo.ascendRepresentative,
-            raffleType: charityInfo.raffleType,
-            campaignLaunchDate: charityInfo.campaignLaunchDate
-        });
-        setSearchResults([]);
-        setSearchQuery(brand.name);
-        setIsDropdownOpen(false);
-        setShowAdditionalFields(true); // Show additional fields when brand is selected
-        // Update status to in-progress when user selects a charity
+    // Simple charity name change handler
+    const handleCharityNameChange = (value) => {
+        setCharityInfo(prev => ({ ...prev, charityName: value }));
+        // Update status to in-progress when user starts filling out charity info
         updateStatusToInProgress();
-    };
-
-    const handleEnterKey = () => {
-        if (searchQuery.trim()) {
-            setCharityInfo(prev => ({ ...prev, charityName: searchQuery }));
-            setSearchResults([]);
-            setIsDropdownOpen(false);
-            setShowAdditionalFields(true); // Show additional fields when user presses enter
-            // Update status to in-progress when user starts filling out charity info
-            updateStatusToInProgress();
-        }
     };
 
     // [KEEP] ensure defaults so previews don't show as blank
@@ -972,9 +844,14 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
 
     // Restore saved section overrides when component loads (only once)
     useEffect(() => {
+        // Only restore once
+        if (hasRestoredOverridesRef.current) return;
+        
         const savedOverrides = row?.onboarding_json?.sectionOverrides;
         if (savedOverrides && Object.keys(savedOverrides).length > 0) {
-            // Restore each section's overrides
+            console.log('🔄 Restoring saved overrides:', Object.keys(savedOverrides));
+            
+            // Batch all state updates together
             Object.entries(savedOverrides).forEach(([sectionKey, sectionData]) => {
                 if (sectionData.variant) {
                     setVariant(sectionKey, sectionData.variant);
@@ -990,11 +867,34 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     });
                 }
             });
+            
+            hasRestoredOverridesRef.current = true;
+            console.log('✅ Overrides restored');
+            
+            // Mark restoration as complete after a short delay
+            setTimeout(() => {
+                isRestoringRef.current = false;
+                console.log('✅ Restoration complete, auto-save enabled');
+            }, 100);
+        } else {
+            // No data to restore, enable auto-save immediately
+            isRestoringRef.current = false;
+            console.log('✅ No overrides to restore, auto-save enabled');
         }
-    }, [setVariant, setDisplay, setCopy]);
+    }, []); // Empty dependency array - only run on mount
 
     // Separate effect for step restoration (only run once on mount)
     useEffect(() => {
+        console.log('🔍 Starting step restoration analysis...');
+        console.log('📊 Raw data from database:', {
+            row: row ? 'exists' : 'null',
+            onboarding_json: row?.onboarding_json ? 'exists' : 'null',
+            sectionOverrides: row?.onboarding_json?.sectionOverrides ? Object.keys(row.onboarding_json.sectionOverrides) : 'none',
+            charityInfo: row?.onboarding_json?.charityInfo ? Object.keys(row.onboarding_json.charityInfo) : 'none',
+            progress: row?.onboarding_json?.progress ? row.onboarding_json.progress : 'none',
+            currentStepIndex: stepIndex
+        });
+        
         const correctStepIndex = getCorrectStepIndex();
         
         // Only update if the step index is different to prevent infinite loops
@@ -1030,15 +930,30 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                 currentStepIndex: stepIndex,
                 correctStepIndex,
                 stepKey: STEP_KEYS[correctStepIndex],
-                stepStatus
+                stepStatus: stepStatus.map(s => ({
+                    step: s.stepKey,
+                    type: s.type,
+                    completed: s.isCompleted,
+                    prereqsMet: s.prerequisitesMet,
+                    prereqs: s.prerequisites
+                }))
             });
+            console.log('🚀 Updating step index from', stepIndex, 'to', correctStepIndex);
             setStepIndex(correctStepIndex);
+        } else {
+            console.log('✅ Step index is already correct:', stepIndex);
         }
     }, []); // Only run once on mount
 
     // Auto-save when section overrides change (debounced)
     const saveTimeoutRef = useRef(null);
     useEffect(() => {
+        // Skip auto-save during restoration
+        if (isRestoringRef.current) {
+            console.log('⏸️ Auto-save skipped during restoration');
+            return;
+        }
+        
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
         }
@@ -1047,7 +962,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
             if (Object.keys(overridesBySection).length > 0) {
                 saveProgress(stepIndex);
             }
-        }, 2000); // 2 second debounce for overrides changes
+        }, 1000); // 1 second debounce for overrides changes
         
         return () => {
             if (saveTimeoutRef.current) {
@@ -1127,111 +1042,31 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
 
                             <div className="grid grid-cols-[3fr_2fr] gap-8">
                                 <div className="space-y-8 bg-white p-6 rounded-lg border border-gray-200 shadow-md">
-                                    {/* Charity Name Search Field */}
-                                    <div className="space-y-2 ">
-                                        <Label htmlFor="charitySearch" className="text-muted-foreground">Charity Name</Label>
-                                        <div className="relative ">
-
-                                            <Input
-                                                id="charitySearch"
-                                                placeholder="Search for your charity or enter name manually"
-                                                value={searchQuery}
-                                                onChange={(e) => handleSearchInput(e.target.value)}
-                                                onFocus={handleInputFocus}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        handleEnterKey();
-                                                    }
-                                                }}
-                                                className=""
-                                            />
-                                            {isSearching && (
-                                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                                                </div>
-                                            )}
+                                    {/* Charity Section */}
+                                    <div className="space-y-6">
+                                        <div className="border-b border-gray-200 pb-2">
+                                            <h3 className="text-lg font-semibold text-gray-900">Charity</h3>
                                         </div>
-                                    </div>
-                                    {/* Search Results Dropdown */}
-                                    {isDropdownOpen && searchResults.length > 0 && (
-                                        <div className="relative">
-                                            <div 
-                                                id="charity-search-dropdown"
-                                                className="absolute top-0 left-0 right-0 z-10 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
-                                            >
-                                                {searchResults.map((brand, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="cursor-pointer hover:bg-gray-50 transition-colors p-3 border-b last:border-b-0"
-                                                        onClick={() => selectBrand(brand)}
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            {/* Logo with fallback to favicon */}
-                                                            <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center">
-                                                                {brand.logo ? (
-                                                                    <img
-                                                                        src={brand.logo}
-                                                                        alt={`${brand.name} logo`}
-                                                                        className="h-8 w-8 object-contain rounded"
-                                                                        onError={(e) => {
-                                                                            // Fallback to favicon if logo fails
-                                                                            const domain = brand.domain || brand.website;
-                                                                            if (domain) {
-                                                                                const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/^www\./, '');
-                                                                                e.target.src = `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=32`;
-                                                                            } else {
-                                                                                e.target.style.display = 'none';
-                                                                                e.target.nextSibling.style.display = 'block';
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                ) : null}
-                                                                {/* Fallback favicon */}
-                                                                {brand.domain && (
-                                                                    <img
-                                                                        src={`https://www.google.com/s2/favicons?domain=${brand.domain.replace(/^https?:\/\//, '').replace(/^www\./, '')}&sz=32`}
-                                                                        alt={`${brand.name} favicon`}
-                                                                        className="h-6 w-6 object-contain"
-                                                                        style={{ display: brand.logo ? 'none' : 'block' }}
-                                                                        onError={(e) => {
-                                                                            e.target.style.display = 'none';
-                                                                            e.target.nextSibling.style.display = 'block';
-                                                                        }}
-                                                                    />
-                                                                )}
-                                                                {/* Fallback icon */}
-                                                                <div
-                                                                    className="h-6 w-6 bg-gray-200 rounded flex items-center justify-center"
-                                                                    style={{ display: 'none' }}
-                                                                >
-                                                                    <Building2 className="h-4 w-4 text-gray-500" />
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="font-medium truncate text-gray-900">{brand.name}</p>
-                                                                {brand.domain && (
-                                                                    <p className="text-sm text-gray-500 truncate">{brand.domain}</p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                        
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="charityName" className="text-muted-foreground">Name</Label>
+                                                <Input
+                                                    id="charityName"
+                                                    placeholder="Enter charity name"
+                                                    value={charityInfo.charityName}
+                                                    onChange={(e) => handleCharityNameChange(e.target.value)}
+                                                />
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {/* Additional Fields - Only shown after selection or enter */}
-                                    {showAdditionalFields && (
-                                        <div className="space-y-8">
                                             <LogoUpload
                                                 value={charityInfo.charityLogo}
                                                 onChange={(url) => setCharityInfo(prev => ({ ...prev, charityLogo: url }))}
-                                                label="Charity Logo"
+                                                label="Logo"
                                                 description="Upload your charity logo or enter a URL"
                                             />
 
                                             <div className="space-y-2">
-                                                <Label htmlFor="charitySite" className="text-muted-foreground">Charity Website</Label>
+                                                <Label htmlFor="charitySite" className="text-muted-foreground">Website</Label>
                                                 <Input
                                                     id="charitySite"
                                                     placeholder="https://yourcharity.org"
@@ -1240,65 +1075,85 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                 />
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
 
-                                    <div className="space-y-2 ">
-                                        <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Ascend Client Services Representative</Label>
-                                        <div className="relative">
+                                    {/* Campaign Section */}
+                                    <div className="space-y-6">
+                                        <div className="border-b border-gray-200 pb-2">
+                                            <h3 className="text-lg font-semibold text-gray-900">Campaign</h3>
+                                        </div>
+                                        
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="raffleType" className="text-muted-foreground">Raffle Type</Label>
+                                                <Select
+                                                    value={charityInfo.raffleType || ""}
+                                                    onValueChange={async (value) => {
+                                                        const updatedInfo = { ...charityInfo, raffleType: value };
+                                                        setCharityInfo(updatedInfo);
+                                                        // Save to database
+                                                        try {
+                                                            await updateInvite({
+                                                                onboarding_json: {
+                                                                    ...row?.onboarding_json,
+                                                                    charityInfo: updatedInfo
+                                                                }
+                                                            });
+                                                        } catch (error) {
+                                                            console.warn("Failed to save charityInfo to database:", error);
+                                                        }
+                                                    }}
+                                                >
+                                                    <SelectTrigger id="raffleType">
+                                                        <SelectValue placeholder="Select raffle type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="50/50">50/50</SelectItem>
+                                                        <SelectItem value="Prize Raffle">Prize Raffle</SelectItem>
+                                                        <SelectItem value="Sweepstakes">Sweepstakes</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
 
-                                            <Input
-                                                id="ascendRepresentative"
-                                                placeholder="Enter full name"
-                                                value={charityInfo.ascendRepresentative}
-                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, ascendRepresentative: e.target.value }))}
-                                                className=""
-                                            />
+                                            <div className="space-y-2">
+                                                <Label htmlFor="campaignLaunchDate" className="text-muted-foreground">Launch Date</Label>
+                                                <Input
+                                                    id="campaignLaunchDate"
+                                                    type="date"
+                                                    value={charityInfo.campaignLaunchDate}
+                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, campaignLaunchDate: e.target.value }))}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Type of Raffle */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="raffleType" className="text-muted-foreground">Type of Raffle</Label>
-                                        <Select
-                                            value={charityInfo.raffleType || ""}
-                                            onValueChange={async (value) => {
-                                                const updatedInfo = { ...charityInfo, raffleType: value };
-                                                setCharityInfo(updatedInfo);
-                                                // Save to database
-                                                try {
-                                                    await updateInvite({
-                                                        onboarding_json: {
-                                                            ...row?.onboarding_json,
-                                                            charityInfo: updatedInfo
-                                                        }
-                                                    });
-                                                } catch (error) {
-                                                    console.warn("Failed to save charityInfo to database:", error);
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger id="raffleType">
-                                                <SelectValue placeholder="Select raffle type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="50/50">50/50</SelectItem>
-                                                <SelectItem value="Prize Raffle">Prize Raffle</SelectItem>
-                                                <SelectItem value="Sweepstakes">Sweepstakes</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                                    {/* Ascend Client Services Representative Section */}
+                                    <div className="space-y-6">
+                                        <div className="border-b border-gray-200 pb-2">
+                                            <h3 className="text-lg font-semibold text-gray-900">Ascend Client Services Representative</h3>
+                                        </div>
+                                        
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Name</Label>
+                                                <Input
+                                                    id="ascendRepresentative"
+                                                    placeholder="Enter full name"
+                                                    value={charityInfo.ascendRepresentative}
+                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, ascendRepresentative: e.target.value }))}
+                                                />
+                                            </div>
 
-                                    {/* Campaign Launch Date */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="campaignLaunchDate" className="text-muted-foreground">Campaign Launch Date</Label>
-                                        <div className="relative">
-                                            <Input
-                                                id="campaignLaunchDate"
-                                                type="date"
-                                                value={charityInfo.campaignLaunchDate}
-                                                onChange={(e) => setCharityInfo(prev => ({ ...prev, campaignLaunchDate: e.target.value }))}
-                                                className=""
-                                            />
+                                            <div className="space-y-2">
+                                                <Label htmlFor="ascendEmail" className="text-muted-foreground">Email</Label>
+                                                <Input
+                                                    id="ascendEmail"
+                                                    type="email"
+                                                    placeholder="representative@ascendfs.com"
+                                                    value={charityInfo.ascendEmail || ""}
+                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, ascendEmail: e.target.value }))}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1311,7 +1166,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                     <div className="flex gap-3">
                                         <Button
                                             onClick={next}
-                                            disabled={!charityInfo.charityName || !charityInfo.charityName}
+                                            disabled={!charityInfo.charityName || !charityInfo.raffleType}
                                         >
                                             Continue
                                             <ArrowRight className="ml-2 h-4 w-4" />
@@ -1406,6 +1261,12 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                     </div>
                                                 )}
 
+                                                {charityInfo.ascendEmail && (
+                                                    <div className="text-sm text-muted-foreground">
+                                                        <span className="font-medium">Email:</span> {charityInfo.ascendEmail}
+                                                    </div>
+                                                )}
+
                                                
                                             </div>
                                         </div>
@@ -1430,8 +1291,12 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             <VariantCarousel
                                 sectionKey="hero"
                                 onPicked={() => {
+                                    console.log('🎯 Hero variant selected, scheduling advance...');
                                     // Give React time to update state
-                                    setTimeout(() => advance(1), 0);
+                                    setTimeout(() => {
+                                        console.log('🎯 Hero variant advance executing...');
+                                        advance(1);
+                                    }, 0);
                                 }}
                             />
                         </div>
@@ -1459,9 +1324,11 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                     onImageChange={updateImage}
                                     images={images}
                                     raffleType={charityInfo.raffleType}
-                                    onSaveNext={() =>
-                                        setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
-                                    }
+                                    onSaveNext={() => {
+                                        const newIndex = Math.min(stepIndex + 1, STEP_KEYS.length - 1);
+                                        setStepIndex(newIndex);
+                                        saveProgress(newIndex);
+                                    }}
                                 />
                             </div>
                         </div>
@@ -1525,9 +1392,11 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 onImageChange={updateImage}
                                 images={images}
                                 raffleType={charityInfo.raffleType}
-                                onSaveNext={() =>
-                                    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
-                                }
+                                onSaveNext={() => {
+                                    const newIndex = Math.min(stepIndex + 1, STEP_KEYS.length - 1);
+                                    setStepIndex(newIndex);
+                                    saveProgress(newIndex);
+                                }}
                             />
 
                             {/* Skip section button */}
@@ -1590,9 +1459,11 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 onImageChange={updateImage}
                                 images={images}
                                 raffleType={charityInfo.raffleType}
-                                onSaveNext={() =>
-                                    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
-                                }
+                                onSaveNext={() => {
+                                    const newIndex = Math.min(stepIndex + 1, STEP_KEYS.length - 1);
+                                    setStepIndex(newIndex);
+                                    saveProgress(newIndex);
+                                }}
                             />
                         </div>
                     )}
@@ -1731,9 +1602,11 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 onImageChange={updateImage}
                                 images={images}
                                 raffleType={charityInfo.raffleType}
-                                onSaveNext={() =>
-                                    setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1))
-                                }
+                                onSaveNext={() => {
+                                    const newIndex = Math.min(stepIndex + 1, STEP_KEYS.length - 1);
+                                    setStepIndex(newIndex);
+                                    saveProgress(newIndex);
+                                }}
                             />
                         </div>
                     )}
@@ -1827,7 +1700,14 @@ function VariantCarousel({ sectionKey, onPicked }) {
     if (variants.length === 0) return null;
 
     const choose = (key) => {
-        console.log('🎯 VariantCarousel: Choosing variant', { sectionKey, key });
+        console.log('🎯 VariantCarousel: Choosing variant', { sectionKey, key, currentActive: active });
+        
+        // Don't re-select if already selected
+        if (active === key) {
+            console.log('⏭️ Already selected, skipping');
+            return;
+        }
+        
         setVariant(sectionKey, key);
         onPicked?.(key);
     };
