@@ -181,12 +181,36 @@ export function HeroA({ preview = false, raffleType = null }) {
 
 /* --------------------------------- Hero B --------------------------------- */
 
-export function HeroB({ preview = false, raffleType = null }) {
-  const imagePath = useImageVariant("/images/img-hero-full-light.png", "hero");
-  const backgroundImage = `url(${imagePath})`;
+export function HeroB({ preview = false, raffleType = null, customImage = null }) {
+  const defaultImagePath = useImageVariant("/images/img-hero-full-light.png", "hero");
+  
+  // Use custom image if provided, otherwise use default variant
+  const imagePath = customImage || defaultImagePath;
+
+  // For main app, also set CSS variable for backward compatibility with ImageManager
+  React.useEffect(() => {
+    if (!preview) {
+      const sectionElement = document.querySelector('[data-section="hero"]');
+      if (sectionElement) {
+        sectionElement.style.setProperty('--hero-background-image', `url(${imagePath})`);
+      }
+    }
+  }, [imagePath, preview]);
 
   return (
-    <section data-section="hero" className="p-6 bg-Colors-background h-full" data-image="hero-image"  data-default-image="/images/img-hero-full-light.png" style={{ backgroundImage, backgroundSize: "contain", backgroundPosition: "top center",  backgroundRepeat: "no-repeat" }}>
+    <section 
+      data-section="hero" 
+      className="p-6 h-full" 
+      data-image="hero-image"  
+      data-default-image="/images/img-hero-full-light.png" 
+      style={{ 
+        backgroundColor: 'var(--colors-background)',
+        backgroundImage: `url(${imagePath})`,
+        backgroundSize: "contain", 
+        backgroundPosition: "top center",  
+        backgroundRepeat: "no-repeat" 
+      }}
+    >
       <div className="w-[1440px] py-24  inline-flex flex-col justify-start items-center gap-4 overflow-hidden mt-120 ">
         <div className="w-full h-full max-w-[1280px] inline-flex justify-start items-center gap-6" >
           <div className="w-full inline-flex flex-col justify-start items-center ">
@@ -221,9 +245,9 @@ export function HeroB({ preview = false, raffleType = null }) {
               data-style="no-box"
               data-display="true"
               data-label="Countdown"
-              className="py-3 bg-Colors-background rounded-md flex flex-col justify-start items-start gap-2"
+              className="py-3 text-center rounded-md flex flex-col justify-start items-center gap-2"
             >
-              <div className="justify-center text-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
+              <div className="justify-center text-center text-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
                 Grand Prize Deadline: Mar 14, 6pm
               </div>
               <div className="inline-flex justify-start items-center gap-2">

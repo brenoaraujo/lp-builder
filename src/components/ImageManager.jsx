@@ -88,6 +88,11 @@ export default function ImageManager({
           element.style.backgroundImage = `url(${imageUrl})`;
           element.style.backgroundSize = backgroundSize;
           element.style.backgroundPosition = backgroundPosition;
+          
+          // Special handling for hero section - also update CSS variable
+          if (id === 'hero-image' && element.closest('[data-section="hero"]')) {
+            element.style.setProperty('--hero-background-image', `url(${imageUrl})`);
+          }
         } else if (element.tagName === 'IMG') {
           // For actual img tags, set src
           element.src = imageUrl;
@@ -97,8 +102,18 @@ export default function ImageManager({
         const defaultImage = element.getAttribute('data-default-image');
         if (defaultImage) {
           element.style.backgroundImage = `url(${defaultImage})`;
+          
+          // Special handling for hero section - also update CSS variable
+          if (element.getAttribute('data-image') === 'hero-image' && element.closest('[data-section="hero"]')) {
+            element.style.setProperty('--hero-background-image', `url(${defaultImage})`);
+          }
         } else {
           element.style.backgroundImage = '';
+          
+          // Special handling for hero section - clear CSS variable
+          if (element.getAttribute('data-image') === 'hero-image' && element.closest('[data-section="hero"]')) {
+            element.style.removeProperty('--hero-background-image');
+          }
         }
       }
     });

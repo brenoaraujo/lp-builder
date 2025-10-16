@@ -381,7 +381,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
                             compact={false}
                             hideControls={true}
                         >
-                            <ComposedPreview overrides={overridesBySection} />
+                            <ComposedPreview overrides={overridesBySection} customImages={images} />
                         </ImageManager>
                     </div>
                 </AutoScaler>
@@ -394,11 +394,14 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
    Preview + Variants
    ========================================================================= */
 
-function SectionPreview({ k, state }) {
+function SectionPreview({ k, state, customImages = {} }) {
     if (state?.visible === false) return null;
     const variant = state?.variant || "A";
     const Comp = resolveByVariant(k, variant);
     if (!Comp) return null;
+
+    // Get custom image for this section
+    const customImage = k === 'hero' ? customImages['hero-image'] : null;
 
     return (
         <div data-scope={k} className="mb-0 last:mb-0">
@@ -407,23 +410,23 @@ function SectionPreview({ k, state }) {
                 controls={state?.display || {}}
                 copyValues={state?.copy || {}}
             >
-                <Comp preview />
+                <Comp preview customImage={customImage} />
             </EditableSection>
         </div>
     );
 }
 
-function ComposedPreview({ overrides }) {
+function ComposedPreview({ overrides, customImages = {} }) {
     // Get all extra content section keys
     const extraContentKeys = Object.keys(overrides).filter(key => key.startsWith('extraContent_'));
 
     return (
         <div className="mx-auto">
-            <SectionPreview k="hero" state={overrides.hero} />
-            <SectionPreview k="extraPrizes" state={overrides.extraPrizes} />
-            <SectionPreview k="winners" state={overrides.winners} />
+            <SectionPreview k="hero" state={overrides.hero} customImages={customImages} />
+            <SectionPreview k="extraPrizes" state={overrides.extraPrizes} customImages={customImages} />
+            <SectionPreview k="winners" state={overrides.winners} customImages={customImages} />
             {extraContentKeys.map(key => (
-                <SectionPreview key={key} k={key} state={overrides[key]} />
+                <SectionPreview key={key} k={key} state={overrides[key]} customImages={customImages} />
             ))}
         </div>
     );
@@ -1177,6 +1180,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="hero"
+                                customImages={images}
                                 onPicked={() => {
                                     // Give React time to update state
                                     setTimeout(() => advance(1), 0);
@@ -1229,6 +1233,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="extraPrizes"
+                                customImages={images}
                                 onPicked={() => {
                                     // Give React time to update state
                                     setTimeout(() => advance(1), 0);
@@ -1309,6 +1314,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="winners"
+                                customImages={images}
                                 onPicked={() => {
                                     // Give React time to update state
                                     setTimeout(() => advance(1), 0);
@@ -1444,7 +1450,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 <h2 className="text-4xl font-medium">Choose Extra Content Layout</h2>
                                 <p className="text-base text-slate-500">Select your preferred extra content format.</p>
                             </div>
-                            <VariantCarousel sectionKey={currentExtraContentKey} onPicked={() => advance(1)} />
+                            <VariantCarousel sectionKey={currentExtraContentKey} customImages={images} onPicked={() => advance(1)} />
                             <Button
                                 variant="outline"
                                 onClick={() => {
@@ -1557,7 +1563,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
    Variant Carousel (compact)
    ========================================================================= */
 
-function VariantCarousel({ sectionKey, onPicked }) {
+function VariantCarousel({ sectionKey, onPicked, customImages = {} }) {
     const { overridesBySection, setVariant } = useBuilderOverrides();
 
     // For dynamic extra content sections, use the feature section definition
@@ -1599,7 +1605,7 @@ function VariantCarousel({ sectionKey, onPicked }) {
                     </CardHeader>
                     <CardContent className="py-3 ">
                         {typeof def.thumbnail === "function"
-                            ? def.thumbnail(v.key, state)
+                            ? def.thumbnail(v.key, state, customImages)
                             : v.render
                                 ? v.render(state)
                                 : null}
