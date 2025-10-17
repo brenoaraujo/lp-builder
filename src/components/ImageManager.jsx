@@ -133,16 +133,19 @@ export default function ImageManager({
           const defaultImage = element.getAttribute('data-default-image');
           if (defaultImage) {
             if (element.tagName === 'IMG') {
-              // For img tags, only set to default if current src IS the default or empty
-              // This prevents overriding charity logos set via props
-              const currentSrc = element.src;
-              const isDefaultOrEmpty = !currentSrc || currentSrc.endsWith(defaultImage);
-              if (isDefaultOrEmpty) {
-                element.src = defaultImage;
-              }
+              // For img tags, set to default image when no custom image is provided
+              // This handles the case when a custom image is removed
+              element.src = defaultImage;
             } else {
               // For div elements, set background image
-              element.style.backgroundImage = `url(${defaultImage})`;
+              if (element.getAttribute('data-image') === 'hero-image') {
+                // For Hero B, don't touch the background image at all
+                // Let React's inline style prop (from useImageVariant hook) control it
+                // Do nothing here
+              } else {
+                // For other sections, set default background image
+                element.style.backgroundImage = `url(${defaultImage})`;
+              }
             }
             
             // Special handling for hero section - also update CSS variable
@@ -157,7 +160,14 @@ export default function ImageManager({
             if (element.tagName === 'IMG') {
               element.src = '';
             } else {
-              element.style.backgroundImage = '';
+              // For Hero B, don't touch the background image
+              if (element.getAttribute('data-image') === 'hero-image') {
+                // For Hero B, don't touch the background image
+                // Let React's inline style prop control it
+              } else {
+                // For other sections, clear background image
+                element.style.backgroundImage = '';
+              }
             }
             
             // Special handling for hero section - clear CSS variable
