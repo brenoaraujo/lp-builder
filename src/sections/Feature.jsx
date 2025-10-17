@@ -36,6 +36,7 @@ export function FeatureA({ blockType = "feature" }) {
                             data-display="yes"
                             data-copy="yes"
                             data-label="Description"
+                            data-max-chars="400"
                             className="self-stretch justify-start text-Colors-muted-foreground text-base text-left font-normal font-primary leading-normal"
                         >
                             Explain in one or two concise sentences how your solution transforms users&apos; challenges into

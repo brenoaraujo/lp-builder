@@ -104,12 +104,12 @@ export default function ImageManager({
     discoveredImages.forEach(({ id, element }) => {
       const imageUrl = images[id];
       if (imageUrl && element) {
-        // Check if element has data-image attribute (indicating it should have a background image)
-        const hasDataImage = element.hasAttribute('data-image');
-        
-        if (hasDataImage) {
-          // For elements with data-image, always set as background image
-          // Preserve existing background properties like backgroundSize and backgroundPosition
+        // Check element type FIRST
+        if (element.tagName === 'IMG') {
+          // For <img> tags, always use src
+          element.src = imageUrl;
+        } else if (element.hasAttribute('data-image')) {
+          // For other elements with data-image, use backgroundImage
           const currentStyle = element.style;
           const backgroundSize = currentStyle.backgroundSize || 'cover';
           const backgroundPosition = currentStyle.backgroundPosition || 'center';
@@ -118,16 +118,13 @@ export default function ImageManager({
           element.style.backgroundSize = backgroundSize;
           element.style.backgroundPosition = backgroundPosition;
           
-          // Special handling for hero section - also update CSS variable
+          // Special handling for hero section
           if (id === 'hero-image' || id.includes('hero')) {
             const heroSection = element.closest('[data-section="hero"]');
             if (heroSection) {
               heroSection.style.setProperty('--hero-background-image', `url(${imageUrl})`);
             }
           }
-        } else if (element.tagName === 'IMG') {
-          // For actual img tags, set src
-          element.src = imageUrl;
         }
       } else if (element) {
         // Handle case when no custom image is provided
@@ -136,8 +133,13 @@ export default function ImageManager({
           const defaultImage = element.getAttribute('data-default-image');
           if (defaultImage) {
             if (element.tagName === 'IMG') {
-              // For img tags, set src to default
-              element.src = defaultImage;
+              // For img tags, only set to default if current src IS the default or empty
+              // This prevents overriding charity logos set via props
+              const currentSrc = element.src;
+              const isDefaultOrEmpty = !currentSrc || currentSrc.endsWith(defaultImage);
+              if (isDefaultOrEmpty) {
+                element.src = defaultImage;
+              }
             } else {
               // For div elements, set background image
               element.style.backgroundImage = `url(${defaultImage})`;

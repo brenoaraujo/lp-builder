@@ -19,6 +19,7 @@ export function useImageManager(inviteRow, onUpdateInvite) {
     const newImagesString = JSON.stringify(newImages);
     const previousImagesString = JSON.stringify(previousImagesRef.current);
     
+    
     // Only update if the images have actually changed
     if (newImagesString !== previousImagesString) {
       setImages(newImages);

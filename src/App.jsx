@@ -809,6 +809,17 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
 
   const [themeOpen, setThemeOpen] = useState(false);
 
+  // Check URL parameters to auto-open theme panel
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1]);
+    if (params.get('theme') === 'open') {
+      setThemeOpen(true);
+      // Clean up URL parameter after opening
+      const cleanHash = window.location.hash.split('?')[0] + `?invite=${params.get('invite')}`;
+      window.history.replaceState(null, '', cleanHash);
+    }
+  }, []);
+
   // Builder state
   const [hydrated, setHydrated] = useState(false);
   const didAutoSelectOnce = useRef(false);
@@ -1422,6 +1433,10 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     return inviteRow.onboarding_json.charityInfo || {};
   };
 
+  const NAVBAR_DEFAULT_DATA = {
+    charityLogo: getCharityInfo().charityLogo || "",
+  };
+
   const FOOTER_DEFAULT_DATA = {
     // mirrors defaults inside FooterPrimitive but allows builder overrides later
     charityName: getCharityInfo().charityName || "",
@@ -1575,6 +1590,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                     sectionId="Navbar"
                     label="Navbar"
                     variant={NAVBAR_VARIANT}
+                    data={NAVBAR_DEFAULT_DATA}
                     discoverKey={`Navbar:${NAVBAR_VARIANT}:${activeBlockId === "Navbar"}`}
                     controls={navbarControls}
                     copyValues={navbarCopy}
@@ -1582,7 +1598,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                     onCopyDiscovered={(list) => handleCopyDiscovered("Navbar", list)}
                     fixedPosition="top"
                   >
-                    <NavbarCmp />
+                    <NavbarCmp data={NAVBAR_DEFAULT_DATA} />
                   </EditableSection>
                 </ImageManager>
               </AutoScaler>
@@ -1879,6 +1895,7 @@ export function AppRouterShell() {
   const route = useHashRoute();
   const inviteToken = useInviteToken();
   const { row: inviteRow, loading, error, updateInvite } = useInviteRow(inviteToken);
+  
 
   // Handle admin route
   if (route === "/admin") {

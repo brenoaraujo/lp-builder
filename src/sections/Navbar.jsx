@@ -4,18 +4,18 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { useImageVariant } from "../hooks/useImageVariant.js";
 
 // Shared primitive used by both variants
 function NavPrimitive({ data }) {
   const {
     logoSrc = "/images/ascend-light.svg",
+    charityLogo = "",
     items = ["Lottery", "Prizes", "Winners"],
     cta = { label: "BUY TICKETS", href: "#buy" },
   } = data || {};
 
-  // Use the image variant hook for automatic light/dark logo switching
-  const logoPath = useImageVariant(logoSrc, "Navbar");
+  // Let ImageManager handle the logo image completely
+  // It will set the src to custom uploaded image or default image
 
   return (
     <div
@@ -26,8 +26,8 @@ function NavPrimitive({ data }) {
       <div className="w-full max-w-[1280px] inline-flex justify-between items-center">
         {/* Logo */}
         <img 
-          className="w-36 h-14 max-w-[144px] max-h-[56px] rounded-lg" 
-          src={logoPath} 
+          className=" max-w-[144px] max-h-[56px] rounded-lg" 
+          src={charityLogo || "/images/ascend-light.svg"}
           alt="Logo"
           data-image="navbar-logo"
           data-size="144×56"

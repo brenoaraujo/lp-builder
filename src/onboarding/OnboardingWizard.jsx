@@ -871,6 +871,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
     }
     async function finish() {
         try {
+            
             // Save onboarding data to database
             await updateInvite({
                 onboarding_json: {
@@ -879,15 +880,17 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                 },
                 // IMPORTANT: Copy section overrides to overrides_json for main app
                 overrides_json: overridesBySection,
+                // IMPORTANT: Copy images from onboarding to main app
+                images_json: images,
                 status: 'submitted'
             });
             
-            // Navigate to app
-            window.location.hash = `#/app?invite=${inviteToken}`;
+            // Navigate to app with theme panel open
+            window.location.hash = `#/app?invite=${inviteToken}&theme=open`;
         } catch (error) {
             console.error('Failed to save onboarding data:', error);
             // Still navigate even if save fails
-            window.location.hash = `#/app?invite=${inviteToken}`;
+            window.location.hash = `#/app?invite=${inviteToken}&theme=open`;
         }
     }
 
@@ -1426,8 +1429,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 <Button
                                     variant="outline"
                                     onClick={() => {
-                                        // User doesn't want extra content section, skip to review
-                                        setStepIndex(STEP_KEYS.indexOf("review")); // jump to review
+                                        // User doesn't want extra content section, finish and go to app
+                                        finish();
                                     }}
                                     className=" p-6"
                                 >
@@ -1524,12 +1527,12 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                         <Button
                                             variant="outline"
                                             onClick={() => {
-                                                // User is done adding sections, go to review
-                                                setStepIndex(STEP_KEYS.indexOf("review"));
+                                                // User is done adding sections, finish and go to app
+                                                finish();
                                             }}
                                             className="p-6"
                                         >
-                                            Skip, go to review
+                                            Finish & Continue to App
                                         </Button>
                                     </div>
 
