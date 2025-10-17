@@ -753,13 +753,15 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   // No longer needed - routing is handled by AppRouterShell
 
   function blocksFromOverrides(ovr) {
-    const order = ["hero", "extraPrizes", "winners"]; // Removed WhoYouHelp from default order
+    const defaultOrder = ["hero", "extraPrizes", "winners"]; // Default order for new projects
     const toIndex = (v) => (v === "B" ? 1 : v === "C" ? 2 : 0);       // "A" → 0, "B" → 1, "C" → 2
 
+    // Use stored order if available, otherwise use default order
+    const sectionOrder = ovr?._sectionOrder || defaultOrder;
     const blocks = [];
     
-    // First, add sections in the standard order (only if they exist in overrides)
-    order.forEach((k) => {
+    // Add sections in the stored order (only if they exist in overrides)
+    sectionOrder.forEach((k) => {
       if (ovr?.[k]?.visible !== false) {
         const s = ovr[k] || {};
         blocks.push({
@@ -774,7 +776,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     });
     
     // Then, add WhoYouHelp only if it was explicitly added during onboarding
-    if (ovr?.WhoYouHelp?.visible === true) { // Changed from !== false to === true
+    if (ovr?.WhoYouHelp?.visible === true && !sectionOrder.includes('WhoYouHelp')) {
       const s = ovr.WhoYouHelp || {};
       blocks.push({
         id: crypto?.randomUUID?.() ?? `b_WhoYouHelp_${Date.now()}`,
@@ -786,9 +788,9 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       });
     }
     
-    // Then, add all extra content sections
+    // Then, add all extra content sections that aren't already in the order
     Object.keys(ovr).forEach((k) => {
-      if (k.startsWith('extraContent_') && ovr[k]?.visible !== false) {
+      if (k.startsWith('extraContent_') && ovr[k]?.visible !== false && !sectionOrder.includes(k)) {
         const s = ovr[k] || {};
         blocks.push({
           id: crypto?.randomUUID?.() ?? `b_${k}_${Date.now()}`,
@@ -1013,6 +1015,10 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     }
     
     previousBlocksRef.current = blocks;
+    
+    // Store section order based on current blocks array
+    const sectionOrder = blocks.map(block => block.type);
+    setSection('_sectionOrder', sectionOrder);
     
     blocks.forEach(block => {
       setSection(block.type, {
