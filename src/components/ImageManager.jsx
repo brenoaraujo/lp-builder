@@ -18,6 +18,7 @@ export default function ImageManager({
   hideControls = false,
   className = "",
   previewRef = null,
+  mode = "wrapper",
   children
 }) {
   const [discoveredImages, setDiscoveredImages] = useState([]);
@@ -38,11 +39,30 @@ export default function ImageManager({
   // Discover images in the section
   useEffect(() => {
     const discoverImages = () => {
-      // Use previewElement if available (for onboarding), otherwise use sectionRef (for main app)
-      const searchRoot = previewElement || sectionRef.current;
-      if (!searchRoot || typeof searchRoot.querySelectorAll !== 'function') return;
+      let imageElements;
+      
+      if (mode === "external") {
+        // EditorSidebar in builder: search external DOM
+        const sectionElement = document.querySelector(`[data-section="${sectionId}"]`);
+        if (sectionElement) {
+          // Get child elements with data-image
+          const childImages = sectionElement.querySelectorAll('[data-image]');
+          // Check if section element itself has data-image (like Hero B)
+          const sectionHasImage = sectionElement.hasAttribute('data-image');
+          imageElements = sectionHasImage ? [sectionElement, ...childImages] : childImages;
+        } else {
+          imageElements = [];
+        }
+      } else {
+        // Onboarding or main canvas: search within children
+        const searchRoot = previewElement || sectionRef.current;
+        if (!searchRoot || typeof searchRoot.querySelectorAll !== 'function') return;
+        const childImages = searchRoot.querySelectorAll('[data-image]');
+        // Check if root element itself has data-image
+        const rootHasImage = searchRoot.hasAttribute('data-image');
+        imageElements = rootHasImage ? [searchRoot, ...childImages] : childImages;
+      }
 
-      const imageElements = searchRoot.querySelectorAll('[data-image]');
       const foundImages = Array.from(imageElements).map(el => ({
         id: el.getAttribute('data-image'),
         label: el.getAttribute('data-label') || el.getAttribute('data-image'),
@@ -57,9 +77,18 @@ export default function ImageManager({
 
     // Also discover when DOM changes (for dynamic content)
     const observer = new MutationObserver(discoverImages);
-    const searchRoot = previewElement || sectionRef.current;
-    if (searchRoot && typeof searchRoot.observe === 'function') {
-      observer.observe(searchRoot, {
+    
+    let observeTarget;
+    if (mode === "external") {
+      // External mode: Observe the specific section in external DOM
+      observeTarget = document.querySelector(`[data-section="${sectionId}"]`);
+    } else {
+      // Wrapper mode: Observe within children
+      observeTarget = previewElement || sectionRef.current;
+    }
+    
+    if (observeTarget && typeof observeTarget.observe === 'function') {
+      observer.observe(observeTarget, {
         childList: true,
         subtree: true,
         attributes: true,
@@ -68,7 +97,7 @@ export default function ImageManager({
     }
 
     return () => observer.disconnect();
-  }, [sectionId, previewElement]);
+  }, [sectionId, previewElement, mode]);
 
   // Apply image URLs to discovered elements
   useEffect(() => {
@@ -90,8 +119,11 @@ export default function ImageManager({
           element.style.backgroundPosition = backgroundPosition;
           
           // Special handling for hero section - also update CSS variable
-          if (id === 'hero-image' && element.closest('[data-section="hero"]')) {
-            element.style.setProperty('--hero-background-image', `url(${imageUrl})`);
+          if (id === 'hero-image' || id.includes('hero')) {
+            const heroSection = element.closest('[data-section="hero"]');
+            if (heroSection) {
+              heroSection.style.setProperty('--hero-background-image', `url(${imageUrl})`);
+            }
           }
         } else if (element.tagName === 'IMG') {
           // For actual img tags, set src
@@ -104,15 +136,21 @@ export default function ImageManager({
           element.style.backgroundImage = `url(${defaultImage})`;
           
           // Special handling for hero section - also update CSS variable
-          if (element.getAttribute('data-image') === 'hero-image' && element.closest('[data-section="hero"]')) {
-            element.style.setProperty('--hero-background-image', `url(${defaultImage})`);
+          if (element.getAttribute('data-image') === 'hero-image' || element.getAttribute('data-image').includes('hero')) {
+            const heroSection = element.closest('[data-section="hero"]');
+            if (heroSection) {
+              heroSection.style.setProperty('--hero-background-image', `url(${defaultImage})`);
+            }
           }
         } else {
           element.style.backgroundImage = '';
           
           // Special handling for hero section - clear CSS variable
-          if (element.getAttribute('data-image') === 'hero-image' && element.closest('[data-section="hero"]')) {
-            element.style.removeProperty('--hero-background-image');
+          if (element.getAttribute('data-image') === 'hero-image' || element.getAttribute('data-image').includes('hero')) {
+            const heroSection = element.closest('[data-section="hero"]');
+            if (heroSection) {
+              heroSection.style.removeProperty('--hero-background-image');
+            }
           }
         }
       }

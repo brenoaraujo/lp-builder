@@ -72,9 +72,9 @@ export const SECTIONS = {
       { key: "B", label: "Hero B" },
     ],
     // 👇 responsive thumbnail (fills the card)
-    thumbnail: (key = "A", state, customImages = {}) => (
+    thumbnail: (key = "A") => (
       <ThumbFrame>
-        {key === "B" ? <HeroB preview customImage={customImages?.['hero-image']} /> : <HeroA preview />}
+        {key === "B" ? <HeroB preview /> : <HeroA preview />}
       </ThumbFrame>
     ),
     skippable: false,

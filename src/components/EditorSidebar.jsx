@@ -499,6 +499,7 @@ const orderedCopyList = (() => {
                       images={images}
                       onImageChange={onImageChange}
                       compact={true}
+                      mode={mode === "builder" ? "external" : "wrapper"}
                       previewRef={previewRef}
                     />
                   </div>

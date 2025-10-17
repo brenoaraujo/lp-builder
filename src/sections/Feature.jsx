@@ -1,8 +1,8 @@
 // FeatureA.jsx
-export function FeatureA() {
+export function FeatureA({ blockType = "feature" }) {
     return (
         <section
-            data-section="feature"
+            data-section={blockType}
             data-description="true"
             data-mobile="No"
             data-secondary-action="true"
@@ -60,7 +60,7 @@ export function FeatureA() {
                                 Learn More
                             </div>
                         </div>
-                        
+
                         {/* Button Action URL - Metadata only, not displayed */}
                         <div
                             data-copy="true"
@@ -111,97 +111,97 @@ export function FeatureA() {
         </section>
     );
 }
-export function FeatureB() {
+export function FeatureB({ blockType = "feature" }) {
     return (
 
         <section
-        data-section="feature"
-        data-description="true"
-        data-mobile="No"
-        data-secondary-action="true"
-        data-section-label="true"
-        data-type="img_right"
-        className="w-[1440px] py-24 bg-Colors-background inline-flex flex-col justify-start items-center gap-6 overflow-hidden"
-        aria-label="Feature"
-    >
-        <div className="w-full max-w-[1280px] px-6 flex items-center gap-16">
-            {/* Visual (Image Right) */}
-            <div className="">
-                <div
-                    data-portrait="No"
-                    data-ratio="73:41"
-                    data-image="feature-image"
-                    data-default-image="/images/feature.png"
-                    data-label="Feature Image"
-                    className="relative w-[500px] h-80 rounded-lg overflow-hidden bg-Colors-secondary"
-                    style={{ backgroundImage: "url(/images/feature.png)", backgroundSize: "cover", backgroundPosition: "center" }}
-                   
-                >
-                  
-                </div>
-            </div>
-            {/* Copy */} 
-            <div className="inline-flex flex-col justify-start items-start gap-8">
-                <div className="self-stretch flex flex-col justify-start items-start gap-5">
+            data-section={blockType}
+            data-description="true"
+            data-mobile="No"
+            data-secondary-action="true"
+            data-section-label="true"
+            data-type="img_right"
+            className="w-[1440px] py-24 bg-Colors-background inline-flex flex-col justify-start items-center gap-6 overflow-hidden"
+            aria-label="Feature"
+        >
+            <div className="w-full max-w-[1280px] px-6 flex items-center gap-16">
+                {/* Visual (Image Right) */}
+                <div className="">
                     <div
-                        data-display="yes"
-                        data-copy="yes"
-                        data-label="Section Label"
-                        className="justify-start text-Colors-muted-foreground text-base font-semibold font-primary text-left"
-                    >
-                        Section label
-                    </div>
+                        data-portrait="No"
+                        data-ratio="73:41"
+                        data-image="feature-image"
+                        data-default-image="/images/feature.png"
+                        data-label="Feature Image"
+                        className="relative w-[500px] h-80 rounded-lg overflow-hidden bg-Colors-secondary"
+                        style={{ backgroundImage: "url(/images/feature.png)", backgroundSize: "cover", backgroundPosition: "center" }}
 
-                    <div
-                        data-copy="yes"
-                        data-label="Headline"
-                        className="self-stretch justify-start text-Colors-foreground text-4xl font-bold font-headline leading-10 text-left"
                     >
-                        Headline that shows solution&apos;s impact on user success
-                    </div>
 
-                    <div
-                        data-display="yes"
-                        data-copy="yes"
-                        data-label="Description"
-                        className="self-stretch justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal text-left"
-                    >
-                        Explain in one or two concise sentences how your solution transforms users&apos; challenges into
-                        positive outcomes. Focus on the end benefits that matter most to your target audience. Keep it
-                        clear and compelling.
                     </div>
                 </div>
+                {/* Copy */}
+                <div className="inline-flex flex-col justify-start items-start gap-8">
+                    <div className="self-stretch flex flex-col justify-start items-start gap-5">
+                        <div
+                            data-display="yes"
+                            data-copy="yes"
+                            data-label="Section Label"
+                            className="justify-start text-Colors-muted-foreground text-base font-semibold font-primary text-left"
+                        >
+                            Section label
+                        </div>
 
-                {/* Actions */}
-                <div className="inline-flex justify-start items-start gap-3">
-                    {/* Primary */}
-                    <div
-                        data-display="true"
-                        data-label="Button"
-                        data-copy="true"
-                        data-id="cta-button"
-                        role="button"
-                        tabIndex={0}
-                        className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
-                    >
-                        <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
-                            Learn More
+                        <div
+                            data-copy="yes"
+                            data-label="Headline"
+                            className="self-stretch justify-start text-Colors-foreground text-4xl font-bold font-headline leading-10 text-left"
+                        >
+                            Headline that shows solution&apos;s impact on user success
+                        </div>
+
+                        <div
+                            data-display="yes"
+                            data-copy="yes"
+                            data-label="Description"
+                            className="self-stretch justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal text-left"
+                        >
+                            Explain in one or two concise sentences how your solution transforms users&apos; challenges into
+                            positive outcomes. Focus on the end benefits that matter most to your target audience. Keep it
+                            clear and compelling.
                         </div>
                     </div>
-                    
-                    {/* Button Action URL - Metadata only, not displayed */}
-                    <div
-                        data-copy="true"
-                        data-placeholder="Learn More Url"
-                        data-id="cta-button-action"
-                        data-control-id="cta-button"
-                        data-max-chars="200"
-                        style={{ display: 'none' }}
-                    >
-                        https://example.com
-                    </div>
 
-                    {/* Secondary (Ghost) 
+                    {/* Actions */}
+                    <div className="inline-flex justify-start items-start gap-3">
+                        {/* Primary */}
+                        <div
+                            data-display="true"
+                            data-label="Button"
+                            data-copy="true"
+                            data-id="cta-button"
+                            role="button"
+                            tabIndex={0}
+                            className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
+                        >
+                            <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
+                                Learn More
+                            </div>
+                        </div>
+
+                        {/* Button Action URL - Metadata only, not displayed */}
+                        <div
+                            data-copy="true"
+                            data-placeholder="Learn More Url"
+                            data-id="cta-button-action"
+                            data-control-id="cta-button"
+                            data-max-chars="200"
+                            style={{ display: 'none' }}
+                        >
+                            https://example.com
+                        </div>
+
+                        {/* Secondary (Ghost) 
         <div
           data-show-left-icon="false"
           data-show-right-icon="true"
@@ -219,95 +219,96 @@ export function FeatureB() {
             <div className="w-2.5 h-2.5 left-[3.33px] top-[3.33px] absolute outline outline-[1.33px] outline-offset-[-0.67px] outline-Colors-primary" />
           </div>
         </div>*/}
+                    </div>
                 </div>
+
+
             </div>
+        </section>
 
-           
-        </div>
-    </section>
 
-   
 
 
     );
 }
-export function FeatureC() {
+export function FeatureC({ blockType = "feature" }) {
     return (
 
         <section
-        data-section="feature"
-        data-description="true"
-        data-mobile="No"
-        data-secondary-action="true"
-        data-section-label="true"
-        data-type="img_right"
-        className="w-[1440px] py-24 bg-Colors-background inline-flex flex-col justify-center items-center gap-6 overflow-hidden"
-        aria-label="Feature"
-    >
-        <div className="w-full max-w-[1280px] px-6 flex items-center gap-16">
-           
-            {/* Copy */} 
-            <div className="w-full inline-flex flex-col justify-center items-center gap-8 text-center">
-                <div className="gap-4 flex flex-col pb-8">
-                    <div
-                        data-display="yes"
-                        data-copy="yes"
-                        data-label="Section Label"
-                        className="self-stretch  text-Colors-muted-foreground text-base font-semibold font-primary text-center"
-                    >
-                        Section label
-                    </div>
+            data-section={blockType}
+            data-description="true"
+            data-mobile="No"
+            data-secondary-action="true"
+            data-section-label="true"
+            data-type="img_right"
+            className="w-[1440px] py-24 bg-Colors-background inline-flex flex-col justify-center items-center gap-6 overflow-hidden"
+            aria-label="Feature"
+        >
+            <div className="w-full max-w-[1280px] px-6 flex items-center gap-8">
 
-                    <div
-                        data-copy="yes"
-                        data-label="Headline"
-                        className="self-stretch  text-Colors-foreground text-4xl font-bold font-headline leading-10 text-center"
-                    >
-                        Headline that shows solution&apos;s impact on user success
-                    </div>
+                {/* Copy */}
+                <div className="w-full inline-flex flex-col justify-center items-center gap-8 text-center">
+                    <div className="gap-4 flex flex-col max-w-[840px]">
+                        <div
+                            data-display="yes"
+                            data-copy="yes"
+                            data-label="Section Label"
+                            className="self-stretch  text-Colors-muted-foreground text-base font-semibold font-primary text-center"
+                        >
+                            Section label
+                        </div>
 
-                    <div
-                        data-display="yes"
-                        data-copy="yes"
-                        data-label="Description"
-                        className="max-w-[840px] text-Colors-muted-foreground text-base font-normal font-primary leading-normal text-center "
-                    >
-                        Explain in one or two concise sentences how your solution transforms users&apos; challenges into
-                        positive outcomes. Focus on the end benefits that matter most to your target audience. Keep it
-                        clear and compelling.
-                    </div>
-                </div>
+                        <div
+                            data-copy="yes"
+                            data-label="Headline"
+                            className="self-stretch  text-Colors-foreground text-4xl font-bold font-headline leading-10 text-center"
+                        >
+                            Headline that shows solution&apos;s impact on user success
+                        </div>
 
-                {/* Actions */}
-                <div className="inline-flex justify-center items-start gap-3">
-                    {/* Primary */}
-                    <div
-                        data-display="true"
-                        data-label="Button"
-                        data-copy="true"
-                        data-id="cta-button"
-                        role="button"
-                        tabIndex={0}
-                        className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
-                    >
-                        <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
-                            Learn More
+                        <div
+                            data-display="yes"
+                            data-copy="yes"
+                            data-label="Description"
+                            className="text-Colors-muted-foreground text-base font-normal font-primary leading-normal text-center "
+                        >
+                            Explain in one or two concise sentences how your solution transforms users&apos; challenges into
+                            positive outcomes. Focus on the end benefits that matter most to your target audience. Keep it
+                            clear and compelling.
                         </div>
                     </div>
-                    
-                    {/* Button Action URL - Metadata only, not displayed */}
-                    <div
-                        data-copy="true"
-                        data-placeholder="Learn More Url"
-                        data-id="cta-button-action"
-                        data-control-id="cta-button"
-                        data-max-chars="200"
-                        style={{ display: 'none' }}
-                    >
-                        https://example.com
-                    </div>
 
-                    {/* Secondary (Ghost) 
+                    {/* Actions */}
+                    <div className="inline-flex justify-center items-center gap-3">
+                        {/* Primary */}
+                        <div
+                            data-display="true"
+                            data-label="Button"
+                            data-copy="true"
+                            data-id="cta-button"
+                            role="button"
+                            tabIndex={0}
+                            className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
+                        >
+                            <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
+                                Learn More
+                            </div>
+                        </div>
+
+
+                        {/* Button Action URL - Metadata only, not displayed */}
+                        <div
+                            data-copy="true"
+                            data-placeholder="Learn More Url"
+                            data-id="cta-button-action"
+                            data-control-id="cta-button"
+                            data-max-chars="200"
+                            style={{ display: 'none' }}
+                        >
+                            https://example.com
+                        </div>
+
+                        {/* Secondary (Ghost) 
         <div
           data-show-left-icon="false"
           data-show-right-icon="true"
@@ -325,14 +326,28 @@ export function FeatureC() {
             <div className="w-2.5 h-2.5 left-[3.33px] top-[3.33px] absolute outline outline-[1.33px] outline-offset-[-0.67px] outline-Colors-primary" />
           </div>
         </div>*/}
+                    </div>
+                    <div className="">
+                            <div
+                                data-portrait="No"
+                                data-ratio="73:41"
+                                data-image="feature-image"
+                                data-default-image="/images/feature.png"
+                                data-label="Feature Image"
+                                className="relative w-[500px] h-80 rounded-lg overflow-hidden bg-Colors-secondary"
+                                style={{ backgroundImage: "url(/images/feature.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+
+                            >
+
+                            </div>
+                        </div>
                 </div>
+
+
             </div>
+        </section>
 
-           
-        </div>
-    </section>
 
-   
 
 
     );

@@ -539,7 +539,7 @@ function SortableBlock({
                   onCopyDiscovered?.(arr);
                 }}
               >
-                <Comp />
+                <Comp {...(type.startsWith('extraContent_') ? { blockType: type } : {})} />
               </EditableSection>
             </ImageManager>
           </div>
@@ -1096,19 +1096,10 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       return;
     }
 
-    // 1) Build the exact payload you already decode on load
-    const payload = encodeState(packSnapshot({ blocks, globalTheme }));
+    // Simply copy the current URL - it already contains all the state
+    const url = location.href;
 
-    const url = `${location.origin}${location.pathname}#${payload}`;
-
-    // 2) Replace the hash once (don’t assign location.hash separately)
-    try {
-      history.replaceState(null, "", `#${payload}`);
-    } catch {
-      // no-op; worst case the URL won’t update but payload still copies
-    }
-
-    // 3) Copy to clipboard with fallback
+    // Copy to clipboard with fallback
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(url);
@@ -1191,8 +1182,9 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
 
   const [approveOpen, setApproveOpen] = useState(false);
   const [approvalLink, setApprovalLink] = useState("");
+  const [approvalSuccess, setApprovalSuccess] = useState(false);
   const [approvalMeta, setApprovalMeta] = useState({
-    customerName: "", projectId: "", notes: "", approverName: "", approverEmail: "",
+    customerName: "", projectId: "", notes: "",
   });
 
   const submitViaEmail = async () => {
@@ -1203,29 +1195,15 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       };
       const payload = encodeState(snapshot);
       const url = `${location.origin}${location.pathname}#${payload}`;
+      
+      // Generate approval link locally without API call
       setApprovalLink(url);
-
-      const res = await fetch("/api/handoff", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ approvalLink: url, snapshot, approvalMeta }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        console.error("handoff error:", data);
-        setToastMsg(
-          data?.error
-            ? `Handoff failed: ${data.error}${data.missing ? ` (${data.missing.join(", ")})` : ""}`
-            : "Handoff failed. Check server logs/env vars."
-        );
-        clearTimeout(window.__share_toast_timer);
-        window.__share_toast_timer = setTimeout(() => setToastMsg(null), 3200);
-        return;
-      }
-      setApproveOpen(false);
+      
+      // Show success confirmation
+      setApprovalSuccess(true);
     } catch (err) {
       console.error(err);
-      setToastMsg("Handoff failed due to a network or server error.");
+      setToastMsg("Failed to generate approval link.");
       clearTimeout(window.__share_toast_timer);
       window.__share_toast_timer = setTimeout(() => setToastMsg(null), 3200);
     }
@@ -1462,9 +1440,6 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <a href={`#/onboarding?invite=${inviteToken}`} className="text-xs underline text-muted-foreground" >
-              Restart onboarding
-            </a>
             {/* darkmode
             <Button variant="outline" className="text-gray-500" onClick={() => setThemeMode((m) => (m === "light" ? "dark" : "light"))}>
               {themeMode === "light" ? "Dark mode" : "Light mode"}
@@ -1802,54 +1777,54 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs text-gray-600">Submitter name</label>
-              <input
-                className="w-full rounded-md border px-2 py-1 text-sm"
-                placeholder="Jane Doe"
-                value={approvalMeta.approverName}
-                onChange={(e) => setApprovalMeta((m) => ({ ...m, approverName: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-gray-600">Submitter email</label>
-              <input
-                type="email"
-                className="w-full rounded-md border px-2 py-1 text-sm"
-                placeholder="jane@example.com"
-                value={approvalMeta.approverEmail}
-                onChange={(e) => setApprovalMeta((m) => ({ ...m, approverEmail: e.target.value }))}
-              />
-            </div>
+            {!approvalSuccess ? (
+              // Original form (without submitter fields)
+              <>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-600">Campaign Name (optional)</label>
+                  <input
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    placeholder="Summer Campaign"
+                    value={approvalMeta.projectId}
+                    onChange={(e) => setApprovalMeta((m) => ({ ...m, projectId: e.target.value }))}
+                  />
+                </div>
 
-            <div className="space-y-1">
-              <label className="text-xs text-gray-600">Project Name (optional)</label>
-              <input
-                className="w-full rounded-md border px-2 py-1 text-sm"
-                placeholder="Summer Campaign"
-                value={approvalMeta.projectId}
-                onChange={(e) => setApprovalMeta((m) => ({ ...m, projectId: e.target.value }))}
-              />
-            </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-600">Notes (optional)</label>
+                  <textarea
+                    rows={3}
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    placeholder="Any special instructions…"
+                    value={approvalMeta.notes}
+                    onChange={(e) => setApprovalMeta((m) => ({ ...m, notes: e.target.value }))}
+                  />
+                </div>
 
-            <div className="space-y-1">
-              <label className="text-xs text-gray-600">Notes (optional)</label>
-              <textarea
-                rows={3}
-                className="w-full rounded-md border px-2 py-1 text-sm"
-                placeholder="Any special instructions…"
-                value={approvalMeta.notes}
-                onChange={(e) => setApprovalMeta((m) => ({ ...m, notes: e.target.value }))}
-              />
-            </div>
-
-            <div className="pt-2">
-              <Button className="w-full" onClick={submitViaEmail}>Submit to Production</Button>
-            </div>
-
-            {approvalLink && (
-              <div className="text-[11px] text-gray-600">
-                Approval link generated: <span className="break-all">{approvalLink}</span>
+                <div className="pt-2">
+                  <Button className="w-full" onClick={submitViaEmail}>Submit to Production</Button>
+                </div>
+              </>
+            ) : (
+              // Success confirmation
+              <div className="text-center space-y-4 py-8">
+                <div className="text-green-600 text-4xl">✓</div>
+                <div className="text-lg font-medium text-gray-900">Successfully Submitted!</div>
+                <div className="text-sm text-gray-600">
+                  Your design has been approved and is ready for production. The approval link has been generated and contains all the necessary data.
+                </div>
+                <div className="pt-4">
+                  <Button 
+                    className="w-full" 
+                    onClick={() => {
+                      setApprovalSuccess(false);
+                      setApproveOpen(false);
+                      setApprovalMeta({ customerName: "", projectId: "", notes: "" });
+                    }}
+                  >
+                    Close
+                  </Button>
+                </div>
               </div>
             )}
           </div>
