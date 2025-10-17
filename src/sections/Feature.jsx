@@ -99,7 +99,7 @@ export function FeatureA({ blockType = "feature" }) {
                     <div
                         data-portrait="No"
                         data-ratio="73:41"
-                        data-image="feature-image"
+                        data-image={blockType === "feature" ? "feature-image" : `${blockType}-image`}
                         data-default-image=""
                         data-label="Feature Image"
                         className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary"
@@ -130,7 +130,7 @@ export function FeatureB({ blockType = "feature" }) {
                     <div
                         data-portrait="No"
                         data-ratio="73:41"
-                        data-image="feature-image"
+                        data-image={blockType === "feature" ? "feature-image" : `${blockType}-image`}
                         data-default-image="/images/feature.png"
                         data-label="Feature Image"
                         className="relative w-[500px] h-80 rounded-lg overflow-hidden bg-Colors-secondary"
@@ -331,7 +331,7 @@ export function FeatureC({ blockType = "feature" }) {
                             <div
                                 data-portrait="No"
                                 data-ratio="73:41"
-                                data-image="feature-image"
+                                data-image={blockType === "feature" ? "feature-image" : `${blockType}-image`}
                                 data-default-image="/images/feature.png"
                                 data-label="Feature Image"
                                 className="relative w-[500px] h-80 rounded-lg overflow-hidden bg-Colors-secondary"

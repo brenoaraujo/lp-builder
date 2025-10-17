@@ -722,7 +722,7 @@ function blocksFromOverrides(ovr = {}) {
 
 // Inner component that uses useBuilderOverrides
 function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
-  const { overridesBySection, setSection } = useBuilderOverrides();
+  const { overridesBySection, setSection, addExtraContentSection } = useBuilderOverrides();
   const { images, updateImage } = useImageManager(row, updateInvite);
 
   const HAS_SNAPSHOT = useMemo(() => {
@@ -1296,9 +1296,17 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
 
   function handleAddSectionAt(index, type = "hero") {
     if (approvedMode) return;
+    
+    // For feature sections, use addExtraContentSection to generate unique IDs
+    let finalType = type;
+    if (type === "feature") {
+      // Reuse the same logic as onboarding - generates extraContent_1, extraContent_2, etc.
+      finalType = addExtraContentSection();
+    }
+    
     const newBlock = {
       id: crypto?.randomUUID?.() ?? `b_${Date.now()}`,
-      type, variant: 0, controls: {}, copy: {},
+      type: finalType, variant: 0, controls: {}, copy: {},
       overrides: { enabled: false, values: {}, valuesPP: {} },
     };
     setBlocks((arr) => {
@@ -1719,6 +1727,9 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                   </Button>
                   <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "winners")}>
                     Winners
+                  </Button>
+                  <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "feature")}>
+                    Extra Content
                   </Button>
                   <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "WhoYouHelp")}>
                     How You Help
