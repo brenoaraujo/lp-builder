@@ -119,7 +119,7 @@ export function  WhoYouHelpB({ preview = false }) {
             <div className="w-full max-w-[1280px] px-6 grid grid-cols-1 md:grid-cols-2 items-center gap-16">
                 {/* Visual (Image Right) */}
                 <div className="flex-1">
-                    <div
+                    <img
                         data-portrait="No"
                         data-ratio="4:3"
                         data-display="yes"
@@ -127,11 +127,10 @@ export function  WhoYouHelpB({ preview = false }) {
                         data-size="1200×900"
                         data-default-image="/images/who-you-help.png"
                         data-label=" HowYouHelp Image"
-                        className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary  h-[420px]"
-                        style={{ backgroundImage: "url(/images/who-you-help.png)", backgroundSize: "cover", backgroundPosition: "center" }}
-                    >
-                      
-                    </div>
+                        className="max-w-full rounded-lg overflow-hidden object-cover bg-Colors-secondary"
+                        src="/images/who-you-help.png"
+                        alt="Who You Help"
+                    />
                 </div>
                 {/* Copy */} 
                 <div className="flex-1 inline-flex flex-col justify-start items-start gap-8">

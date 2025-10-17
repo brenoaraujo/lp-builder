@@ -36,33 +36,39 @@ export function WinnersA() {
           <div data-display="true" data-label="Winners Photos" className="relative inline-flex justify-center items-center">
             <div className="flex justify-center items-center gap-4">
               <div className="w-full p-1 flex justify-start items-center gap-2">
-                <div
+                <img
                   data-portrait="No"
                   data-ratio="5:4"
                   data-size="708×532"
-                  className="w-[354px] h-[266px] rounded-lg overflow-hidden text-Colors-secondary"
-                  data-image="winner1-image"  data-default-image="/images/winner1.png"
-                  style={{ backgroundImage: "url(/images/winner1.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                  data-image="winner1-image"
+                  data-default-image="/images/winner1.png"
+                  className="max-w-[354px] rounded-lg overflow-hidden object-cover"
+                  src="/images/winner1.png"
+                  alt="Winner 1"
                 />
               </div>
               <div className="w-full p-1 flex justify-start items-center gap-2">
-                <div
+                <img
                   data-portrait="No"
                   data-ratio="5:4"
                   data-size="708×532"
-                  className="w-[354px] h-[266px] rounded-lg overflow-hidden text-Colors-secondary"
-                  data-image="winner2-image"  data-default-image="/images/winner2.png"
-                  style={{ backgroundImage: "url(/images/winner2.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                  data-image="winner2-image"
+                  data-default-image="/images/winner2.png"
+                  className="max-w-[354px] rounded-lg overflow-hidden object-cover"
+                  src="/images/winner2.png"
+                  alt="Winner 2"
                 />
               </div>
               <div className="w-full p-1 flex justify-start items-center gap-2">
-                <div
+                <img
                   data-portrait="No"
                   data-ratio="5:4"
                   data-size="708×532"
-                  className="w-[354px] h-[266px] rounded-lg overflow-hidden text-Colors-secondary"
-                  data-image="winner3-image"  data-default-image="/images/winner3.png"
-                  style={{ backgroundImage: "url(/images/winner3.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+                  data-image="winner3-image"
+                  data-default-image="/images/winner3.png"
+                  className="max-w-[354px] rounded-lg overflow-hidden object-cover"
+                  src="/images/winner3.png"
+                  alt="Winner 3"
                 />
               </div>
             </div>

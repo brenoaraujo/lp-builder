@@ -84,14 +84,15 @@ export function HeroA({ preview = false, raffleType = null }) {
           </div>
 
           {/* Right column (image/placeholder) */}
-          <div
+          <img
             data-portrait="No"
             data-ratio="5:4"
-            data-image=" "
+            data-image="hero-a-image"
             data-size="1240×992"
             data-default-image="/images/img-hero.png"
-            className="w-[620px] h-[583px]  rounded-lg overflow-hidden "
-            style={{ backgroundImage: "url(/images/img-hero.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+            className="max-w-[620px] rounded-lg overflow-hidden object-cover"
+            src="/images/img-hero.png"
+            alt="Hero"
           />
         </div>
 

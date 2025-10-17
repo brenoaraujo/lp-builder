@@ -246,13 +246,15 @@ export function ExtraPrizesB() {
             </div>*/}
           </div>
 
-          <div
+          <img
             data-portrait="No"
             data-ratio="5:4"
             data-size="1200×960"
-            className="w-[654px] h-[600px]  rounded-lg inline-flex flex-col justify-start items-start overflow-hidden relative"
-            data-image="extra-prize-image"  data-default-image="/images/img-extra.png"
-            style={{ backgroundImage: "url(/images/img-extra.png)", backgroundSize: "cover", backgroundPosition: "center" }}
+            data-image="extra-prize-image"
+            data-default-image="/images/img-extra.png"
+            className="max-w-[654px] rounded-lg overflow-hidden object-cover"
+            src="/images/img-extra.png"
+            alt="Extra Prize"
           />
         </div>
 

@@ -97,17 +97,17 @@ export function FeatureA({ blockType = "feature" }) {
 
                 {/* Visual (Image Right) */}
                 <div className="flex-1">
-                    <div
+                    <img
                         data-portrait="No"
                         data-ratio="73:41"
                         data-image={blockType === "feature" ? "feature-image" : `${blockType}-image`}
                         data-size="1000×560"
                         data-default-image=""
                         data-label="Feature Image"
-                        className="relative w-full h-80 rounded-lg overflow-hidden bg-Colors-secondary"
-                    >
-
-                    </div>
+                        className="max-w-full rounded-lg overflow-hidden object-cover bg-Colors-secondary"
+                        src="/images/feature.png"
+                        alt="Feature"
+                    />
                 </div>
             </div>
         </section>
@@ -129,19 +129,17 @@ export function FeatureB({ blockType = "feature" }) {
             <div className="w-full max-w-[1280px] px-6 flex items-center gap-16">
                 {/* Visual (Image Right) */}
                 <div className="">
-                    <div
+                    <img
                         data-portrait="No"
                         data-ratio="73:41"
                         data-image={blockType === "feature" ? "feature-image" : `${blockType}-image`}
                         data-size="1000×560"
                         data-default-image="/images/feature.png"
                         data-label="Feature Image"
-                        className="relative w-[500px] h-80 rounded-lg overflow-hidden bg-Colors-secondary"
-                        style={{ backgroundImage: "url(/images/feature.png)", backgroundSize: "cover", backgroundPosition: "center" }}
-
-                    >
-
-                    </div>
+                        className="max-w-[500px] rounded-lg overflow-hidden object-cover bg-Colors-secondary"
+                        src="/images/feature.png"
+                        alt="Feature"
+                    />
                 </div>
                 {/* Copy */}
                 <div className="inline-flex flex-col justify-start items-start gap-8">
@@ -331,19 +329,17 @@ export function FeatureC({ blockType = "feature" }) {
         </div>*/}
                     </div>
                     <div className="">
-                            <div
+                            <img
                                 data-portrait="No"
                                 data-ratio="73:41"
                                 data-image={blockType === "feature" ? "feature-image" : `${blockType}-image`}
                                 data-size="1000×560"
                                 data-default-image="/images/feature.png"
                                 data-label="Feature Image"
-                                className="relative w-[500px] h-80 rounded-lg overflow-hidden bg-Colors-secondary"
-                                style={{ backgroundImage: "url(/images/feature.png)", backgroundSize: "cover", backgroundPosition: "center" }}
-
-                            >
-
-                            </div>
+                                className="max-w-[800px] rounded-lg overflow-hidden object-cover bg-Colors-secondary"
+                                src="/images/feature.png"
+                                alt="Feature"
+                            />
                         </div>
                 </div>
 

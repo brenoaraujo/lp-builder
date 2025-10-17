@@ -1748,7 +1748,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                     Extra Content
                   </Button>
                   <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "WhoYouHelp")}>
-                    How You Help
+                    Who You Help
                   </Button>
                 </div>
             
