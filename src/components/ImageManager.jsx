@@ -167,20 +167,28 @@ export default function ImageManager({
 
   return (
     <div ref={sectionRef} className={className}>
-      {discoveredImages.map(({ id, label }) => (
-        <div key={id} className="mb-4">
-          <label className="block text-xs font-medium text-gray-600 mb-2">
-            {label}
-          </label>
-          <ImageUpload
-            imageId={id}
-            currentImageUrl={images[id]}
-            onImageChange={onImageChange}
-            compact={compact}
-            placeholder={`Upload ${label.toLowerCase()}`}
-          />
-        </div>
-      ))}
+      {discoveredImages.map(({ id, label, element }) => {
+        const size = element.getAttribute('data-size');
+        return (
+          <div key={id} className="mb-4">
+            <label className="block text-xs font-medium text-gray-600 mb-2">
+              {label}
+            </label>
+            <ImageUpload
+              imageId={id}
+              currentImageUrl={images[id]}
+              onImageChange={onImageChange}
+              compact={compact}
+              placeholder={`Upload ${label.toLowerCase()}`}
+            />
+            {size && (
+              <div className="text-xs text-gray-500 mt-1">
+                Recommended: {size}
+              </div>
+            )}
+          </div>
+        );
+      })}
       {children}
     </div>
   );
