@@ -407,7 +407,10 @@ function SectionPreview({ k, state }) {
                 controls={state?.display || {}}
                 copyValues={state?.copy || {}}
             >
-                <Comp preview />
+                <Comp 
+                    preview 
+                    {...(k.startsWith('extraContent_') ? { blockType: k } : {})}
+                />
             </EditableSection>
         </div>
     );

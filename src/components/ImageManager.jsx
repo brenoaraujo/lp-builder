@@ -129,27 +129,41 @@ export default function ImageManager({
           // For actual img tags, set src
           element.src = imageUrl;
         }
-      } else if (element && element.hasAttribute('data-image')) {
-        // If no image URL, restore default background image or clear it
-        const defaultImage = element.getAttribute('data-default-image');
-        if (defaultImage) {
-          element.style.backgroundImage = `url(${defaultImage})`;
-          
-          // Special handling for hero section - also update CSS variable
-          if (element.getAttribute('data-image') === 'hero-image' || element.getAttribute('data-image').includes('hero')) {
-            const heroSection = element.closest('[data-section="hero"]');
-            if (heroSection) {
-              heroSection.style.setProperty('--hero-background-image', `url(${defaultImage})`);
+      } else if (element) {
+        // Handle case when no custom image is provided
+        if (element.hasAttribute('data-image')) {
+          // If no image URL, restore default background image or clear it
+          const defaultImage = element.getAttribute('data-default-image');
+          if (defaultImage) {
+            if (element.tagName === 'IMG') {
+              // For img tags, set src to default
+              element.src = defaultImage;
+            } else {
+              // For div elements, set background image
+              element.style.backgroundImage = `url(${defaultImage})`;
             }
-          }
-        } else {
-          element.style.backgroundImage = '';
-          
-          // Special handling for hero section - clear CSS variable
-          if (element.getAttribute('data-image') === 'hero-image' || element.getAttribute('data-image').includes('hero')) {
-            const heroSection = element.closest('[data-section="hero"]');
-            if (heroSection) {
-              heroSection.style.removeProperty('--hero-background-image');
+            
+            // Special handling for hero section - also update CSS variable
+            if (element.getAttribute('data-image') === 'hero-image' || element.getAttribute('data-image').includes('hero')) {
+              const heroSection = element.closest('[data-section="hero"]');
+              if (heroSection) {
+                heroSection.style.setProperty('--hero-background-image', `url(${defaultImage})`);
+              }
+            }
+          } else {
+            // No default image - clear the element
+            if (element.tagName === 'IMG') {
+              element.src = '';
+            } else {
+              element.style.backgroundImage = '';
+            }
+            
+            // Special handling for hero section - clear CSS variable
+            if (element.getAttribute('data-image') === 'hero-image' || element.getAttribute('data-image').includes('hero')) {
+              const heroSection = element.closest('[data-section="hero"]');
+              if (heroSection) {
+                heroSection.style.removeProperty('--hero-background-image');
+              }
             }
           }
         }

@@ -25,7 +25,15 @@ function NavPrimitive({ data }) {
     >
       <div className="w-full max-w-[1280px] inline-flex justify-between items-center">
         {/* Logo */}
-        <img className="w-36 h-14 rounded-lg" src={logoPath} alt="Logo" />
+        <img 
+          className="w-36 h-14 max-w-[144px] max-h-[56px] rounded-lg" 
+          src={logoPath} 
+          alt="Logo"
+          data-image="navbar-logo"
+          data-size="144×56"
+          data-default-image="/images/ascend-light.svg"
+          data-label="Navbar Logo"
+        />
 
         {/* Menu */}
         <nav className="flex justify-start items-center gap-1">

@@ -154,7 +154,10 @@ export default function EditorForOnboarding({
                     setCopyList(arr);
                   }}
                 >
-                  <Comp raffleType={raffleType} />
+                  <Comp 
+                    raffleType={raffleType}
+                    {...(sectionKey.startsWith('extraContent_') ? { blockType: sectionKey } : {})}
+                  />
                 </EditableSection>
               </div>
             </AutoScaler>
