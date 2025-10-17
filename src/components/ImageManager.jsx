@@ -133,9 +133,13 @@ export default function ImageManager({
           const defaultImage = element.getAttribute('data-default-image');
           if (defaultImage) {
             if (element.tagName === 'IMG') {
-              // For img tags, set to default image when no custom image is provided
-              // This handles the case when a custom image is removed
-              element.src = defaultImage;
+              // For img tags, only set to default if current src IS the default or empty
+              // This prevents overriding charity logos set via props
+              const currentSrc = element.src;
+              const isDefaultOrEmpty = !currentSrc || currentSrc.endsWith(defaultImage);
+              if (isDefaultOrEmpty) {
+                element.src = defaultImage;
+              }
             } else {
               // For div elements, set background image
               if (element.getAttribute('data-image') === 'hero-image') {
