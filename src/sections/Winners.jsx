@@ -78,7 +78,7 @@ export function WinnersA() {
               data-orientation="Horizontal"
               data-state="Default"
               data-variant="Previous"
-              className="w-8 h-8 p-2.5 right-[-48px] top-[50%] absolute bg-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
+              className="w-8 h-8 p-2.5 right-[-48px] top-[50%] absolute text-Colors-foreground bg-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
             >
               <ArrowLeft className="w-4 h-4 text-Colors-muted-foreground" />
             </div>
@@ -88,7 +88,7 @@ export function WinnersA() {
               data-orientation="Horizontal"
               data-state="Default"
               data-variant="Next"
-              className="w-8 h-8 p-2.5 left-[1132px] top-[50%] absolute bg-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
+              className="w-8 h-8 p-2.5 left-[1132px] top-[50%] absolute text-Colors-foreground bg-Colors-background rounded-full outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2.5"
             >
               <ArrowRight className="w-4 h-4 text-Colors-muted-foreground" />
             </div>
@@ -309,7 +309,7 @@ export function WinnersA() {
                 className="w-28 h-10 px-4 py-2 bg-base-background rounded-md outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4 text-Colors-muted-foreground" />
-                <div className="justify-center text-base-foreground text-sm font-medium font-primary leading-tight">Previous</div>
+                <div className="justify-center text-Colors-foreground text-sm font-medium font-primary leading-tight">Previous</div>
               </div>
 
               <div className="flex justify-center items-center gap-2.5">
@@ -324,7 +324,7 @@ export function WinnersA() {
                 data-variant="Outline"
                 className="w-28 h-10 px-4 py-2 bg-base-background rounded-md outline outline-1 outline-offset-[-1px] outline-base-input flex justify-center items-center gap-2"
               >
-                <div className="justify-center text-base-foreground text-sm font-medium font-primary leading-tight">Next</div>
+                <div className="justify-center text-Colors-foreground text-sm font-medium font-primary leading-tight">Next</div>
                 <ArrowRight className="w-4 h-4 text-Colors-muted-foreground" />
               </div>
             </div>

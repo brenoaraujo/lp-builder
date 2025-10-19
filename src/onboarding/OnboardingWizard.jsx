@@ -1506,7 +1506,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                             }}
                                             className="p-6"
                                         >
-                                            Finish & Continue to App
+                                            Go to Design Preview
                                         </Button>
                                     </div>
 

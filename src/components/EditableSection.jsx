@@ -55,12 +55,16 @@ export default function EditableSection({
 
   const copyParts = copyNodes.map((el, i) => {
     const id = nodeId(el, i);
+    // Try to associate this copy item with the nearest [data-display] ancestor
+    const ctrl = el.closest('[data-display]');
+    const controlId = ctrl ? (ctrl.getAttribute('data-id') || ctrl.getAttribute('data-label') || ctrl.getAttribute('id')) : null;
     return {
       id,
       label: el.getAttribute("data-label") || id,
       defaultText: (el.textContent || "").trim(),
       maxChars: Number(el.getAttribute("data-max-chars") ?? el.getAttribute("data-maxchars")) || 120,
       placeholder: el.getAttribute("data-placeholder"),
+      displayId: controlId || undefined,
     };
   });
 

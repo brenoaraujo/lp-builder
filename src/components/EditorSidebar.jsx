@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -183,6 +183,8 @@ export default function EditorSidebar({
     return () => window.removeEventListener("keydown", onKey);
   }, [closePanel]);
 
+  const [hasImages, setHasImages] = useState(false);
+
 
   const activeEntry = activeBlock ? SECTIONS_REG[activeBlock.type] : null;
 const getControlChecked = (part) => {
@@ -207,7 +209,12 @@ const isCopyVisible = (copyItem) => {
   const controls = activeBlock?.controls || {};
   const controlId = copyItem.displayId || copyItem.visibleIfId || copyItem.controlId;
 
-  if (controlId) return isControlOn(controlId, true);
+  if (controlId) {
+    // Use the discovered default visibility of the controlling part, if available
+    const controllingPart = Array.isArray(partList) ? partList.find(p => p.id === controlId) : null;
+    const defaultOn = controllingPart ? controllingPart.visible !== false : true;
+    return isControlOn(controlId, defaultOn);
+  }
 
   for (const key in controls) {
     if (controls[key] === false && String(copyItem.id).startsWith(String(key))) return false;
@@ -462,9 +469,9 @@ const orderedCopyList = (() => {
               {/* Images section */}
               {images && onImageChange && (
                 <>
-                  <Separator className="my-3" />
+                  {hasImages && <Separator className="my-3" />}
+                  {hasImages && <div className="text-xs font-semibold text-gray-500 my-4">Images</div>}
                   <div>
-                    <div className="text-xs font-semibold text-gray-500 my-4">Images</div>
                     <ImageManager
                       sectionId={activeBlock?.type}
                       images={images}
@@ -472,6 +479,8 @@ const orderedCopyList = (() => {
                       compact={true}
                       mode={mode === "builder" ? "external" : "wrapper"}
                       previewRef={previewRef}
+                      controls={activeBlock?.controls || {}}
+                      onHasImagesChange={setHasImages}
                     />
                   </div>
                 </>

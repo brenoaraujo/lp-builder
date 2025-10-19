@@ -125,6 +125,21 @@ export default function AdminPage() {
     return invite.onboarding_json?.charityInfo?.charityName || invite.charity_name;
   };
 
+  // Derive a human-readable status for admin listing
+  const hasStartedOnboarding = (invite) => {
+    const oj = invite?.onboarding_json;
+    return oj && typeof oj === 'object' && Object.keys(oj).length > 0;
+  };
+
+  const getDisplayStatus = (invite) => {
+    const s = invite?.status;
+    if (s === 'void') return 'Void';
+    if (s === 'submitted' || s === 'handed_off') return 'Submitted';
+    if (s === 'in_progress') return 'In Progress';
+    // invited or unknown → check if onboarding started
+    return hasStartedOnboarding(invite) ? 'Onboarding' : 'Invited';
+  };
+
   const getStatusVariant = (status) => {
     switch (status) {
       case 'invited': return 'invited';
@@ -340,9 +355,7 @@ export default function AdminPage() {
                   <Button onClick={handleCreateInvite} className="flex-1">
                     Create Invite
                   </Button>
-                  <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                    Cancel
-                  </Button>
+                 
                 </div>
               </div>
             </DialogContent>
@@ -367,7 +380,7 @@ export default function AdminPage() {
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="invited">Invited</SelectItem>
               <SelectItem value="in_progress">In Progress</SelectItem>
               <SelectItem value="submitted">Submitted</SelectItem>
@@ -420,7 +433,7 @@ export default function AdminPage() {
                       <TableCell>{getRaffleType(invite)}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(invite.status)}>
-                          {invite.status}
+                          {getDisplayStatus(invite)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">

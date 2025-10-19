@@ -19,7 +19,9 @@ export default function ImageManager({
   className = "",
   previewRef = null,
   mode = "wrapper",
-  children
+  children,
+  controls = {},
+  onHasImagesChange,
 }) {
   const [discoveredImages, setDiscoveredImages] = useState([]);
   const sectionRef = useRef(null);
@@ -63,11 +65,17 @@ export default function ImageManager({
         imageElements = rootHasImage ? [searchRoot, ...childImages] : childImages;
       }
 
-      const foundImages = Array.from(imageElements).map(el => ({
-        id: el.getAttribute('data-image'),
-        label: el.getAttribute('data-label') || el.getAttribute('data-image'),
-        element: el
-      }));
+      const foundImages = Array.from(imageElements).map(el => {
+        const id = el.getAttribute('data-image');
+        const label = el.getAttribute('data-label') || id;
+        const controlEl = el.closest('[data-display]');
+        const controlId = controlEl ? (controlEl.getAttribute('data-id') || controlEl.getAttribute('data-label') || controlEl.getAttribute('id')) : null;
+        const defaultVisible = () => {
+          const v = (controlEl?.getAttribute('data-display') || '').toLowerCase();
+          return v === 'yes' || v === 'true' || v === '1';
+        };
+        return { id, label, element: el, controlEl, controlId, defaultVisible };
+      });
 
       setDiscoveredImages(foundImages);
     };
@@ -98,6 +106,23 @@ export default function ImageManager({
 
     return () => observer.disconnect();
   }, [sectionId, previewElement, mode]);
+
+  // Determine which images are visible based on controls/defaults
+  const visibleImages = React.useMemo(() => {
+    const list = Array.isArray(discoveredImages) ? discoveredImages : [];
+    const has = (obj, k) => Object.prototype.hasOwnProperty.call(obj || {}, k);
+    return list.filter(({ controlEl, controlId, defaultVisible }) => {
+      if (!controlEl || !controlId) return true; // no controller → visible by default
+      const def = typeof defaultVisible === 'function' ? defaultVisible() : true;
+      return has(controls, controlId) ? !!controls[controlId] : def;
+    });
+  }, [discoveredImages, controls]);
+
+  useEffect(() => {
+    if (typeof onHasImagesChange === 'function') {
+      onHasImagesChange(visibleImages.length > 0);
+    }
+  }, [visibleImages, onHasImagesChange]);
 
   // Apply image URLs to discovered elements
   useEffect(() => {
@@ -191,13 +216,13 @@ export default function ImageManager({
     return <div ref={sectionRef} className={className}>{children}</div>;
   }
 
-  if (discoveredImages.length === 0) {
+  if (visibleImages.length === 0) {
     return children ? <div ref={sectionRef} className={className}>{children}</div> : null;
   }
 
   return (
     <div ref={sectionRef} className={className}>
-      {discoveredImages.map(({ id, label, element }) => {
+      {visibleImages.map(({ id, label, element }) => {
         const size = element.getAttribute('data-size');
         return (
           <div key={id} className="mb-4">
