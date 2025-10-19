@@ -16,105 +16,51 @@ import AutoScaler from "@/components/AutoScaler.jsx";
 import EditableSection from "@/components/EditableSection.jsx";
 import SectionActionsMenu from "./SectionActionsMenu.jsx";
 import ImageManager from "./ImageManager.jsx";
-import { buildThemeVars, readTokenDefaults, setCSSVars, setCSSVarsImportant, readThemeMode } from "../theme-utils.js";
+import { buildThemeVars, readTokenDefaults, setCSSVars, setCSSVarsImportant, readThemeMode, resolvePalette } from "../theme-utils.js";
 
 /* Section Color Overrides Component - Enhanced for partial overrides */
-function SectionColorOverrides({ activeBlock, onColorChange, onReset }) {
-  const [isExpanded, setIsExpanded] = React.useState(false);
+function SectionColorOverrides({ activeBlock, onColorChange, onReset, globalColors = {} }) {
+  // Force re-render when globalColors changes by adding it as a key dependency
+  const globalColorKey = React.useMemo(() => JSON.stringify(globalColors), [globalColors]);
   
-  // Load saved section overrides or token defaults
-  const initialColors = React.useMemo(() => {
+  // Get current effective colors (global + section overrides)
+  const currentColors = React.useMemo(() => {
     const defaults = readTokenDefaults();
     const overrides = activeBlock?.overrides?.values || {};
-    return Object.keys(overrides).length ? { ...defaults, ...overrides } : defaults;
-  }, [activeBlock?.id]);
-
-  const [colors, setColors] = React.useState(initialColors);
+    return resolvePalette(defaults, globalColors, overrides);
+  }, [activeBlock?.overrides?.values, globalColorKey]);
   
   if (!activeBlock) return null;
 
-  // Check if there are any overrides (partial or full)
-  const hasOverrides = activeBlock.overrides?.values && Object.keys(activeBlock.overrides.values).length > 0;
+  // More robust override check - check the actual overrides object
+  const hasOverrides = React.useMemo(() => {
+    const vals = activeBlock?.overrides?.values;
+    return vals && typeof vals === 'object' && Object.keys(vals).length > 0;
+  }, [activeBlock?.overrides?.values]);
   
   // Same color order as ThemeAside
   const colorOrder = [
-    
     "primary", 
     "secondary",
     "background",
     "alt-background"
-   
   ];
-
-      // Live preview while expanded (same as ThemeAside)
-      React.useEffect(() => {
-        if (!isExpanded) return;
-        const mode = readThemeMode();
-        const vars = buildThemeVars(colors, mode);
-        
-        // Apply to the specific section element with !important to override global theme
-        const sectionElement = document.querySelector(`[data-section="${activeBlock.type}"]`);
-        if (sectionElement) {
-          setCSSVarsImportant(sectionElement, "colors", vars);
-        }
-      }, [isExpanded, colors, activeBlock.type]);
 
   // Helper to set color with automatic foreground adjustment
   const setRole = (key) => (hex) => {
     if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return;
-    
-    // Update local state for preview
-    setColors((prev) => {
-      let next = { ...prev, [key]: hex };
-      if (key === "background" && "foreground" in next) {
-        // let buildThemeVars pick a readable foreground for the new bg
-        const { foreground, ...rest } = next;
-        next = rest;
-      }
-      return next;
-    });
-    
-    // Apply the change to the section (only the specific color that changed)
     onColorChange(key, hex);
   };
 
-  // Update local state when activeBlock changes
-  React.useEffect(() => {
-    const defaults = readTokenDefaults();
-    const overrides = activeBlock?.overrides?.values || {};
-    
-    // Always start with defaults, then apply overrides
-    // Only calculate foreground if background is overridden
-    let colors = { ...defaults, ...overrides };
-    
-    if (overrides.background && !overrides.foreground) {
-      // Only calculate foreground if background is overridden but foreground isn't
-      const mode = readThemeMode();
-      const calculated = buildThemeVars({ background: overrides.background }, mode);
-      colors.foreground = calculated.foreground;
-    }
-    
-    setColors(colors);
-  }, [activeBlock?.id]);
-
-  // Reset function (same as ThemeAside)
+  // Reset function
   const handleReset = () => {
-    const fresh = readTokenDefaults();
-    setColors(fresh);
     onReset();
   };
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="h-8 px-2 text-xs"
-        >
-          {isExpanded ? "Hide" : "Show"} Colors
-        </Button>
+        <span className="text-xs font-semibold text-gray-500">Section Colors</span>
         {hasOverrides && (
           <Button
             variant="ghost"
@@ -127,19 +73,17 @@ function SectionColorOverrides({ activeBlock, onColorChange, onReset }) {
         )}
       </div>
       
-      {isExpanded && (
-        <div className="space-y-3">
-              {colorOrder.filter(k => k in colors).map((keyName) => (
-                <ColorRole
-                  key={keyName}
-                  label={keyName.replace(/-/g, " ")}
-                  value={colors[keyName]}
-                  onChange={setRole(keyName)}
-                  isOverridden={activeBlock.overrides?.values && keyName in activeBlock.overrides.values}
-                />
-              ))}
-        </div>
-      )}
+      <div className="space-y-3">
+        {colorOrder.filter(k => k in currentColors).map((keyName) => (
+          <ColorRole
+            key={keyName}
+            label={keyName.replace(/-/g, " ")}
+            value={currentColors[keyName]}
+            onChange={setRole(keyName)}
+            isOverridden={(activeBlock.overrides?.values && keyName in activeBlock.overrides.values) || false}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -191,6 +135,7 @@ export default function EditorSidebar({
   staticLayout = false,
   hideCloseAction = false,
   onSaveNext,
+  globalColors = {},
 }) {
 
   // Close on Escape (but don't trigger while typing in inputs/textareas)
@@ -511,43 +456,29 @@ const orderedCopyList = (() => {
                 <>
                   <div className="mt-4 mb-4">
                     <Separator className="my-4" />
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        {/*<Palette className="h-4 w-4 text-muted-foreground" />*/}
-                        <span className="text-xs font-semibold text-gray-500 mb-2">Section Colors</span>
-                      </div>
-                      <SectionColorOverrides 
+                    <SectionColorOverrides 
                         activeBlock={activeBlock}
+                        globalColors={globalColors}
                         onColorChange={(colorKey, value) => {
                           if (!activeBlock) return;
                           
-                          // Update the block with only the specific color override
+                          // 1. Update database via props
                           if (activeBlock.type === 'Navbar' && setNavbarOverrides) {
                             setNavbarOverrides({
                               enabled: true,
-                              values: {
-                                ...(activeBlock.overrides?.values || {}),
-                                [colorKey]: value
-                              },
+                              values: { ...(activeBlock.overrides?.values || {}), [colorKey]: value },
                               valuesPP: activeBlock.overrides?.valuesPP || {}
                             });
                           } else if (activeBlock.type === 'Footer' && setFooterOverrides) {
                             setFooterOverrides({
                               enabled: true,
-                              values: {
-                                ...(activeBlock.overrides?.values || {}),
-                                [colorKey]: value
-                              },
+                              values: { ...(activeBlock.overrides?.values || {}), [colorKey]: value },
                               valuesPP: activeBlock.overrides?.valuesPP || {}
                             });
                           } else if (setBlockOverrides) {
-                            // Use the new setBlockOverrides prop for database persistence
                             setBlockOverrides(activeBlock.id, {
                               enabled: true,
-                              values: {
-                                ...(activeBlock.overrides?.values || {}),
-                                [colorKey]: value
-                              },
+                              values: { ...(activeBlock.overrides?.values || {}), [colorKey]: value },
                               valuesPP: activeBlock.overrides?.valuesPP || {}
                             });
                           } else {
@@ -569,29 +500,8 @@ const orderedCopyList = (() => {
                             ));
                           }
                           
-                          // Apply the change immediately to the section element
-                          const sectionElement = document.querySelector(`[data-section="${activeBlock.type}"]`);
-                          if (sectionElement) {
-                            const mode = readThemeMode();
-                            const globalColors = readTokenDefaults();
-                            const currentOverrides = activeBlock.overrides?.values || {};
-                            
-                            // Merge global colors with overrides (only the changed colors)
-                            let mergedValues = {
-                              ...globalColors,
-                              ...currentOverrides,
-                              [colorKey]: value
-                            };
-                            
-                            // Only calculate foreground if background is overridden but foreground isn't
-                            if (colorKey === 'background' && !currentOverrides.foreground) {
-                              const calculated = buildThemeVars({ background: value }, mode);
-                              mergedValues.foreground = calculated.foreground;
-                            }
-                            
-                            const vars = buildThemeVars(mergedValues, mode);
-                            setCSSVarsImportant(sectionElement, "colors", vars);
-                          }
+                          // 2. Apply colors immediately (will be called after state update)
+                          // No need to manually apply here - the useEffect in App.jsx will handle it
                         }}
                         onReset={() => {
                           if (!activeBlock) return;
@@ -610,29 +520,20 @@ const orderedCopyList = (() => {
                               block.id === activeBlock.id 
                                 ? {
                                     ...block,
-                                    overrides: { enabled: false, values: {} }
+                                    overrides: { 
+                                      ...block.overrides,
+                                      enabled: false, 
+                                      values: {}, 
+                                      valuesPP: {} 
+                                    }
                                   }
                                 : block
                             ));
                           }
                           
-                          // Clear the section overrides from the DOM
-                          const sectionElement = document.querySelector(`[data-section="${activeBlock.type}"]`);
-                          if (sectionElement) {
-                            const colorKeys = [
-                               "primary", "primary-foreground",
-                              "secondary", "secondary-foreground", "background", "foreground","alt-background", "alt-foreground",
-                              "border", "muted", "muted-foreground", "accent", "accent-foreground",
-                              "destructive", "destructive-foreground", "success", "success-foreground",
-                              "warning", "warning-foreground"
-                            ];
-                            colorKeys.forEach(key => {
-                              sectionElement.style.removeProperty(`--colors-${key}`);
-                            });
-                          }
+                          // applyAllColors will be called by useEffect in App.jsx
                         }}
                       />
-                    </div>
                   </div>
                 </>
               )}

@@ -139,10 +139,6 @@ export function readTokenDefaults() {
  * localStorage(theme.baseline) as a JSON string.
  */
 export function readBaselineColors() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE.baseline) || "null");
-    if (saved && typeof saved === "object") return saved;
-  } catch { }
   return readTokenDefaults();
 }
 
@@ -168,6 +164,19 @@ export function buildThemeVars(input = {}, mode = "light") {
   const bgDark = isDark(background);
   const foreground = normalizeHex(input.foreground, readableOn(background));
   const altForeground = readableOn(altBg);
+
+  try {
+    console.debug("[theme-debug][buildThemeVars]", {
+      mode,
+      inputBackground: input?.background,
+      resolvedBackground: background,
+      inputForegroundProvided: Object.prototype.hasOwnProperty.call(input || {}, "foreground"),
+      computedForeground: foreground,
+      inputPrimary: input?.primary,
+      inputSecondary: input?.secondary,
+      inputAltBackground: input?.["alt-background"],
+    });
+  } catch {}
 
   // adaptive muted pair (depends on background)
   const mutedBackground = bgDark
@@ -210,27 +219,76 @@ export function buildThemeVars(input = {}, mode = "light") {
 }
 
 /**
+ * Deterministic resolver: derive the effective base color inputs for a section
+ * following the precedence: App Defaults < Global Theme < Section Override.
+ * If background is overridden without foreground, we drop foreground to allow
+ * buildThemeVars() to regenerate an accessible color.
+ */
+export function resolvePalette(defaults = {}, globalColors = {}, overrideValues = null, opts = {}) {
+  const base = { ...(defaults || {}), ...(globalColors || {}) };
+  // Global path: if background was explicitly changed at global level but foreground was not,
+  // drop foreground so buildThemeVars can recompute accessible foreground.
+  const globalBgChangedNoFg = !!(globalColors && Object.prototype.hasOwnProperty.call(globalColors, "background") && !Object.prototype.hasOwnProperty.call(globalColors, "foreground"));
+  if (globalBgChangedNoFg && Object.prototype.hasOwnProperty.call(base, "foreground")) {
+    delete base.foreground;
+    try { console.debug("[theme-debug][resolvePalette][global-drop-fg]", { globalColors, resultBase: base }); } catch {}
+  }
+  if (!overrideValues || typeof overrideValues !== "object" || !Object.keys(overrideValues).length) {
+    if (opts?.trace) return { colors: base, traceByKey: Object.fromEntries(Object.keys(base).map(k => [k, "global"])) };
+    try { console.debug("[theme-debug][resolvePalette] no overrides", { base }); } catch {}
+    return base;
+  }
+  const merged = { ...base, ...overrideValues };
+  const droppedForeground = !!(overrideValues.background && !overrideValues.foreground && Object.prototype.hasOwnProperty.call(merged, "foreground"));
+  if (droppedForeground) delete merged.foreground;
+
+  try {
+    console.debug("[theme-debug][resolvePalette] with overrides", {
+      defaults,
+      globalColors,
+      overrideValues,
+      droppedForeground,
+      merged
+    });
+  } catch {}
+
+  if (opts?.trace) {
+    const traceByKey = {};
+    Object.keys(merged).forEach((k) => {
+      if (k in overrideValues) traceByKey[k] = "section";
+      else if (k in (globalColors || {})) traceByKey[k] = "global";
+      else traceByKey[k] = "default";
+    });
+    try { console.debug("[theme-debug][resolvePalette][trace]", { traceByKey, merged }); } catch {}
+    return { colors: merged, traceByKey };
+  }
+  return merged;
+}
+
+/** Resolve palettes for all sections using a shared overrides object. */
+export function resolveAllPalettes(defaults = {}, globalColors = {}, overridesBySection = {}) {
+  const result = {};
+  const keys = Object.keys(overridesBySection || {});
+  keys.forEach((sectionKey) => {
+    const ov = overridesBySection[sectionKey]?.theme?.values || {};
+    result[sectionKey] = resolvePalette(defaults, globalColors, ov);
+  });
+  return result;
+}
+
+/**
  * Apply saved theme (colors + fonts) to :root immediately.
  * If nothing is saved, we keep whatever tokens.css already provides.
  */
 export function applySavedTheme(modeOverride) {
   const root = ROOT();
-  let saved = {};
-  try { saved = JSON.parse(localStorage.getItem(STORAGE.colors) || "{}"); } catch { }
-
-  // If user has never saved colors, DO NOT force any color — we simply leave tokens.css in charge.
-  // If they have saved colors, set the variables explicitly.
-  if (saved && Object.keys(saved).length) {
-    const mode =
-      modeOverride ||
-      (root.classList.contains("dark") || root.getAttribute("data-theme") === "dark"
-        ? "dark"
-        : "light");
-    const vars = buildThemeVars(saved, mode);
-    setCSSVars(root, "colors", vars);
-  }
-
-  // Fonts (saved or defaults)
+  const mode =
+    modeOverride ||
+    (root.classList.contains("dark") || root.getAttribute("data-theme") === "dark"
+      ? "dark"
+      : "light");
+  // Keep whatever tokens.css provides; no LS colors here.
+  // Re-apply any current inline fonts (no-op without DB-provided fonts)
   restoreFonts();
 }
 
@@ -258,15 +316,7 @@ export function applyFonts(map = {}) {
   if ("headline" in map) setOrClear("--font-headline", map.headline);
   if ("numbers" in map) setOrClear("--font-numbers", map.numbers);
 
-  // persist
-  try {
-    const prev = JSON.parse(localStorage.getItem(STORAGE.fonts) || "{}");
-    const next = { ...prev };
-    if ("primary" in map) next.primary = map.primary || null;
-    if ("headline" in map) next.headline = map.headline || null;
-    if ("numbers" in map) next.numbers = map.numbers || null;
-    localStorage.setItem(STORAGE.fonts, JSON.stringify(next));
-  } catch { }
+  // no LocalStorage persistence; DB is source of truth
 }
 
 /**
@@ -289,14 +339,7 @@ export function loadGoogleFont(family, axis = "wght@400;700") {
  * Re-apply saved font overrides (and inject their Google font if needed).
  */
 export function restoreFonts() {
-  let saved = {};
-  try { saved = JSON.parse(localStorage.getItem(STORAGE.fonts) || "{}"); } catch { }
-  // Auto-load Google font for any saved family names (best-effort)
-  ["primary", "headline", "numbers"].forEach((k) => {
-    const fam = saved?.[k];
-    if (fam) loadGoogleFont(fam);
-  });
-  applyFonts(saved || {});
+  // No LS-backed restore; fonts are applied from DB by caller when present
 }
 
 // ---------- resets ----------
@@ -307,11 +350,6 @@ export function restoreFonts() {
  * - re-apply token defaults
  */
 export function resetThemeToBaseline() {
-  try {
-    localStorage.removeItem(STORAGE.colors);
-    localStorage.removeItem(STORAGE.fonts);
-  } catch { }
-
   // remove inline overrides so tokens.css rules win again
   clearInlineColorVars();
   ["--font-app", "--font-primary", "--font-headline", "--font-numbers"].forEach((v) =>
@@ -343,11 +381,13 @@ export function clearInlineColorVars(keys = []) {
 // Take a concrete snapshot of the *current* theme so a viewer sees the same thing.
 export function snapshotThemeNow() {
   // Prefer saved colors/fonts; if missing, read live tokens so the snapshot is explicit.
-  let colors = {};
-  let fonts = {};
-  try { colors = JSON.parse(localStorage.getItem("theme.colors") || "{}"); } catch {}
-  try { fonts  = JSON.parse(localStorage.getItem("theme.fonts")  || "{}"); } catch {}
-  if (!colors || !Object.keys(colors).length) colors = readTokenDefaults();
+  const colors = readTokenDefaults();
+  // Fonts snapshot reads live CSS vars; avoid LS
+  const fonts = {
+    primary: getComputedStyle(ROOT()).getPropertyValue("--font-primary").trim() || null,
+    headline: getComputedStyle(ROOT()).getPropertyValue("--font-headline").trim() || null,
+    numbers: getComputedStyle(ROOT()).getPropertyValue("--font-numbers").trim() || null,
+  };
   return { colors, fonts };
 }
 
@@ -372,11 +412,7 @@ export function applyThemeSnapshot(snap, { persist = false } = {}) {
 
   // fonts
   applyFonts(fonts || {}); // applyFonts already persists per-key if provided
-
-  if (persist) {
-    try { localStorage.setItem("theme.colors", JSON.stringify(base)); } catch {}
-    try { localStorage.setItem("theme.fonts",  JSON.stringify(fonts));  } catch {}
-  }
+  // No LS persistence for colors/fonts here
 }
 
 // Tiny base64 helpers used by share links (safe to duplicate if you already have them).
@@ -388,22 +424,6 @@ export function decodeState(str) {
 }
 
 // ---------- section color overrides ----------
-/**
- * Apply section-specific color overrides to a section element
- * Uses buildThemeVars to automatically calculate foreground colors
- */
-export function applySectionColorOverrides(sectionElement, overrides) {
-  if (!sectionElement || !overrides?.enabled || !overrides.values) return;
-  
-  // Get current theme mode
-  const mode = readThemeMode();
-  
-  // Build theme vars with section overrides (same logic as global theme)
-  const sectionThemeVars = buildThemeVars(overrides.values, mode);
-  
-  // Apply the calculated CSS variables to the section with !important to override global theme
-  setCSSVarsImportant(sectionElement, "colors", sectionThemeVars);
-}
 
 /**
  * Remove section-specific color overrides from a section element
@@ -425,69 +445,46 @@ export function clearSectionColorOverrides(sectionElement) {
   });
 }
 
-/**
- * Apply global theme to sections that don't have overrides
- * This ensures global theme changes affect sections without overrides
- * Sections with overrides are left alone to preserve their calculated colors
- */
-export function applyGlobalThemeToSectionsWithoutOverrides(globalColors, sectionOverrides = {}) {
-  const mode = readThemeMode();
-  const globalVars = buildThemeVars(globalColors, mode);
-  
-  // Get all section elements
-  const sectionElements = document.querySelectorAll('[data-section]');
-  
-  sectionElements.forEach(sectionElement => {
-    const sectionType = sectionElement.getAttribute('data-section');
-    const sectionOverride = sectionOverrides[sectionType];
-    
-    // Only apply global theme to sections with NO overrides
-    if (!sectionOverride?.values || Object.keys(sectionOverride.values).length === 0) {
-      setCSSVars(sectionElement, "colors", globalVars);
-    }
-    // Sections with overrides are left alone - they keep their calculated colors
-  });
-}
 
 /**
- * Update sections with partial overrides when global theme changes
- * This merges global theme with section overrides for sections that have partial overrides
+ * SINGLE SOURCE OF TRUTH for applying all colors
+ * Call this whenever colors change (global or section)
  */
-export function updateSectionsWithPartialOverrides(globalColors, sectionOverrides = {}) {
+export function applyAllColors(globalColors, sectionOverrides = {}) {
   const mode = readThemeMode();
-  
-  // Get all section elements
+
+  // Resolve root palette from defaults + global (no section override)
+  const defaults = readTokenDefaults();
+  const traceEnabled = (() => {
+    try { return window && (window.__THEME_TRACE__ || /[?&]traceTheme=1/.test(location.search)); } catch { return false; }
+  })();
+  const rootBase = resolvePalette(defaults, globalColors);
+  const rootVars = buildThemeVars(rootBase, mode);
+  try {
+    console.debug("[theme-debug][applyAllColors][root]", { mode, defaults, globalColors, rootBase, rootVars });
+  } catch {}
+  setCSSVars(document.documentElement, "colors", rootVars);
+
+  // Apply per-section effective palettes
   const sectionElements = document.querySelectorAll('[data-section]');
-  
-  sectionElements.forEach(sectionElement => {
+  sectionElements.forEach((sectionElement) => {
     const sectionType = sectionElement.getAttribute('data-section');
-    
-    // Find the corresponding override - handle extraContent sections
-    let sectionOverride = sectionOverrides[sectionType];
-    if (!sectionOverride && sectionType === 'feature') {
-      // For feature sections, check if any extraContent sections have overrides
-      const extraContentKeys = Object.keys(sectionOverrides).filter(key => key.startsWith('extraContent_'));
-      if (extraContentKeys.length > 0) {
-        // Use the first extraContent override (they should all be the same for feature sections)
-        sectionOverride = sectionOverrides[extraContentKeys[0]];
-      }
+
+    // Map feature to first extraContent override if present (builder convention)
+    let overrideDef = sectionOverrides[sectionType];
+    if (!overrideDef && sectionType === 'feature') {
+      const extraContentKeys = Object.keys(sectionOverrides).filter((k) => k.startsWith('extraContent_'));
+      if (extraContentKeys.length > 0) overrideDef = sectionOverrides[extraContentKeys[0]];
     }
-    
-    // Only update sections with partial overrides that are enabled
-    if (sectionOverride?.enabled && sectionOverride?.values && Object.keys(sectionOverride.values).length > 0) {
-      let mergedColors = {
-        ...globalColors,
-        ...sectionOverride.values
-      };
-      
-      // Only calculate foreground if background is overridden but foreground isn't
-      if (sectionOverride.values.background && !sectionOverride.values.foreground) {
-        const calculated = buildThemeVars({ background: sectionOverride.values.background }, mode);
-        mergedColors.foreground = calculated.foreground;
-      }
-      
-      const mergedVars = buildThemeVars(mergedColors, mode);
-      setCSSVarsImportant(sectionElement, "colors", mergedVars);
-    }
+
+    const overrideValues = overrideDef?.theme?.enabled ? (overrideDef?.theme?.values || {}) : {};
+    const effectiveBase = resolvePalette(defaults, globalColors, overrideValues);
+    const vars = buildThemeVars(effectiveBase, mode);
+    setCSSVarsImportant(sectionElement, "colors", vars);
+
+    try {
+      const id = sectionType || 'root';
+      console.debug(`[theme-debug][applyAllColors][section:${id}]`, { effectiveBase, vars, overrideDef });
+    } catch {}
   });
 }

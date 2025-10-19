@@ -22,7 +22,7 @@ import LogoUpload from "../components/LogoUpload.jsx";
 import ImageManager from "../components/ImageManager.jsx";
 
 // [KEEP] theme helpers
-import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readBaselineColors, applySavedTheme, clearInlineColorVars } from "../theme-utils.js";
+import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readBaselineColors, applySavedTheme, clearInlineColorVars, applyAllColors } from "../theme-utils.js";
 
 // ---- shadcn/ui imports (adjust paths if needed in your setup) ----
 import { Button } from "@/components/ui/button";
@@ -122,14 +122,11 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
 
     const [themeMode, setThemeMode] = useState(readThemeMode());
     const [colors, setColors] = useState(() => {
-        // Load from database first, then fallback to localStorage, then baseline
+        // Load from database first, then baseline
         if (inviteRow?.theme_json?.colors && Object.keys(inviteRow.theme_json.colors).length > 0) {
             return { ...BASELINE_COLORS, ...inviteRow.theme_json.colors };
         }
-        return {
-            ...BASELINE_COLORS,
-            ...(JSON.parse(localStorage.getItem("theme.colors") || "{}")),
-        };
+        return { ...BASELINE_COLORS };
     });
 
     // Debounced save to database
@@ -166,11 +163,10 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
     }, []);
 
 
-    // live-apply when colors/mode change
+    // live-apply when colors/mode change (unified resolver path)
     useEffect(() => {
-        const vars = buildThemeVars(colors, themeMode);
-        setCSSVars(document.documentElement, "colors", vars);
-    }, [colors, themeMode]);
+        applyAllColors(colors || {}, overridesBySection || {});
+    }, [colors, themeMode, overridesBySection]);
 
     // keep in sync if user flips OS / app mode
     useEffect(() => {
@@ -221,13 +217,9 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
         if (token === "numbers") setNumbersFontName(chosen ?? readFontToken("--font-numbers"));
     }
 
-    // save + finish (save to both localStorage and database)
+    // save + finish (save to database)
     const finalize = async () => {
-        try { localStorage.setItem("theme.colors", JSON.stringify(colors)); } catch { }
-        setCSSVars(document.documentElement, "colors", buildThemeVars(colors, themeMode));
-        applySavedTheme(themeMode);
-        
-        // Save to database as well
+        // Save to database
         if (inviteToken && onUpdateInvite) {
             try {
                 await onUpdateInvite({
@@ -240,41 +232,25 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
                 console.error('Failed to save theme colors on finish:', error);
             }
         }
-        
+        // Apply for immediate preview
+        applyAllColors(colors || {}, overridesBySection || {});
         onFinish?.();
     };
 
     function resetReviewToDefaults() {
-        try { localStorage.removeItem("theme.colors"); } catch { }
-
         // Update local state first so inputs reflect the baseline immediately
         setColors(BASELINE_COLORS);
-
-        // Apply to document right now
-        const mode = readThemeMode();
-        const vars = buildThemeVars(BASELINE_COLORS, mode);
-        setCSSVars(document.documentElement, "colors", vars);
-
-        // Save baseline so Main app picks it up too
-        try { localStorage.setItem("theme.colors", JSON.stringify(BASELINE_COLORS)); } catch { }
-
-        // Optional: keep shadcn / app helpers in sync
-        applySavedTheme(mode);
+        // Apply unified path
+        applyAllColors(BASELINE_COLORS, overridesBySection || {});
     }
 
     // **THE IMPORTANT PART**: hard-reset to original tokens.css (no blue)
     const handleResetToDefaults = () => {
-        try { localStorage.removeItem("theme.colors"); } catch { }
         // nuke inline overrides so tokens.css values become visible again
         clearInlineColorVars();
-        // fresh baseline captured on first load
         const base = readBaselineColors();
         setColors(base);
-        // apply immediately in current mode
-        const vars = buildThemeVars(base, readThemeMode());
-        setCSSVars(document.documentElement, "colors", vars);
-        // keep any shadcn components in sync
-        applySavedTheme(readThemeMode());
+        applyAllColors(base, overridesBySection || {});
     };
 
     return (
@@ -772,11 +748,9 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
 
     // [KEEP] ensure defaults so previews don't show as blank
     useEffect(() => {
-        // Reset colors and fonts to defaults when onboarding starts
-        try {
-            localStorage.removeItem("theme.colors");
-            localStorage.removeItem("theme.fonts");
-        } catch { }
+        // Reset inline color overrides when onboarding starts
+        // (Avoid LocalStorage color logic entirely)
+        try { clearInlineColorVars(); } catch {}
 
         // nuke inline overrides so tokens.css values become visible again
         clearInlineColorVars();

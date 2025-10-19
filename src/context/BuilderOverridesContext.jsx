@@ -63,8 +63,10 @@ export function BuilderOverridesProvider({ children, inviteToken, inviteRow, onU
 
   const api = useMemo(() => ({
     overridesBySection,
-    setSection: (key, next) =>
-      setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), ...next } })),
+    setSection: (key, next) => {
+      console.log('💾 setSection:', key, next);
+      setOverridesBySection(prev => ({ ...prev, [key]: { ...(prev[key] || {}), ...next } }));
+    },
     setCopy: (key, label, value) =>
       setOverridesBySection(prev => ({
         ...prev,

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
-import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readTokenDefaults, readThemeMode, resetThemeToBaseline, applyGlobalThemeToSectionsWithoutOverrides, updateSectionsWithPartialOverrides } from "../theme-utils.js";
+import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readTokenDefaults, readThemeMode, resetThemeToBaseline, applyAllColors } from "../theme-utils.js";
 
 /* Small color input row */
 function ColorRole({ label, value, onChange }) {
@@ -36,7 +36,7 @@ const FONT_OPTIONS = [
   { label: "Oswald", value: "Oswald", gf: { family: "Oswald", axis: "wght@400;700" } },
 ];
 
-export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange, sectionOverrides = {}, inviteToken, inviteRow, onUpdateInvite }) {
+export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange, sectionOverrides = {}, inviteToken, inviteRow, onUpdateInvite, currentGlobalColors }) {
   // Load from database or token defaults
   const initialColors = useMemo(() => {
     if (inviteRow?.theme_json?.colors) {
@@ -98,29 +98,15 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
     return () => window.removeEventListener("lp:section-selected", handleSectionSelected);
   }, [onClose]);
 
-  // Live preview while open
-  useEffect(() => {
-    if (!open) return;
-    const mode = readThemeMode();
-    const vars = buildThemeVars(colors, mode);
-    setCSSVars(document.documentElement, "colors", vars);
-    setCSSVars(document.body, "colors", vars);
-    
-    // Apply global theme to sections without overrides
-    applyGlobalThemeToSectionsWithoutOverrides(colors, sectionOverrides);
-  }, [open, colors, sectionOverrides]);
+  // Removed direct painting; App.jsx is the single painter via applyAllColors
 
-  // Update sections with partial overrides when colors change (but not when modal opens)
-  const [previousColors, setPreviousColors] = useState(null);
+  // Sync pickers with the actual current global colors when opening or when globals change
   useEffect(() => {
     if (!open) return;
-    
-    // Only update when colors actually change, not when modal opens
-    if (previousColors && JSON.stringify(previousColors) !== JSON.stringify(colors)) {
-      updateSectionsWithPartialOverrides(colors, sectionOverrides);
-    }
-    setPreviousColors(colors);
-  }, [colors, sectionOverrides, open, previousColors]);
+    const next = currentGlobalColors || inviteRow?.theme_json?.colors || readTokenDefaults();
+    try { console.debug('[theme-debug][ThemeAside.syncOnOpen]', { next }); } catch {}
+    setColors(next);
+  }, [open, currentGlobalColors, inviteRow?.theme_json?.colors]);
 
   // Escape closes
   useEffect(() => {
@@ -137,17 +123,20 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
   // Helpers
   const setRole = (key) => (hex) => {
     if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) return;
-    setColors((prev) => {
-      let next = { ...prev, [key]: hex };
-      if (key === "background" && "foreground" in next) {
-        // let buildThemeVars pick a readable foreground for the new bg
-        const { foreground, ...rest } = next;
-        next = rest;
-      }
+    // compute next based on current colors state
+    let next = { ...(colors || {}), [key]: hex };
+    const droppingFg = key === "background" && "foreground" in next;
+    if (droppingFg) {
+      const { foreground, ...rest } = next;
+      next = rest;
+    }
+    try { console.debug('[theme-debug][ThemeAside.setRole]', { key, hex, droppingFg, next }); } catch {}
+    setColors(next);
+    // Defer parent update to avoid updating parent during child render
+    setTimeout(() => {
       onColorsChange?.(next);
       debouncedSave(next, fonts);
-      return next;
-    });
+    }, 0);
   };
   
   function handlePickFont(token, v) {
@@ -251,10 +240,10 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
           <div className="space-y-3">
             <div className="text-sm font-semibold">Colors</div>
             <div className="grid gap-5">
-              <ColorRole label="Primary" value={colors.primary} onChange={setRole("primary")} />
-              <ColorRole label="Secondary (Accent)" value={colors.secondary} onChange={setRole("secondary")} />
-              <ColorRole label="Background" value={colors.background} onChange={setRole("background")} />
-              <ColorRole label="Alternative" value={colors["alt-background"]} onChange={setRole("alt-background")} />
+              <ColorRole key={`primary-${colors.primary}`} label="Primary" value={colors.primary} onChange={setRole("primary")} />
+              <ColorRole key={`secondary-${colors.secondary}`} label="Secondary (Accent)" value={colors.secondary} onChange={setRole("secondary")} />
+              <ColorRole key={`background-${colors.background}`} label="Background" value={colors.background} onChange={setRole("background")} />
+              <ColorRole key={`alt-background-${colors["alt-background"]}`} label="Alternative" value={colors["alt-background"]} onChange={setRole("alt-background")} />
             </div>
           </div>
         </div>

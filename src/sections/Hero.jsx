@@ -185,10 +185,10 @@ export function HeroA({ preview = false, raffleType = null }) {
 
 export function HeroB({ preview = false, raffleType = null }) {
   const imagePath = useImageVariant("/images/img-hero-full-light.png", "hero");
-  const backgroundImage = `url(${imagePath})`;
+  const backgroundImage = `var(--hero-background-image, url(${imagePath}))`;
 
   return (
-    <section data-section="hero" className="p-6 bg-Colors-background h-full" data-image="hero-image" data-size="1920×1080" data-default-image="/images/img-hero-full-light.png" style={{ backgroundImage, backgroundSize: "contain", backgroundPosition: "top center",  backgroundRepeat: "no-repeat" }}>
+    <section data-section="hero" className="p-6 h-full" data-image="hero-image" data-size="1920×1080" data-default-image="/images/img-hero-full-light.png" style={{ backgroundColor: 'var(--colors-background)', backgroundImage, backgroundSize: "contain", backgroundPosition: "top center",  backgroundRepeat: "no-repeat" }}>
       <div className="w-[1440px] py-24  inline-flex flex-col justify-start items-center gap-4 overflow-hidden mt-120 ">
         <div className="w-full h-full max-w-[1280px] inline-flex justify-start items-center gap-6" >
           <div className="w-full inline-flex flex-col justify-start items-center ">

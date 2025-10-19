@@ -27,7 +27,7 @@ import { BuilderOverridesProvider } from "./context/BuilderOverridesContext.jsx"
 import AdminPage from "./AdminPage.jsx";
 
 // Theme + utilities
-import { applySavedTheme, applyThemeSnapshot, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults, readThemeMode, loadGoogleFont, applyFonts, setCSSVarsImportant } from "./theme-utils.js"
+import { applySavedTheme, applyThemeSnapshot, restoreFonts, buildThemeVars, readBaselineColors, clearInlineColorVars, readTokenDefaults, readThemeMode, loadGoogleFont, applyFonts, setCSSVarsImportant, applyAllColors } from "./theme-utils.js"
 import { snapshotThemeNow } from "./theme-utils.js";
 import ThemeAside from "@/components/ThemeAside.jsx";
 
@@ -447,39 +447,6 @@ function SortableBlock({
 
   const listParts = Array.isArray(parts) ? parts : parts && typeof parts === "object" ? Object.values(parts) : [];
 
-  // Apply section color overrides using the same approach as ThemeAside
-  useEffect(() => {
-    if (!overrides?.enabled || !overrides.values) return;
-    
-    // For extraContent sections, use "feature" as the data-section attribute
-    const sectionType = type.startsWith('extraContent_') ? 'feature' : type;
-    const sectionElement = document.querySelector(`[data-section="${sectionType}"]`);
-    if (!sectionElement) return;
-
-    // Get current global theme colors
-    const globalColors = readTokenDefaults();
-    const mode = readThemeMode();
-    
-    // Merge global colors with overrides (only the changed colors)
-    const mergedColors = {
-      ...globalColors,
-      ...overrides.values
-    };
-    
-    // Build theme variables with proper foreground calculation
-    const themeVars = buildThemeVars(mergedColors, mode);
-    
-    // Apply with !important to override global theme
-    setCSSVarsImportant(sectionElement, "colors", themeVars);
-    
-    // Cleanup function to remove overrides when component unmounts
-    return () => {
-      // Remove the !important overrides to fall back to global theme
-      Object.keys(themeVars).forEach(key => {
-        sectionElement.style.removeProperty(`--colors-${key}`);
-      });
-    };
-  }, [overrides, type]);
 
   return (
     <div
@@ -730,7 +697,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     return !!raw && !raw.startsWith("/");
   }, []);
 
-  // Hydrate theme from database
+  // Hydrate theme from database and apply globally using unified resolver
   useEffect(() => {
     if (!inviteRow?.theme_json) return;
 
@@ -738,9 +705,11 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     
     // Apply colors if available
     if (themeData.colors) {
-      const mode = readThemeMode();
-      setCSSVars(document.documentElement, "colors", buildThemeVars(themeData.colors, mode));
-      setGlobalTheme(prev => ({ ...prev, colors: themeData.colors }));
+      const same = JSON.stringify(themeData.colors) === JSON.stringify(globalTheme.colors || {});
+      const recentLocalEdit = Date.now() - (lastLocalThemeEditRef.current || 0) < 1500;
+      if (!same && !recentLocalEdit) {
+        setGlobalTheme(prev => ({ ...prev, colors: themeData.colors }));
+      }
     }
 
     // Apply fonts if available
@@ -884,39 +853,35 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     }
   });
 
+  // Track last local theme edit to avoid hydration races
+  const lastLocalThemeEditRef = useRef(0);
+
+  // Use ref to always have fresh overrides
+  const overridesBySectionRef = useRef(overridesBySection);
+  useEffect(() => {
+    overridesBySectionRef.current = overridesBySection;
+  }, [overridesBySection]);
+
   // Start with system preference and keep CSS vars in sync (✅ single place now)
 
   useEffect(() => {
     // Always set the DOM attribute so readThemeMode() is reliable
     document.documentElement.setAttribute("data-theme", themeMode);
 
-    // Only paint inline colors from state if there are NO saved colors yet AND no database theme
-    const hasDatabaseTheme = inviteRow?.theme_json?.colors && Object.keys(inviteRow.theme_json.colors).length > 0;
-    const hasLocalStorageTheme = localStorage.getItem("theme.colors");
-    
-    if (!hasLocalStorageTheme && !hasDatabaseTheme) {
-      const vars = buildThemeVars(globalTheme.colors, themeMode);
-      setCSSVars(document.documentElement, "colors", vars);
-    }
-  }, [globalTheme, themeMode, inviteRow?.theme_json?.colors]);
+    // Apply the unified resolver to root and sections
+    applyAllColors(globalTheme.colors || {}, overridesBySection || {});
+  }, [globalTheme.colors, themeMode, overridesBySection]);
 
-  const persistColors = useCallback((partialColors) => {
-    // merge with current
-    const next = { ...(globalTheme?.colors || {}), ...(partialColors || {}) };
-
-    // write CSS vars now
-    const mode = readThemeMode?.() || "light";
-    const vars = buildThemeVars(next, mode);
-    setCSSVars(document.documentElement, "colors", vars);
-
-    // persist so refresh picks it up
-    try { localStorage.setItem("theme.colors", JSON.stringify(next)); } catch { }
-
-    // keep React state in sync (defer to avoid setState during render)
-    setTimeout(() => {
-      setGlobalTheme((t) => ({ ...(t || {}), colors: next }));
-    }, 0);
-  }, [globalTheme]);
+  const persistColors = useCallback((nextColors) => {
+    const next = nextColors || {};
+    // keep React state in sync; DB save handled by ThemeAside via onUpdateInvite
+    setGlobalTheme((t) => ({ ...(t || {}), colors: next }));
+    // apply immediately with the latest overrides from ref
+    try { console.debug('[theme-debug][App.persistColors]', { next, overrides: overridesBySectionRef.current }); } catch {}
+    applyAllColors(next, overridesBySectionRef.current || {});
+    // mark last local edit time to prevent immediate DB hydration stomp
+    lastLocalThemeEditRef.current = Date.now();
+  }, []); // No dependencies - always uses ref
 
   const persistFonts = useCallback((map) => {
     // optional: best-effort auto-load any webfont
@@ -951,27 +916,29 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     setHandoffOpen(false);
   };
 
+  // One-time migration: if LS has colors and DB does not, write to DB and clear LS
   useEffect(() => {
-    // Only load from localStorage if we don't have database theme data
-    if (inviteRow?.theme_json?.colors && Object.keys(inviteRow.theme_json.colors).length > 0) {
-      return;
-    }
-    
-    try {
-      const saved = JSON.parse(localStorage.getItem("theme.colors") || "{}");
-      if (Object.keys(saved).length) {
-        // merge into state (so ThemePanel sees them)
-        setGlobalTheme(t => ({ ...t, colors: { ...(t.colors || {}), ...saved } }));
-        // and write the CSS vars immediately
-        const mode =
-          document.documentElement.classList.contains("dark") ||
-            document.documentElement.getAttribute("data-theme") === "dark"
-            ? "dark"
-            : "light";
-        setCSSVars(document.documentElement, "colors", buildThemeVars(saved, mode));
+    const migrate = async () => {
+      if (!updateInvite) return;
+      const hasDb = !!(inviteRow?.theme_json?.colors && Object.keys(inviteRow.theme_json.colors).length > 0);
+      if (hasDb) return;
+      let ls = null;
+      try { ls = JSON.parse(localStorage.getItem("theme.colors") || "null"); } catch { ls = null; }
+      if (ls && typeof ls === 'object' && Object.keys(ls).length > 0) {
+        try {
+          await updateInvite({ theme_json: { ...(inviteRow?.theme_json || {}), colors: ls } });
+        } catch {}
+        try { localStorage.removeItem("theme.colors"); } catch {}
       }
-    } catch { }
-  }, [inviteRow?.theme_json?.colors]);
+    };
+    migrate();
+  }, [inviteRow?.theme_json?.colors, updateInvite]);
+
+  // Apply colors whenever section overrides or global theme changes
+  useEffect(() => {
+    if (!hydrated) return;
+    applyAllColors(globalTheme.colors || {}, overridesBySection || {});
+  }, [overridesBySection, globalTheme.colors, hydrated]);
 
   const [approvedMeta, setApprovedMeta] = useState(null);
   const approvedMode = !!approvedMeta?.approved;
@@ -1560,12 +1527,14 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
               // Find the block type from the blocks array
               const block = blocks.find(b => b.id === blockId);
               if (block) {
+                console.log('🎨 setBlockOverrides:', block.type, overrides);
                 setSection(block.type, { theme: overrides });
               }
             }}
             images={images}
             onImageChange={updateImage}
             mode="builder"
+            globalColors={globalTheme.colors}
           />
         )}
 
@@ -1775,6 +1744,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         inviteToken={inviteToken}
         inviteRow={row}
         onUpdateInvite={updateInvite}
+        currentGlobalColors={globalTheme.colors}
         sectionOverrides={(() => {
           const acc = blocks.reduce((acc, block) => {
             if (block.overrides?.values && Object.keys(block.overrides.values).length > 0) {
