@@ -19,7 +19,7 @@ import ImageManager from "./ImageManager.jsx";
 import { buildThemeVars, readTokenDefaults, setCSSVars, setCSSVarsImportant, readThemeMode, resolvePalette } from "../theme-utils.js";
 
 /* Section Color Overrides Component - Enhanced for partial overrides */
-function SectionColorOverrides({ activeBlock, onColorChange, onReset, globalColors = {} }) {
+function SectionColorOverrides({ activeBlock, onColorChange, onReset, onClearKey, globalColors = {} }) {
   // Force re-render when globalColors changes by adding it as a key dependency
   const globalColorKey = React.useMemo(() => JSON.stringify(globalColors), [globalColors]);
   
@@ -76,11 +76,27 @@ function SectionColorOverrides({ activeBlock, onColorChange, onReset, globalColo
       <div className="space-y-3">
         {colorOrder.filter(k => k in currentColors).map((keyName) => (
           <ColorRole
-            key={keyName}
+            key={`color-${keyName}-${currentColors[keyName]}`}
             label={keyName.replace(/-/g, " ")}
-            value={currentColors[keyName]}
+            value={currentColors[keyName] ?? "#000000"}
             onChange={setRole(keyName)}
             isOverridden={(activeBlock.overrides?.values && keyName in activeBlock.overrides.values) || false}
+            onClearKey={() => {
+              if (!activeBlock) return;
+              // Clear only this key from overrides and persist via provided setters
+              const nextValues = { ...(activeBlock.overrides?.values || {}) };
+              delete nextValues[keyName];
+              const base = { enabled: Object.keys(nextValues).length > 0, values: nextValues, valuesPP: activeBlock.overrides?.valuesPP || {} };
+              if (activeBlock.type === 'Navbar' && typeof setNavbarOverrides === 'function') {
+                setNavbarOverrides(base);
+              } else if (activeBlock.type === 'Footer' && typeof setFooterOverrides === 'function') {
+                setFooterOverrides(base);
+              } else if (typeof setBlockOverrides === 'function') {
+                setBlockOverrides(activeBlock.id, base);
+              } else {
+                setBlocks(prev => prev.map(block => block.id === activeBlock.id ? { ...block, overrides: base } : block));
+              }
+            }}
           />
         ))}
       </div>
@@ -101,16 +117,26 @@ function ColorRole({ label, value, onChange, isOverridden = false }) {
       <div className="flex items-center gap-3">
         <input
           type="color"
-          value={value}
+          value={value ?? "#000000"}
           onChange={(e) => onChange(e.target.value)}
           className="h-10 w-14 cursor-pointer rounded-md border"
         />
         <input
           type="text"
-          value={value}
+          value={value ?? "#000000"}
           onChange={(e) => onChange(e.target.value)}
           className="h-10 w-28 rounded-md border px-2 text-sm font-mono"
         />
+        {isOverridden && typeof onChange === 'function' && typeof onClearKey === 'function' && (
+          <button
+            type="button"
+            onClick={onClearKey}
+            className="h-8 px-2 text-[11px] rounded border bg-white hover:bg-gray-50"
+            title="Revert this color to inherit"
+          >
+            Revert
+          </button>
+        )}
       </div>
     </div>
   );
@@ -476,11 +502,15 @@ const orderedCopyList = (() => {
                               valuesPP: activeBlock.overrides?.valuesPP || {}
                             });
                           } else if (setBlockOverrides) {
-                            setBlockOverrides(activeBlock.id, {
-                              enabled: true,
-                              values: { ...(activeBlock.overrides?.values || {}), [colorKey]: value },
-                              valuesPP: activeBlock.overrides?.valuesPP || {}
-                            });
+                            const nextValues = { ...(activeBlock.overrides?.values || {}), [colorKey]: value };
+                            const nextOverride = { enabled: true, values: nextValues, valuesPP: activeBlock.overrides?.valuesPP || {} };
+                            setBlockOverrides(activeBlock.id, nextOverride);
+                            // Mirror to local blocks so pickers reflect immediately
+                            setBlocks(prev => prev.map(block => 
+                              block.id === activeBlock.id 
+                                ? { ...block, overrides: nextOverride }
+                                : block
+                            ));
                           } else {
                             // Fallback to local state if setBlockOverrides not available
                             setBlocks(prev => prev.map(block => 
@@ -513,7 +543,14 @@ const orderedCopyList = (() => {
                             setFooterOverrides({ enabled: false, values: {}, valuesPP: {} });
                           } else if (setBlockOverrides) {
                             // Use the new setBlockOverrides prop for database persistence
-                            setBlockOverrides(activeBlock.id, { enabled: false, values: {}, valuesPP: {} });
+                            const cleared = { enabled: false, values: {}, valuesPP: {} };
+                            setBlockOverrides(activeBlock.id, cleared);
+                            // Mirror to local blocks for instant UI
+                            setBlocks(prev => prev.map(block => 
+                              block.id === activeBlock.id 
+                                ? { ...block, overrides: cleared }
+                                : block
+                            ));
                           } else {
                             // Fallback to local state if setBlockOverrides not available
                             setBlocks(prev => prev.map(block => 

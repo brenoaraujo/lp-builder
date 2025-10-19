@@ -46,6 +46,7 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
   }, [inviteRow?.theme_json?.colors]);
 
   const [colors, setColors] = useState(initialColors);
+  const lastLocalEditRef = useRef(0);
   const [fonts, setFonts] = useState(() => {
     return inviteRow?.theme_json?.fonts || {};
   });
@@ -103,10 +104,15 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
   // Sync pickers with the actual current global colors when opening or when globals change
   useEffect(() => {
     if (!open) return;
-    const next = currentGlobalColors || inviteRow?.theme_json?.colors || readTokenDefaults();
-    try { console.debug('[theme-debug][ThemeAside.syncOnOpen]', { next }); } catch {}
-    setColors(next);
-  }, [open, currentGlobalColors, inviteRow?.theme_json?.colors]);
+    const external = currentGlobalColors || inviteRow?.theme_json?.colors || readTokenDefaults();
+    const externalKey = JSON.stringify(external);
+    const localKey = JSON.stringify(colors);
+    const recentLocal = Date.now() - (lastLocalEditRef.current || 0) < 300;
+    if (recentLocal) return;
+    if (externalKey !== localKey) {
+      setColors(external);
+    }
+  }, [open, currentGlobalColors, inviteRow?.theme_json?.colors, colors]);
 
   // Escape closes
   useEffect(() => {
@@ -130,7 +136,7 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
       const { foreground, ...rest } = next;
       next = rest;
     }
-    try { console.debug('[theme-debug][ThemeAside.setRole]', { key, hex, droppingFg, next }); } catch {}
+    lastLocalEditRef.current = Date.now();
     setColors(next);
     // Defer parent update to avoid updating parent during child render
     setTimeout(() => {

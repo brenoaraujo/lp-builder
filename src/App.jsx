@@ -726,11 +726,30 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     const toIndex = (v) => (v === "B" ? 1 : v === "C" ? 2 : 0);       // "A" → 0, "B" → 1, "C" → 2
 
     // Use stored order if available, otherwise use default order
-    const sectionOrder = ovr?._sectionOrder || defaultOrder;
+    const rawOrder = ovr?._sectionOrder;
+    let sectionOrder = defaultOrder;
+    if (Array.isArray(rawOrder)) {
+      sectionOrder = rawOrder;
+    } else if (rawOrder && typeof rawOrder === "object") {
+      // Some persistence layers may store arrays as keyed objects
+      sectionOrder = Object.values(rawOrder).filter((v) => typeof v === "string");
+      if (!sectionOrder.length) sectionOrder = defaultOrder;
+    } else if (typeof rawOrder === "string") {
+      // Accept comma-separated or JSON string formats defensively
+      try {
+        const parsed = JSON.parse(rawOrder);
+        if (Array.isArray(parsed)) sectionOrder = parsed;
+        else sectionOrder = rawOrder.split(",").map((s) => s.trim()).filter(Boolean);
+      } catch {
+        sectionOrder = rawOrder.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+      if (!sectionOrder.length) sectionOrder = defaultOrder;
+    }
+
     const blocks = [];
     
     // Add sections in the stored order (only if they exist in overrides)
-    sectionOrder.forEach((k) => {
+    (sectionOrder || []).forEach((k) => {
       if (ovr?.[k]?.visible !== false) {
         const s = ovr[k] || {};
         blocks.push({
@@ -877,7 +896,6 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     // keep React state in sync; DB save handled by ThemeAside via onUpdateInvite
     setGlobalTheme((t) => ({ ...(t || {}), colors: next }));
     // apply immediately with the latest overrides from ref
-    try { console.debug('[theme-debug][App.persistColors]', { next, overrides: overridesBySectionRef.current }); } catch {}
     applyAllColors(next, overridesBySectionRef.current || {});
     // mark last local edit time to prevent immediate DB hydration stomp
     lastLocalThemeEditRef.current = Date.now();

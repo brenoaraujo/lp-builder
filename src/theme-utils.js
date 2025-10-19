@@ -165,18 +165,7 @@ export function buildThemeVars(input = {}, mode = "light") {
   const foreground = normalizeHex(input.foreground, readableOn(background));
   const altForeground = readableOn(altBg);
 
-  try {
-    console.debug("[theme-debug][buildThemeVars]", {
-      mode,
-      inputBackground: input?.background,
-      resolvedBackground: background,
-      inputForegroundProvided: Object.prototype.hasOwnProperty.call(input || {}, "foreground"),
-      computedForeground: foreground,
-      inputPrimary: input?.primary,
-      inputSecondary: input?.secondary,
-      inputAltBackground: input?.["alt-background"],
-    });
-  } catch {}
+  // debug removed
 
   // adaptive muted pair (depends on background)
   const mutedBackground = bgDark
@@ -231,26 +220,14 @@ export function resolvePalette(defaults = {}, globalColors = {}, overrideValues 
   const globalBgChangedNoFg = !!(globalColors && Object.prototype.hasOwnProperty.call(globalColors, "background") && !Object.prototype.hasOwnProperty.call(globalColors, "foreground"));
   if (globalBgChangedNoFg && Object.prototype.hasOwnProperty.call(base, "foreground")) {
     delete base.foreground;
-    try { console.debug("[theme-debug][resolvePalette][global-drop-fg]", { globalColors, resultBase: base }); } catch {}
   }
   if (!overrideValues || typeof overrideValues !== "object" || !Object.keys(overrideValues).length) {
     if (opts?.trace) return { colors: base, traceByKey: Object.fromEntries(Object.keys(base).map(k => [k, "global"])) };
-    try { console.debug("[theme-debug][resolvePalette] no overrides", { base }); } catch {}
     return base;
   }
   const merged = { ...base, ...overrideValues };
   const droppedForeground = !!(overrideValues.background && !overrideValues.foreground && Object.prototype.hasOwnProperty.call(merged, "foreground"));
   if (droppedForeground) delete merged.foreground;
-
-  try {
-    console.debug("[theme-debug][resolvePalette] with overrides", {
-      defaults,
-      globalColors,
-      overrideValues,
-      droppedForeground,
-      merged
-    });
-  } catch {}
 
   if (opts?.trace) {
     const traceByKey = {};
@@ -259,7 +236,6 @@ export function resolvePalette(defaults = {}, globalColors = {}, overrideValues 
       else if (k in (globalColors || {})) traceByKey[k] = "global";
       else traceByKey[k] = "default";
     });
-    try { console.debug("[theme-debug][resolvePalette][trace]", { traceByKey, merged }); } catch {}
     return { colors: merged, traceByKey };
   }
   return merged;
@@ -460,9 +436,7 @@ export function applyAllColors(globalColors, sectionOverrides = {}) {
   })();
   const rootBase = resolvePalette(defaults, globalColors);
   const rootVars = buildThemeVars(rootBase, mode);
-  try {
-    console.debug("[theme-debug][applyAllColors][root]", { mode, defaults, globalColors, rootBase, rootVars });
-  } catch {}
+  // debug removed
   setCSSVars(document.documentElement, "colors", rootVars);
 
   // Apply per-section effective palettes
@@ -482,9 +456,6 @@ export function applyAllColors(globalColors, sectionOverrides = {}) {
     const vars = buildThemeVars(effectiveBase, mode);
     setCSSVarsImportant(sectionElement, "colors", vars);
 
-    try {
-      const id = sectionType || 'root';
-      console.debug(`[theme-debug][applyAllColors][section:${id}]`, { effectiveBase, vars, overrideDef });
-    } catch {}
+    // debug removed
   });
 }
