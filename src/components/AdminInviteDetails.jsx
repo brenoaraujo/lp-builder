@@ -25,6 +25,13 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
     ? invite.images_json
     : invite.onboarding_json?.images || {};
 
+  // Determine explicit section order (used to detect sections user actually added)
+  const sectionOrder = (overrides && Array.isArray(overrides._sectionOrder))
+    ? overrides._sectionOrder
+    : (typeof overrides?._sectionOrder === 'object' && overrides?._sectionOrder != null)
+      ? Object.values(overrides._sectionOrder)
+      : [];
+
   // Debug logging to help troubleshoot data sources
   console.log('📊 Admin details data sources:', {
     hasOverridesJson: !!(invite.overrides_json && Object.keys(invite.overrides_json).length > 0),
@@ -409,9 +416,53 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                 </AccordionItem>
 
                 {/* Section Accordions */}
-                {Object.entries(overrides).map(([sectionKey, sectionData]) =>
-                  renderSectionAccordion(sectionKey, sectionData)
-                )}
+                {Object.entries(overrides)
+                  .filter(([k]) => k !== '_sectionOrder')
+                  .filter(([k, v]) => {
+                    // Only include WhoYouHelp if it was explicitly added (in order) or explicitly visible
+                    if (k === 'WhoYouHelp') {
+                      const explicitlyAdded = Array.isArray(sectionOrder) && sectionOrder.includes('WhoYouHelp');
+                      const explicitlyVisible = v && v.visible === true;
+                      return explicitlyAdded || explicitlyVisible;
+                    }
+                    return true;
+                  })
+                  .map(([sectionKey, sectionData]) =>
+                    renderSectionAccordion(sectionKey, sectionData)
+                  )}
+
+                {/* Footer Info (explicit) */}
+                <AccordionItem value="footer-info">
+                  <AccordionTrigger>Footer</AccordionTrigger>
+                  <AccordionContent>
+                    <Table>
+                      <TableBody>
+                        <TableRow>
+                          <TableHead className="w-[160px]">Charity Name</TableHead>
+                          <TableCell>{charityInfo.charityName || 'Not provided'}</TableCell>
+                        </TableRow>
+                        {charityInfo.charityLogo && (
+                          <TableRow>
+                            <TableHead>Logo</TableHead>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={charityInfo.charityLogo}
+                                  alt="Footer Logo"
+                                  className="w-16 h-16 object-contain border rounded"
+                                />
+                                <Button size="sm" variant="outline" onClick={() => downloadImage(charityInfo.charityLogo, 'footer-logo')}>
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Download
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </AccordionContent>
+                </AccordionItem>
 
                 {/* Global Theme */}
                 {invite.theme_json && (

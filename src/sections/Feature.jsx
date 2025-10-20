@@ -271,6 +271,7 @@ export function FeatureC({ blockType = "feature" }) {
                             data-display="yes"
                             data-copy="yes"
                             data-label="Description"
+                            data-max-chars="400"
                             className="text-Colors-muted-foreground text-base font-normal font-primary leading-normal text-center "
                         >
                             Explain in one or two concise sentences how your solution transforms users&apos; challenges into
