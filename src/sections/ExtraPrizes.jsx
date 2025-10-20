@@ -249,10 +249,10 @@ export function ExtraPrizesB() {
           <img
             data-portrait="No"
             data-ratio="5:4"
-            data-size="1200×960"
+            data-size="1168×664"
             data-image="extra-prize-image"
             data-default-image="/images/img-extra.png"
-            className="max-w-[654px] rounded-lg overflow-hidden object-cover"
+            className="max-w-[624px] rounded-lg overflow-hidden object-cover"
             src="/images/img-extra.png"
             alt="Extra Prize"
           />

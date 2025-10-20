@@ -465,6 +465,7 @@ const STEP_KEYS = [
     "feature",        // choose
     "featureEdit",    // edit
     "addMoreSections", // option to add more sections
+    "footerEdit",     // edit footer before review
     "review",         // review
 ];
 
@@ -538,10 +539,16 @@ const STEP_CONFIG = {
         completionCheck: () => true,
         prerequisites: ['feature']
     },
+    footerEdit: {
+        type: 'section-edit',
+        sectionKey: 'Footer',
+        completionCheck: () => true,
+        prerequisites: ['addMoreSections']
+    },
     review: {
         type: 'info',
         completionCheck: () => true,
-        prerequisites: ['addMoreSections']
+      prerequisites: ['footerEdit']
     }
 };
 
@@ -991,18 +998,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                     onChange={(e) => setCharityInfo(prev => ({ ...prev, campaignLaunchDate: e.target.value }))}
                                                 />
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Ascend Client Services Representative Section */}
-                                    <div className="space-y-6">
-                                        <div className="border-b border-gray-200 pb-2">
-                                            <h3 className="text-lg font-semibold text-gray-900">Ascend Client Services Representative</h3>
-                                        </div>
-                                        
-                                        <div className="space-y-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Name</Label>
+                                                <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Ascend Client Services Representative</Label>
                                                 <Input
                                                     id="ascendRepresentative"
                                                     placeholder="Enter full name"
@@ -1010,26 +1007,10 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                     onChange={(e) => setCharityInfo(prev => ({ ...prev, ascendRepresentative: e.target.value }))}
                                                 />
                                             </div>
-
-                                            <div className="space-y-2">
-                                                <Label htmlFor="ascendEmail" className="text-muted-foreground">Email</Label>
-                                                <Input
-                                                    id="ascendEmail"
-                                                    type="email"
-                                                    placeholder="representative@charity.com"
-                                                    value={charityInfo.ascendEmail || ""}
-                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, ascendEmail: e.target.value }))}
-                                                />
-                                            </div>
                                         </div>
                                     </div>
 
-
-
-
-
-
-
+                                 
                                     <div className="flex gap-3">
                                         <Button
                                             onClick={next}
@@ -1403,8 +1384,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 <Button
                                     variant="outline"
                                     onClick={() => {
-                                        // User doesn't want extra content section, finish and go to app
-                                        finish();
+                                        // Continue to Footer editing step
+                                        setStepIndex(STEP_KEYS.indexOf("footerEdit"));
                                     }}
                                     className=" p-6"
                                 >
@@ -1428,8 +1409,8 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             <Button
                                 variant="outline"
                                 onClick={() => {
-                                    setVisible(currentExtraContentKey, false); // hide this section
-                                    advance(2); // skip its edit step as well
+                                    // Continue to Footer editing step
+                                    setStepIndex(STEP_KEYS.indexOf("footerEdit"));
                                 }}
                                 className=" p-6"
                             >
@@ -1501,18 +1482,45 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                         <Button
                                             variant="outline"
                                             onClick={() => {
-                                                // User is done adding sections, finish and go to app
-                                                finish();
+                                                // Continue to Footer editing step
+                                                setStepIndex(STEP_KEYS.indexOf("footerEdit"));
                                             }}
                                             className="p-6"
                                         >
-                                            Go to Design Preview
+                                            Continue to Footer
                                         </Button>
                                     </div>
 
                                 </div>
                             </div>
 
+                        </div>
+                    )}
+
+                    {stepKey === "footerEdit" && (
+                        <div className="space-y-12">
+                            <div className="space-y-1">
+                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
+                                    <ArrowLeft className="mr-1 h-4 w-4" />
+                                    Back
+                                </Button>
+                                <h2 className="text-4xl font-medium">Edit Footer</h2>
+                                <p className="text-base text-slate-500">Customize your footer content before finishing.</p>
+                            </div>
+                            <EditorForOnboarding
+                                sectionKey="Footer"
+                                variantKey={SECTIONS?.Footer?.defaultVariant === 1 ? "B" : "A"}
+                                overrides={overridesBySection.Footer}
+                                onTogglePart={(id, v) => setDisplay("Footer", id, v)}
+                                onCopyChange={(id, t) => setCopy("Footer", id, t)}
+                                onImageChange={updateImage}
+                                images={images}
+                                raffleType={charityInfo.raffleType}
+                                onSaveNext={finish}
+                            />
+                            <div className="flex gap-3">
+                                <Button onClick={finish} className="p-6">Save &amp; Edit Colors</Button>
+                            </div>
                         </div>
                     )}
 

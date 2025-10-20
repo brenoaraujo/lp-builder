@@ -39,7 +39,7 @@ export function WinnersA() {
                 <img
                   data-portrait="No"
                   data-ratio="5:4"
-                  data-size="708×532"
+                  data-size="800x600"
                   data-image="winner1-image"
                   data-default-image="/images/winner1.png"
                   className="max-w-[354px] rounded-lg overflow-hidden object-cover"
@@ -51,7 +51,7 @@ export function WinnersA() {
                 <img
                   data-portrait="No"
                   data-ratio="5:4"
-                  data-size="708×532"
+                  data-size="800x600"
                   data-image="winner2-image"
                   data-default-image="/images/winner2.png"
                   className="max-w-[354px] rounded-lg overflow-hidden object-cover"
@@ -63,7 +63,7 @@ export function WinnersA() {
                 <img
                   data-portrait="No"
                   data-ratio="5:4"
-                  data-size="708×532"
+                  data-size="800x6002"
                   data-image="winner3-image"
                   data-default-image="/images/winner3.png"
                   className="max-w-[354px] rounded-lg overflow-hidden object-cover"
@@ -667,3 +667,4 @@ export function WinnersB() {
     </div>
   );
 }
+

@@ -158,25 +158,85 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
               </TableRow>
 
               {/* Copy Fields */}
-              {sectionData.copy && Object.entries(sectionData.copy)
-                .filter(([key]) => !key.includes('action'))
-                .map(([key, value]) => (
-                  <TableRow
-                    key={key}
-                    className={value ? "cursor-pointer hover:bg-muted/50" : ""}
-                    onClick={value ? () => copyToClipboard(value, key.replace(/([A-Z])/g, ' $1').trim()) : undefined}
-                  >
-                    <TableHead className="capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').trim()}
-                    </TableHead>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span>{value || 'Not set'}</span>
-                        {value && <Copy className="w-3 h-3 text-muted-foreground" />}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              {(() => {
+                const rows = [];
+                const copy = sectionData.copy || {};
+                const consumed = new Set();
+
+                // Special organization for Footer: show label > URL in same row
+                if (sectionKey === 'Footer') {
+                  // Use EditorSidebar's pairing logic: separate regular from action URLs
+                  const regular = [];
+                  const actionUrls = [];
+                  
+                  Object.entries(copy).forEach(([k, v]) => {
+                    if (k.includes('-action') || k.includes('URL') || k.includes('Link')) {
+                      actionUrls.push({ key: k, value: String(v || '').trim() });
+                    } else {
+                      regular.push({ key: k, value: String(v || '').trim() });
+                    }
+                  });
+                  
+                  // Create ordered list by pairing each regular input with its action URL
+                  regular.forEach(regularItem => {
+                    consumed.add(regularItem.key);
+                    const pretty = regularItem.value || regularItem.key.replace(/([A-Z])/g, ' $1').trim();
+                    
+                    // Find its corresponding action URL input
+                    const actionUrl = actionUrls.find(actionItem => {
+                      const baseId = actionItem.key.replace(/-action$/, '').replace(/URL$/, '').replace(/Link$/, '');
+                      const regularBase = regularItem.key.replace(/-action$/, '');
+                      return baseId === regularBase || actionItem.key.includes(regularBase);
+                    });
+                    
+                    if (actionUrl) {
+                      consumed.add(actionUrl.key);
+                    }
+                    
+                    // Show label in left column, URL in right column
+                    const linkValue = actionUrl ? actionUrl.value : 'Not set';
+                    const isClickable = regularItem.value || actionUrl?.value;
+                    
+                    rows.push(
+                      <TableRow key={`footer-pair-${regularItem.key}`} className={isClickable ? 'cursor-pointer hover:bg-muted/50' : ''}
+                        onClick={isClickable ? () => copyToClipboard(linkValue, pretty) : undefined}>
+                        <TableHead className="capitalize">{pretty}</TableHead>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span>{linkValue}</span>
+                            {isClickable && <Copy className="w-3 h-3 text-muted-foreground" />}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  });
+                }
+
+                // Render remaining non-footer or unpaired fields
+                Object.entries(copy)
+                  .filter(([key]) => !key.includes('action'))
+                  .filter(([key]) => !consumed.has(key))
+                  .filter(([key]) => !key.match(/footer[-_]?link[-_]?\d+[-_]?link/i)) // Remove Footer-Link-*-Link items
+                  .forEach(([key, value]) => {
+                    rows.push(
+                      <TableRow
+                        key={key}
+                        className={value ? 'cursor-pointer hover:bg-muted/50' : ''}
+                        onClick={value ? () => copyToClipboard(value, key.replace(/([A-Z])/g, ' $1').trim()) : undefined}
+                      >
+                        <TableHead className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</TableHead>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span>{value || 'Not set'}</span>
+                            {value && <Copy className="w-3 h-3 text-muted-foreground" />}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  });
+
+                return rows;
+              })()}
 
               {/* Button Links */}
               {sectionData.copy && Object.entries(sectionData.copy)
@@ -396,19 +456,23 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* Ascend Representative Section */}
-                <AccordionItem value="ascend">
-                  <AccordionTrigger>Ascend Client Services Representative</AccordionTrigger>
+                {/* Submitter & Ascend Representative Section */}
+                <AccordionItem value="contacts">
+                  <AccordionTrigger>Contacts</AccordionTrigger>
                   <AccordionContent>
                     <Table>
                       <TableBody>
                         <TableRow>
-                          <TableHead className="w-[160px]">Name</TableHead>
-                          <TableCell>{charityInfo.ascendRepresentative || 'Not specified'}</TableCell>
+                          <TableHead className="w-[200px]">Submitter Name</TableHead>
+                          <TableCell>{charityInfo.submitterName || 'Not specified'}</TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableHead>Email</TableHead>
-                          <TableCell>{charityInfo.ascendEmail || 'Not specified'}</TableCell>
+                          <TableHead>Submitter Email</TableHead>
+                          <TableCell>{charityInfo.submitterEmail || 'Not specified'}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableHead>Ascend Client Services Representative</TableHead>
+                          <TableCell>{charityInfo.ascendRepresentative || 'Not specified'}</TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
@@ -427,42 +491,11 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                     }
                     return true;
                   })
+                  // Ensure Footer accordion is shown last
+                  .sort((a, b) => (a[0] === 'Footer' ? 1 : b[0] === 'Footer' ? -1 : 0))
                   .map(([sectionKey, sectionData]) =>
                     renderSectionAccordion(sectionKey, sectionData)
                   )}
-
-                {/* Footer Info (explicit) */}
-                <AccordionItem value="footer-info">
-                  <AccordionTrigger>Footer</AccordionTrigger>
-                  <AccordionContent>
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableHead className="w-[160px]">Charity Name</TableHead>
-                          <TableCell>{charityInfo.charityName || 'Not provided'}</TableCell>
-                        </TableRow>
-                        {charityInfo.charityLogo && (
-                          <TableRow>
-                            <TableHead>Logo</TableHead>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src={charityInfo.charityLogo}
-                                  alt="Footer Logo"
-                                  className="w-16 h-16 object-contain border rounded"
-                                />
-                                <Button size="sm" variant="outline" onClick={() => downloadImage(charityInfo.charityLogo, 'footer-logo')}>
-                                  <Download className="w-3 h-3 mr-1" />
-                                  Download
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </AccordionContent>
-                </AccordionItem>
 
                 {/* Global Theme */}
                 {invite.theme_json && (

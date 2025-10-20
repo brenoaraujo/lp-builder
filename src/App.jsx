@@ -1186,7 +1186,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   const [approvalLink, setApprovalLink] = useState("");
   const [approvalSuccess, setApprovalSuccess] = useState(false);
   const [approvalMeta, setApprovalMeta] = useState({
-    customerName: "", projectId: "", notes: "",
+    customerName: "", projectId: "", notes: "", submitterName: "", submitterEmail: "",
   });
 
   const submitViaEmail = async () => {
@@ -1218,6 +1218,8 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       customerName: approvalMeta.customerName?.trim() || undefined,
       projectId: approvalMeta.projectId?.trim() || undefined,
       notes: approvalMeta.notes?.trim() || undefined,
+      submitterName: approvalMeta.submitterName?.trim() || undefined,
+      submitterEmail: approvalMeta.submitterEmail?.trim() || undefined,
     };
     const snapshot = { blocks, globalTheme, meta };
     const payload = encodeState(snapshot);
@@ -1799,8 +1801,27 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
 
           <div className="space-y-4">
             {!approvalSuccess ? (
-              // Original form (without submitter fields)
+              // Form with submitter fields
               <>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-600">Submitter Name</label>
+                  <input
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    placeholder="Jane Doe"
+                    value={approvalMeta.submitterName}
+                    onChange={(e) => setApprovalMeta((m) => ({ ...m, submitterName: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-600">Submitter Email</label>
+                  <input
+                    className="w-full rounded-md border px-2 py-1 text-sm"
+                    type="email"
+                    placeholder="jane@example.com"
+                    value={approvalMeta.submitterEmail}
+                    onChange={(e) => setApprovalMeta((m) => ({ ...m, submitterEmail: e.target.value }))}
+                  />
+                </div>
                 <div className="space-y-1">
                   <label className="text-xs text-gray-600">Campaign Name (optional)</label>
                   <input
@@ -1840,7 +1861,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                     onClick={() => {
                       setApprovalSuccess(false);
                       setApproveOpen(false);
-                      setApprovalMeta({ customerName: "", projectId: "", notes: "" });
+                      setApprovalMeta({ customerName: "", projectId: "", notes: "", submitterName: "", submitterEmail: "" });
                     }}
                   >
                     Close

@@ -88,9 +88,9 @@ export function HeroA({ preview = false, raffleType = null }) {
             data-portrait="No"
             data-ratio="5:4"
             data-image="hero-a-image"
-            data-size="1240×992"
+            data-size="1380x980"
             data-default-image="/images/img-hero.png"
-            className="max-w-[620px] rounded-lg overflow-hidden object-cover"
+            className="max-w-[624px] rounded-lg overflow-hidden object-cover"
             src="/images/img-hero.png"
             alt="Hero"
           />
