@@ -63,7 +63,7 @@ export function WinnersA() {
                 <img
                   data-portrait="No"
                   data-ratio="5:4"
-                  data-size="800x6002"
+                  data-size="708×532"
                   data-image="winner3-image"
                   data-default-image="/images/winner3.png"
                   className="max-w-[354px] rounded-lg overflow-hidden object-cover"

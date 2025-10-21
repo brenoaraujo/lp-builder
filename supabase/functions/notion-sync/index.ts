@@ -8,7 +8,7 @@ import { Client as NotionClient } from "npm:@notionhq/client@2.2.15";
 const NOTION_TOKEN = Deno.env.get("NOTION_TOKEN");
 const NOTION_DB_ID = Deno.env.get("NOTION_DB_ID");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2dG91b2lnY2tuZ2FsZnZ6bXNwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTMyNzc5NywiZXhwIjoyMDc0OTAzNzk3fQ.utMz331bJbahS-tu4_L7EBa4Bq4_F-7yIoGH7EDF6k4";
 const PUBLIC_SITE_URL = Deno.env.get("PUBLIC_SITE_URL") || "";
 
 const notion = new NotionClient({ auth: NOTION_TOKEN });
