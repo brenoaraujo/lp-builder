@@ -16,6 +16,7 @@ import OnboardingWizard from "./onboarding/OnboardingWizard.jsx";
 import EditorForOnboarding from "./onboarding/EditorForOnboarding.jsx";
 import { SECTIONS } from "./sections/registry.js";
 import EditorSidebar from "./components/EditorSidebar.jsx";
+import LeftSidebar from "./components/LeftSidebar.jsx";
 import { useBuilderOverrides } from "./context/BuilderOverridesContext.jsx";
 
 // New imports for DB-based persistence
@@ -579,7 +580,7 @@ function SortableBlock({
                   // Order copy list to pair copy inputs with their action URLs
                   const regular = [];
                   const actionUrls = [];
-                  
+
                   copyParts.forEach(p => {
                     if (p.id.includes('-action')) {
                       actionUrls.push(p);
@@ -587,7 +588,7 @@ function SortableBlock({
                       regular.push(p);
                     }
                   });
-                  
+
                   const ordered = [];
                   regular.forEach(regularItem => {
                     ordered.push(regularItem);
@@ -599,7 +600,7 @@ function SortableBlock({
                       ordered.push(actionUrl);
                     }
                   });
-                  
+
                   actionUrls.forEach(actionUrl => {
                     const baseId = actionUrl.id.replace('-action', '');
                     const hasRegular = regular.some(regularItem => regularItem.id === baseId);
@@ -607,7 +608,7 @@ function SortableBlock({
                       ordered.push(actionUrl);
                     }
                   });
-                  
+
                   return ordered;
                 })().map((p) => {
                   const current =
@@ -615,7 +616,7 @@ function SortableBlock({
                   const max = p.maxChars || 120;
                   const isActionUrl = p.id.includes('-action');
                   const hasPlaceholder = p.placeholder;
-                  
+
                   return (
                     <div key={p.id} className={`space-y-1 ${isActionUrl ? 'mb-3' : 'mb-6'}`}>
                       {!isActionUrl && (
@@ -665,14 +666,14 @@ function blocksFromOverrides(ovr = {}) {
   if (ovr.hero?.visible !== false) push("hero", ovr.hero?.variant || "A", ovr.hero);
   if (ovr.extraPrizes?.visible !== false) push("extraPrizes", ovr.extraPrizes?.variant || "A", ovr.extraPrizes);
   if (ovr.winners?.visible !== false) push("winners", ovr.winners?.variant || "A", ovr.winners);
-  
+
   // Handle dynamic extra content sections
   Object.keys(ovr).forEach(key => {
     if (key.startsWith('extraContent_') && ovr[key]?.visible !== false) {
       push(key, ovr[key]?.variant || "A", ovr[key]);
     }
   });
-  
+
   // Only add WhoYouHelp if it was explicitly added during onboarding
   if (ovr.WhoYouHelp?.visible === true) push("WhoYouHelp", ovr.WhoYouHelp?.variant || "A", ovr.WhoYouHelp);
   return out.length ? out : [{
@@ -702,7 +703,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     if (!inviteRow?.theme_json) return;
 
     const themeData = inviteRow.theme_json;
-    
+
     // Apply colors if available
     if (themeData.colors) {
       const same = JSON.stringify(themeData.colors) === JSON.stringify(globalTheme.colors || {});
@@ -747,7 +748,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     }
 
     const blocks = [];
-    
+
     // Add sections in the stored order (only if they exist in overrides)
     (sectionOrder || []).forEach((k) => {
       if (ovr?.[k]?.visible !== false) {
@@ -762,7 +763,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         });
       }
     });
-    
+
     // Then, add WhoYouHelp only if it was explicitly added during onboarding
     if (ovr?.WhoYouHelp?.visible === true && !sectionOrder.includes('WhoYouHelp')) {
       const s = ovr.WhoYouHelp || {};
@@ -775,7 +776,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         overrides: s.theme || { enabled: false, values: {}, valuesPP: {} },
       });
     }
-    
+
     // Then, add all extra content sections that aren't already in the order
     Object.keys(ovr).forEach((k) => {
       if (k.startsWith('extraContent_') && ovr[k]?.visible !== false && !sectionOrder.includes(k)) {
@@ -790,25 +791,14 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         });
       }
     });
-    
+
     return blocks;
   }
 
 
   // No longer needed - routing is handled by AppRouterShell
 
-  const [themeOpen, setThemeOpen] = useState(false);
 
-  // Check URL parameters to auto-open theme panel
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.split('?')[1]);
-    if (params.get('theme') === 'open') {
-      setThemeOpen(true);
-      // Clean up URL parameter after opening
-      const cleanHash = window.location.hash.split('?')[0] + `?invite=${params.get('invite')}`;
-      window.history.replaceState(null, '', cleanHash);
-    }
-  }, []);
 
   // Builder state
   const [hydrated, setHydrated] = useState(false);
@@ -945,8 +935,8 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       if (ls && typeof ls === 'object' && Object.keys(ls).length > 0) {
         try {
           await updateInvite({ theme_json: { ...(inviteRow?.theme_json || {}), colors: ls } });
-        } catch {}
-        try { localStorage.removeItem("theme.colors"); } catch {}
+        } catch { }
+        try { localStorage.removeItem("theme.colors"); } catch { }
       }
     };
     migrate();
@@ -993,18 +983,18 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   const previousBlocksRef = useRef(null);
   useEffect(() => {
     if (!hydrated || isInitialLoad.current) return; // Don't sync during initial load
-    
+
     // Only sync if blocks actually changed
     if (JSON.stringify(previousBlocksRef.current) === JSON.stringify(blocks)) {
       return;
     }
-    
+
     previousBlocksRef.current = blocks;
-    
+
     // Store section order based on current blocks array
     const sectionOrder = blocks.map(block => block.type);
     setSection('_sectionOrder', sectionOrder);
-    
+
     blocks.forEach(block => {
       setSection(block.type, {
         visible: true,
@@ -1020,14 +1010,14 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   const previousNavbarRef = useRef(null);
   useEffect(() => {
     if (!hydrated || isInitialLoad.current) return; // Don't sync during initial load
-    
+
     const navbarData = { controls: navbarControls, copy: navbarCopy };
     if (JSON.stringify(previousNavbarRef.current) === JSON.stringify(navbarData)) {
       return;
     }
-    
+
     previousNavbarRef.current = navbarData;
-    
+
     setSection("Navbar", {
       visible: true,
       variant: 'A',
@@ -1041,14 +1031,14 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   const previousFooterRef = useRef(null);
   useEffect(() => {
     if (!hydrated || isInitialLoad.current) return; // Don't sync during initial load
-    
+
     const footerData = { controls: footerControls, copy: footerCopy };
     if (JSON.stringify(previousFooterRef.current) === JSON.stringify(footerData)) {
       return;
     }
-    
+
     previousFooterRef.current = footerData;
-    
+
     setSection("Footer", {
       visible: true,
       variant: 'A',
@@ -1171,8 +1161,8 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         "secondary-foreground": "#71717a",
       },
     });
-    
-    
+
+
     const payload = encodeState({ blocks: [], globalTheme: { colors: {} } });
     history.replaceState(null, "", `#${payload}`);
     setToastMsg("Reset to defaults");
@@ -1197,10 +1187,10 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       };
       const payload = encodeState(snapshot);
       const url = `${location.origin}${location.pathname}#${payload}`;
-      
+
       // Generate approval link locally without API call
       setApprovalLink(url);
-      
+
       // Show success confirmation
       setApprovalSuccess(true);
     } catch (err) {
@@ -1300,14 +1290,14 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
 
   function handleAddSectionAt(index, type = "hero") {
     if (approvedMode) return;
-    
+
     // For feature sections, use addExtraContentSection to generate unique IDs
     let finalType = type;
     if (type === "feature") {
       // Reuse the same logic as onboarding - generates extraContent_1, extraContent_2, etc.
       finalType = addExtraContentSection();
     }
-    
+
     const newBlock = {
       id: crypto?.randomUUID?.() ?? `b_${Date.now()}`,
       type: finalType, variant: 0, controls: {}, copy: {},
@@ -1418,7 +1408,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
 
     // (optional) toast/UI feedback here
   }
-  
+
 
   // Get charity information from database
   const getCharityInfo = () => {
@@ -1442,11 +1432,14 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-gray-50 backdrop-blur" style={{ ["--header-h"]: "56px" }}>
-        <div className="mx-auto w-full flex items-center justify-between px-4 py-3">
+      <header className="sticky top-0 z-40  backdrop-blur border-b border-slate-200 px-0" style={{ ["--header-h"]: "56px" }}>
+        <div className="mx-auto max-w-[1200px] mx-auto flex items-center justify-between pt-4 pb-4 ">
           <div className="flex items-center gap-3">
-          <img src="https://cdn.brandfetch.io/idOQ3T8fjd/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1689300855088" alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
-          <div className="text-sm sm:text-lg font-semibold truncate">Landing Page Builder</div>
+            <img src="https://cdn.brandfetch.io/idOQ3T8fjd/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1689300855088" alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
+            <div>
+              <div className="text-sm font-semibold text-gray-700">Landing Page Builder</div>
+
+            </div>
             {approvedMode && (
               <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-2 py-1 border border-emerald-200">
                 Approved on {new Date(approvedMeta.approvedAt).toLocaleString()}
@@ -1461,7 +1454,24 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
               {themeMode === "light" ? "Dark mode" : "Light mode"}
             </Button> */}
 
-            {!approvedMode ? (
+            
+          </div>
+        </div>
+      </header>
+
+      {/* Layout */}
+
+      <div className=" flex flex-col gap-12 max-w-[1200px] mx-auto pt-4">
+        <div className="flex self-stretch justify-between gap-4">
+        <div className="flex flex-col">
+        <h2 className="text-4xl font-medium">Design & Review</h2>
+                                <p className="text-base text-slate-500">
+                                Update colors, reorder sections, and refine content. Then send it to production.
+                                </p>
+        
+        </div>
+        <div className="flex items-center gap-2">
+        {!approvedMode ? (
               <>
                 {/*} <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
                 <Button variant="outline" onClick={resetThemeInApp} className="text-gray-500">Reset</Button>*/}
@@ -1492,297 +1502,285 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                 </Button>
               </>
             )}
+            </div>
+        </div>
+        
+         <div className="flex ">
+           {/* Left Sidebar with Accordions */}
+           <LeftSidebar
+             activeBlockId={activeBlockId}
+             activeBlock={activeBlock}
+             partList={partList}
+             copyList={copyList}
+             approvedMode={approvedMode}
+             SECTIONS_REG={SECTIONS}
+             closePanel={closePanel}
+             handleDelete={handleDelete}
+             handleMoveUp={handleMoveUp}
+             handleMoveDown={handleMoveDown}
+             onTogglePartFromSidebar={onTogglePartFromSidebar}
+             onCopyChangeFromSidebar={onCopyChangeFromSidebar}
+             variantIndex={variantIndex}
+             setVariantForId={setVariantForId}
+             variantForId={variantForId}
+             setBlocks={setBlocks}
+             blocks={blocks}
+             setNavbarOverrides={(overrides) => setSection("Navbar", { theme: overrides })}
+             setFooterOverrides={(overrides) => setSection("Footer", { theme: overrides })}
+             setBlockOverrides={(blockId, overrides) => {
+               // Find the block type from the blocks array
+               const block = blocks.find(b => b.id === blockId);
+               if (block) {
+                 console.log('🎨 setBlockOverrides:', block.type, overrides);
+                 setSection(block.type, { theme: overrides });
+               }
+             }}
+             images={images}
+             onImageChange={updateImage}
+             globalColors={globalTheme.colors}
+             // Theme props
+             onColorsChange={persistColors}
+             onFontsChange={persistFonts}
+             inviteToken={inviteToken}
+             inviteRow={row}
+             onUpdateInvite={updateInvite}
+             currentGlobalColors={globalTheme.colors}
+             sectionOverrides={(() => {
+               const acc = blocks.reduce((acc, block) => {
+                 if (block.overrides?.values && Object.keys(block.overrides.values).length > 0) {
+                   acc[block.type] = block.overrides;
+                 }
+                 return acc;
+               }, {});
+
+               // Add Navbar and Footer overrides from BuilderOverridesContext
+               if (overridesBySection.Navbar?.theme?.values && Object.keys(overridesBySection.Navbar.theme.values).length > 0) {
+                 acc.Navbar = overridesBySection.Navbar.theme;
+               }
+               if (overridesBySection.Footer?.theme?.values && Object.keys(overridesBySection.Footer.theme.values).length > 0) {
+                 acc.Footer = overridesBySection.Footer.theme;
+               }
+
+               return acc;
+             })()}
+           />
+
+          {/* Main Content Area */}
+          <div className="flex-1 flex flex-col">
+            {/* Floating edit button for sections 
+            {!activeBlockId && blocks.length > 0 && (
+              <button
+                type="button"
+                onClick={openEditorOnFirst}
+                aria-label="Edit first section"
+                className="fixed left-[380px] top-20 z-40 grid h-10 w-10 place-items-center rounded-full border bg-white shadow hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <Pencil className="h-5 w-5 text-gray-700" />
+              </button>
+            )}*/}
+
+
+            {/* Canvas */}
+            <main className="flex-1 overflow-auto">
+              <div className=" flex justify-center ">
+                <div className="w-full max-w-[800px] box-border rounded-lg border border-slate-200 shadow-lg ">
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => { setActiveBlockId("Navbar"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setActiveBlockId("Navbar"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); } }}
+                    className={[
+                      "relative transition",
+                      activeBlockId === "Navbar"
+                        ? "z-10 outline outline-2 outline-blue-500 ring-0"
+                        : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500",
+                    ].join(" ")}
+                  >
+                    <AutoScaler designWidth={1440} targetWidth={798} maxHeight={9999}>
+                      <ImageManager
+                        sectionId="Navbar"
+                        images={images}
+                        onImageChange={updateImage}
+                        compact={false}
+                        hideControls={true}
+                      >
+                        <EditableSection
+                          sectionId="Navbar"
+                          label="Navbar"
+                          variant={NAVBAR_VARIANT}
+                          data={NAVBAR_DEFAULT_DATA}
+                          discoverKey={`Navbar:${NAVBAR_VARIANT}:${activeBlockId === "Navbar"}`}
+                          controls={navbarControls}
+                          copyValues={navbarCopy}
+                          onPartsDiscovered={(list) => handlePartsDiscovered("Navbar", list)}
+                          onCopyDiscovered={(list) => handleCopyDiscovered("Navbar", list)}
+                          fixedPosition="top"
+                        >
+                          <NavbarCmp data={NAVBAR_DEFAULT_DATA} />
+                        </EditableSection>
+                      </ImageManager>
+                    </AutoScaler>
+                  </div>
+
+                  <div className="">
+                    {blocks.length === 0 ? (
+                      <div className="border border-dashed p-10 text-center text-gray-500">
+                        No sections yet. Use the buttons on the left to add some 👈
+                      </div>
+                    ) : (
+                      <DndContext
+                        collisionDetection={closestCenter}
+                        sensors={sensors}
+                        modifiers={[restrictToVerticalAxis]}
+                        onDragEnd={onDragEnd}
+                      >
+                        <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+                          <div style={{ background: "var(--colors-background)", color: "var(--colors-foreground)" }}>
+                            {blocks.map((b, i) => (
+                              <div key={b.id} className={i > 0 ? "-mt-px group relative" : "group relative"}>
+                                <SortableBlock
+                                  id={b.id}
+                                  type={b.type}
+                                  variant={b.variant ?? 0}
+                                  controls={b.controls || {}}
+                                  copyValues={b.copy || {}}
+                                  parts={partsByBlock[b.id] || []}
+                                  onPartsDiscovered={handlePartsDiscovered}
+                                  onCopyDiscovered={(found) => handleCopyDiscovered(b.id, found)}
+                                  onTogglePart={(partId, nextVisible) => {
+                                    if (approvedMode) return;
+                                    setBlocks((arr) =>
+                                      arr.map((x) =>
+                                        x.id === b.id ? { ...x, controls: { ...(x.controls || {}), [partId]: !!nextVisible } } : x
+                                      )
+                                    );
+                                  }}
+                                  onCopyChange={(partId, text) => {
+                                    if (approvedMode) return;
+                                    setBlocks((arr) =>
+                                      arr.map((x) =>
+                                        x.id === b.id ? { ...x, copy: { ...(x.copy || {}), [partId]: text } } : x
+                                      )
+                                    );
+                                  }}
+                                  overrides={b.overrides || { enabled: false, values: {}, valuesPP: {} }}
+                                  onSetOverrides={(next) => {
+                                    if (approvedMode) return;
+                                    setBlocks((arr) => arr.map((x) => (x.id === b.id ? { ...x, overrides: next } : x)));
+                                  }}
+                                  availableThemeKeys={Object.keys(globalTheme.colors)}
+                                  onRemove={(id) => !approvedMode && setBlocks((arr) => arr.filter((blk) => blk.id !== id))}
+                                  onVariantPick={(id, variantIndex) =>
+                                    !approvedMode && setBlocks((arr) => arr.map((blk) => (blk.id === id ? { ...blk, variant: variantIndex } : blk)))
+                                  }
+                                  readOnly={approvedMode}
+                                  onSelect={() => setActiveBlockId(b.id)}
+                                  selected={activeBlockId === b.id}
+                                  variantOpen={variantForId === b.id}
+                                  onVariantOpenChange={(open) => setVariantForId(open ? b.id : (variantForId === b.id ? null : variantForId))}
+                                  contentOpen={contentForId === b.id}
+                                  onContentOpenChange={(open) => setContentForId(open ? b.id : (contentForId === b.id ? null : contentForId))}
+                                  images={images}
+                                  onImageChange={updateImage}
+                                />
+
+                                {/* Inline "+ Section" handle */}
+                                <div className="z-[9999] absolute inset-x-0 -bottom-5 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    onClick={() => setPicker({ open: true, index: i + 1 })}
+                                    variant="primary"
+                                    className="rounded-full bg-blue-500 text-white hover:bg-blue-600"
+                                  >
+                                    + Section
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
+                    )}
+                  </div>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => { setActiveBlockId("Footer"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setActiveBlockId("Footer"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); } }}
+                    className={[
+                      "relative transition",
+                      activeBlockId === "Footer"
+                        ? "z-10 outline outline-2 outline-blue-500 ring-0"
+                        : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500",
+                    ].join(" ")}
+                  >
+                    <AutoScaler designWidth={1440} targetWidth={798}>
+                      <ImageManager
+                        sectionId="Footer"
+                        images={images}
+                        onImageChange={updateImage}
+                        compact={false}
+                        hideControls={true}
+                      >
+                        <EditableSection
+                          sectionId="Footer"
+                          label="Footer"
+                          variant={FOOTER_VARIANT}
+                          data={FOOTER_DEFAULT_DATA}
+                          discoverKey={`Footer:${FOOTER_VARIANT}:${activeBlockId === "Footer"}`}
+                          controls={footerControls}
+                          copyValues={footerCopy}
+                          onPartsDiscovered={(list) => handlePartsDiscovered("Footer", list)}
+                          onCopyDiscovered={(list) => handleCopyDiscovered("Footer", list)}
+                          fixedPosition="bottom"
+                        >
+                          <FooterCmp data={FOOTER_DEFAULT_DATA} />
+                        </EditableSection>
+                      </ImageManager>
+                    </AutoScaler>
+                  </div>
+                  {toastMsg && (
+                    <div className="fixed bottom-4 right-4 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg">
+                      {toastMsg}
+                    </div>
+                  )}
+
+                  {/* Section Picker Dialog */}
+                  <Dialog open={picker.open} onOpenChange={(open) => setPicker((p) => ({ ...p, open }))}>
+                    <DialogContent className="sm:max-w-[520px]">
+                      <DialogHeader>
+                        <DialogTitle>Add a section</DialogTitle>
+                        <DialogDescription>Choose what you want to insert below.</DialogDescription>
+                      </DialogHeader>
+
+                      <div className="grid grid-cols-1 gap-3">
+                        <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "hero")}>
+                          Hero
+                        </Button>
+                        <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "extraPrizes")}>
+                          Extra Prizes
+                        </Button>
+                        <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "winners")}>
+                          Winners
+                        </Button>
+                        <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "feature")}>
+                          Extra Content
+                        </Button>
+                        <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "WhoYouHelp")}>
+                          Who You Help
+                        </Button>
+                      </div>
+
+                      <DialogFooter className="mt-2">
+                        <Button variant="ghost" onClick={() => setPicker({ open: false, index: null })}>Cancel</Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+            </main>
           </div>
         </div>
-      </header>
-
-      {/* Layout */}
-      <div className="flex">
-        {/* Sidebar trigger */}
-        {!activeBlockId && blocks.length > 0 && (
-          <button
-            type="button"
-            onClick={openEditorOnFirst}
-            aria-label="Edit first section"
-            className="fixed left-3 top-20 z-40 grid h-10 w-10 place-items-center rounded-full border bg-white shadow hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <Pencil className="h-5 w-5 text-gray-700" />
-          </button>
-
-        )}
-        {!activeBlockId && blocks.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setThemeOpen(true)}
-            aria-label="Fonts & Colors"
-            className="fixed left-3 top-32 z-40 grid h-10 w-10 place-items-center rounded-full border bg-white shadow hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <Paintbrush className="h-5 w-5 text-gray-700" />
-          </button>
-        )}
-
-        {/* Sidebar */}
-        {activeBlockId && (
-          <EditorSidebar
-            activeBlockId={activeBlockId}
-            activeBlock={activeBlock}
-            partList={partList}
-            copyList={copyList}
-            approvedMode={approvedMode}
-            SECTIONS_REG={SECTIONS}
-            closePanel={closePanel}
-            handleDelete={handleDelete}
-            handleMoveUp={handleMoveUp}
-            handleMoveDown={handleMoveDown}
-            onTogglePartFromSidebar={onTogglePartFromSidebar}
-            onCopyChangeFromSidebar={onCopyChangeFromSidebar}
-            variantIndex={variantIndex}
-            setVariantForId={setVariantForId}
-            variantForId={variantForId}
-            setBlocks={setBlocks}
-            blocks={blocks}
-            setNavbarOverrides={(overrides) => setSection("Navbar", { theme: overrides })}
-            setFooterOverrides={(overrides) => setSection("Footer", { theme: overrides })}
-            setBlockOverrides={(blockId, overrides) => {
-              // Find the block type from the blocks array
-              const block = blocks.find(b => b.id === blockId);
-              if (block) {
-                console.log('🎨 setBlockOverrides:', block.type, overrides);
-                setSection(block.type, { theme: overrides });
-              }
-            }}
-            images={images}
-            onImageChange={updateImage}
-            mode="builder"
-            globalColors={globalTheme.colors}
-          />
-        )}
-
-        {/* Canvas */}
-        <main className="flex-1 p-4 flex justify-center box-border">
-          <div className="w-full max-w-[800px] box-border">
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => { setActiveBlockId("Navbar"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); }}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setActiveBlockId("Navbar"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); } }}
-              className={[
-                "relative transition",
-                activeBlockId === "Navbar"
-                  ? "z-10 outline outline-2 outline-blue-500 ring-0"
-                  : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500",
-              ].join(" ")}
-            >
-              <AutoScaler designWidth={1440} targetWidth={800} maxHeight={9999}>
-                <ImageManager
-                  sectionId="Navbar"
-                  images={images}
-                  onImageChange={updateImage}
-                  compact={false}
-                  hideControls={true}
-                >
-                  <EditableSection
-                    sectionId="Navbar"
-                    label="Navbar"
-                    variant={NAVBAR_VARIANT}
-                    data={NAVBAR_DEFAULT_DATA}
-                    discoverKey={`Navbar:${NAVBAR_VARIANT}:${activeBlockId === "Navbar"}`}
-                    controls={navbarControls}
-                    copyValues={navbarCopy}
-                    onPartsDiscovered={(list) => handlePartsDiscovered("Navbar", list)}
-                    onCopyDiscovered={(list) => handleCopyDiscovered("Navbar", list)}
-                    fixedPosition="top"
-                  >
-                    <NavbarCmp data={NAVBAR_DEFAULT_DATA} />
-                  </EditableSection>
-                </ImageManager>
-              </AutoScaler>
-            </div>
-            
-            <div className="">
-              {blocks.length === 0 ? (
-                <div className="border border-dashed p-10 text-center text-gray-500">
-                  No sections yet. Use the buttons on the left to add some 👈
-                </div>
-              ) : (
-                <DndContext
-                  collisionDetection={closestCenter}
-                  sensors={sensors}
-                  modifiers={[restrictToVerticalAxis]}
-                  onDragEnd={onDragEnd}
-                >
-                  <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                    <div style={{ background: "var(--colors-background)", color: "var(--colors-foreground)" }}>
-                      {blocks.map((b, i) => (
-                        <div key={b.id} className={i > 0 ? "-mt-px group relative" : "group relative"}>
-                          <SortableBlock
-                            id={b.id}
-                            type={b.type}
-                            variant={b.variant ?? 0}
-                            controls={b.controls || {}}
-                            copyValues={b.copy || {}}
-                            parts={partsByBlock[b.id] || []}
-                            onPartsDiscovered={handlePartsDiscovered}
-                            onCopyDiscovered={(found) => handleCopyDiscovered(b.id, found)}
-                            onTogglePart={(partId, nextVisible) => {
-                              if (approvedMode) return;
-                              setBlocks((arr) =>
-                                arr.map((x) =>
-                                  x.id === b.id ? { ...x, controls: { ...(x.controls || {}), [partId]: !!nextVisible } } : x
-                                )
-                              );
-                            }}
-                            onCopyChange={(partId, text) => {
-                              if (approvedMode) return;
-                              setBlocks((arr) =>
-                                arr.map((x) =>
-                                  x.id === b.id ? { ...x, copy: { ...(x.copy || {}), [partId]: text } } : x
-                                )
-                              );
-                            }}
-                            overrides={b.overrides || { enabled: false, values: {}, valuesPP: {} }}
-                            onSetOverrides={(next) => {
-                              if (approvedMode) return;
-                              setBlocks((arr) => arr.map((x) => (x.id === b.id ? { ...x, overrides: next } : x)));
-                            }}
-                            availableThemeKeys={Object.keys(globalTheme.colors)}
-                            onRemove={(id) => !approvedMode && setBlocks((arr) => arr.filter((blk) => blk.id !== id))}
-                            onVariantPick={(id, variantIndex) =>
-                              !approvedMode && setBlocks((arr) => arr.map((blk) => (blk.id === id ? { ...blk, variant: variantIndex } : blk)))
-                            }
-                            readOnly={approvedMode}
-                            onSelect={() => setActiveBlockId(b.id)}
-                            selected={activeBlockId === b.id}
-                            variantOpen={variantForId === b.id}
-                            onVariantOpenChange={(open) => setVariantForId(open ? b.id : (variantForId === b.id ? null : variantForId))}
-                            contentOpen={contentForId === b.id}
-                            onContentOpenChange={(open) => setContentForId(open ? b.id : (contentForId === b.id ? null : contentForId))}
-                            images={images}
-                            onImageChange={updateImage}
-                          />
-
-                          {/* Inline "+ Section" handle */}
-                          <div className="z-[9999] absolute inset-x-0 -bottom-5 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              onClick={() => setPicker({ open: true, index: i + 1 })}
-                              variant="primary"
-                              className="rounded-full bg-blue-500 text-white hover:bg-blue-600"
-                            >
-                              + Section
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              )}
-            </div>
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => { setActiveBlockId("Footer"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); }}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { setActiveBlockId("Footer"); setVariantForId(null); setContentForId(null); window.dispatchEvent(new Event("lp:section-selected")); } }}
-              className={[
-                "relative transition",
-                activeBlockId === "Footer"
-                  ? "z-10 outline outline-2 outline-blue-500 ring-0"
-                  : "hover:z-20 hover:outline hover:outline-2 hover:outline-blue-500",
-              ].join(" ")}
-            >
-              <AutoScaler designWidth={1440} targetWidth={800}>
-                <ImageManager
-                  sectionId="Footer"
-                  images={images}
-                  onImageChange={updateImage}
-                  compact={false}
-                  hideControls={true}
-                >
-                  <EditableSection
-                    sectionId="Footer"
-                    label="Footer"
-                    variant={FOOTER_VARIANT}
-                    data={FOOTER_DEFAULT_DATA}
-                    discoverKey={`Footer:${FOOTER_VARIANT}:${activeBlockId === "Footer"}`}
-                    controls={footerControls}
-                    copyValues={footerCopy}
-                    onPartsDiscovered={(list) => handlePartsDiscovered("Footer", list)}
-                    onCopyDiscovered={(list) => handleCopyDiscovered("Footer", list)}
-                    fixedPosition="bottom"
-                  >
-                    <FooterCmp data={FOOTER_DEFAULT_DATA} />
-                  </EditableSection>
-                </ImageManager>
-              </AutoScaler>
-            </div>
-            {toastMsg && (
-              <div className="fixed bottom-4 right-4 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg">
-                {toastMsg}
-              </div>
-            )}
-
-            {/* Section Picker Dialog */}
-            <Dialog open={picker.open} onOpenChange={(open) => setPicker((p) => ({ ...p, open }))}>
-              <DialogContent className="sm:max-w-[520px]">
-                <DialogHeader>
-                  <DialogTitle>Add a section</DialogTitle>
-                  <DialogDescription>Choose what you want to insert below.</DialogDescription>
-                </DialogHeader>
-
-                <div className="grid grid-cols-1 gap-3">
-                  <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "hero")}>
-                    Hero
-                  </Button>
-                  <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "extraPrizes")}>
-                    Extra Prizes
-                  </Button>
-                  <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "winners")}>
-                    Winners
-                  </Button>
-                  <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "feature")}>
-                    Extra Content
-                  </Button>
-                  <Button variant="outline" className="justify-start" onClick={() => handleAddSectionAt(picker.index ?? blocks.length, "WhoYouHelp")}>
-                    Who You Help
-                  </Button>
-                </div>
-            
-                <DialogFooter className="mt-2">
-                  <Button variant="ghost" onClick={() => setPicker({ open: false, index: null })}>Cancel</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </main>
       </div>
-
-      <ThemeAside
-        open={themeOpen}
-        onClose={() => setThemeOpen(false)}
-        onColorsChange={persistColors}
-        onFontsChange={persistFonts}
-        inviteToken={inviteToken}
-        inviteRow={row}
-        onUpdateInvite={updateInvite}
-        currentGlobalColors={globalTheme.colors}
-        sectionOverrides={(() => {
-          const acc = blocks.reduce((acc, block) => {
-            if (block.overrides?.values && Object.keys(block.overrides.values).length > 0) {
-              acc[block.type] = block.overrides;
-            }
-            return acc;
-          }, {});
-          
-          // Add Navbar and Footer overrides from BuilderOverridesContext
-          if (overridesBySection.Navbar?.theme?.values && Object.keys(overridesBySection.Navbar.theme.values).length > 0) {
-            acc.Navbar = overridesBySection.Navbar.theme;
-          }
-          if (overridesBySection.Footer?.theme?.values && Object.keys(overridesBySection.Footer.theme.values).length > 0) {
-            acc.Footer = overridesBySection.Footer.theme;
-          }
-          
-          return acc;
-        })()} />
 
       {/* Variant dock */}
       {blocks.find((b) => b.id === (null /* dock id unused here */)) && (
@@ -1856,8 +1854,8 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                   Your design has been approved and is ready for production. The approval link has been generated and contains all the necessary data.
                 </div>
                 <div className="pt-4">
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className="w-full"
                     onClick={() => {
                       setApprovalSuccess(false);
                       setApproveOpen(false);
@@ -1883,15 +1881,15 @@ export function MainBuilder({ inviteToken, inviteRow }) {
   const { row, updateInvite } = useInviteRow(inviteToken);
 
   return (
-    <BuilderOverridesProvider 
-      inviteToken={inviteToken} 
-      inviteRow={row} 
+    <BuilderOverridesProvider
+      inviteToken={inviteToken}
+      inviteRow={row}
       onUpdateInvite={updateInvite}
     >
-      <MainBuilderContent 
-        inviteToken={inviteToken} 
-        inviteRow={inviteRow} 
-        row={row} 
+      <MainBuilderContent
+        inviteToken={inviteToken}
+        inviteRow={inviteRow}
+        row={row}
         updateInvite={updateInvite}
       />
     </BuilderOverridesProvider>
@@ -1910,7 +1908,7 @@ export function AppRouterShell() {
   const route = useHashRoute();
   const inviteToken = useInviteToken();
   const { row: inviteRow, loading, error, updateInvite } = useInviteRow(inviteToken);
-  
+
 
   // Handle admin route
   if (route === "/admin") {
@@ -1971,22 +1969,22 @@ export function AppRouterShell() {
       );
     }
 
-        // Route based on status and current route
-        if (route.startsWith("/onboarding")) {
+    // Route based on status and current route
+    if (route.startsWith("/onboarding")) {
       // Show onboarding if status is 'invited' or 'in_progress'
       if (inviteRow.status === 'invited' || inviteRow.status === 'in_progress') {
         return (
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-            <BuilderOverridesProvider 
-              inviteToken={inviteToken} 
-              inviteRow={inviteRow} 
+            <BuilderOverridesProvider
+              inviteToken={inviteToken}
+              inviteRow={inviteRow}
               onUpdateInvite={updateInvite}
               skipAutoSave={true}
               skipSync={true}
             >
-              <OnboardingWizard 
-                inviteToken={inviteToken} 
-                inviteRow={inviteRow} 
+              <OnboardingWizard
+                inviteToken={inviteToken}
+                inviteRow={inviteRow}
                 onUpdateInvite={updateInvite}
               />
             </BuilderOverridesProvider>
@@ -1997,7 +1995,7 @@ export function AppRouterShell() {
         window.location.hash = `#/app?invite=${inviteToken}`;
         return null;
       }
-        } else if (route.startsWith("/app")) {
+    } else if (route.startsWith("/app")) {
       // Show builder if status is 'submitted' or 'handed_off'
       if (inviteRow.status === 'submitted' || inviteRow.status === 'handed_off') {
         return (

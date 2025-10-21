@@ -278,7 +278,7 @@ const orderedCopyList = (() => {
   return (
     <aside className={
       staticLayout
-        ? "h-full w-[280px] overflow-hidden rounded-xl bg-slate-50 border border-slate-200"
+        ? "h-full w-full"
         : "fixed left-4 top-18 z-40 w-[290px] overflow-hidden rounded-md border bg-white shadow-lg"
     }
     >
@@ -286,24 +286,7 @@ const orderedCopyList = (() => {
         ? "flex h-full flex-col overflow-hidden overscroll-contain"
         : "flex h-[calc(100vh-6rem)] flex-col overflow-hidden overscroll-contain"
       }>
-        {!hideVariantPicker && (
-          <div className="shrink-0 p-4 pb-0 flex items-center justify-between">
-            <div className="text-md font-semibold text-gray-700 mb-4">Section</div>
-            <button
-              type="button"
-              onClick={closePanel}
-              onKeyDown={(e) => {
-                if (e.key === "Escape" || e.key === " ") {
-                  e.preventDefault(); // optional: prevents page scroll on space
-                  closePanel();
-                }
-              }}
-              className="rounded p-1 hover:bg-gray-100"
-              aria-label="Close">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+       
         <div className="min-h-0 flex-1">
           <ScrollArea type="hover" className="h-full min-h-0 p-4" >
             <div className="space-y-2">

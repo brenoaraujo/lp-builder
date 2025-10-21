@@ -8,19 +8,19 @@ import { buildThemeVars, setCSSVars, loadGoogleFont, applyFonts, readTokenDefaul
 function ColorRole({ label, value, onChange }) {
   return (
     <div className="space-y-2">
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="text-xs font-medium text-gray-600">{label}</div>
       <div className="flex items-center gap-3">
         <input
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-10 w-14 cursor-pointer rounded-md border"
+          className="h-8 w-8 cursor-pointer rounded border"
         />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-10 w-28 rounded-md border px-2 text-sm font-mono"
+          className="h-8 w-20 rounded border px-2 text-xs font-mono"
         />
       </div>
     </div>
@@ -36,7 +36,7 @@ const FONT_OPTIONS = [
   { label: "Oswald", value: "Oswald", gf: { family: "Oswald", axis: "wght@400;700" } },
 ];
 
-export default function ThemeAside({ open, onClose, onColorsChange, onFontsChange, sectionOverrides = {}, inviteToken, inviteRow, onUpdateInvite, currentGlobalColors }) {
+export default function ThemeAside({ onColorsChange, onFontsChange, sectionOverrides = {}, inviteToken, inviteRow, onUpdateInvite, currentGlobalColors }) {
   // Load from database or token defaults
   const initialColors = useMemo(() => {
     if (inviteRow?.theme_json?.colors) {
@@ -76,10 +76,9 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
   }, [inviteToken, onUpdateInvite]);
 
   useEffect(() => {
-   if (!open) return;
    // live preview of current font picks
    applyFonts(fonts);
- }, [open, fonts]);
+ }, [fonts]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -90,20 +89,11 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
     };
   }, []);
 
-  useEffect(() => {
-    const handleSectionSelected = () => {
-      onClose?.(); // close the aside
-    };
-    // listen for our custom event
-    window.addEventListener("lp:section-selected", handleSectionSelected);
-    return () => window.removeEventListener("lp:section-selected", handleSectionSelected);
-  }, [onClose]);
 
   // Removed direct painting; App.jsx is the single painter via applyAllColors
 
-  // Sync pickers with the actual current global colors when opening or when globals change
+  // Sync pickers with the actual current global colors when globals change
   useEffect(() => {
-    if (!open) return;
     const external = currentGlobalColors || inviteRow?.theme_json?.colors || readTokenDefaults();
     const externalKey = JSON.stringify(external);
     const localKey = JSON.stringify(colors);
@@ -112,19 +102,8 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
     if (externalKey !== localKey) {
       setColors(external);
     }
-  }, [open, currentGlobalColors, inviteRow?.theme_json?.colors, colors]);
+  }, [currentGlobalColors, inviteRow?.theme_json?.colors, colors]);
 
-  // Escape closes
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        onClose?.();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
 
   // Helpers
   const setRole = (key) => (hex) => {
@@ -165,34 +144,12 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
     debouncedSave(fresh, clearedFonts);
   }
 
-  function handleCancel() {
-    onClose?.();
-  }
-
-  if (!open) return null;
-
   return (
-    <aside
-      className="fixed left-2 top-18 z-50 w-[320px] sm:w-[360px] overflow-hidden rounded-md border bg-white shadow-lg"
-      role="dialog"
-      aria-label="Fonts & Colors"
-    >
-      <div className="flex h-[calc(100vh-6rem)] flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 pb-2">
-          <div className="text-md font-semibold text-gray-700">Design</div>
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="rounded p-1 hover:bg-gray-100"
-            aria-label="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <div className="space-y-4">
+     
 
-        {/* Body */}
-        <div className="min-h-0 flex-1 overflow-auto p-4 space-y-8">
+      {/* Body */}
+      <div className="p-4 space-y-4">
           {/* Typography -- DON'T REMOVE THIS FEATURE 
           <div className="space-y-3">
             <div className="text-sm font-semibold">Typography</div>
@@ -243,24 +200,25 @@ export default function ThemeAside({ open, onClose, onColorsChange, onFontsChang
           </div>*/}
 
           {/* Colors */}
-          <div className="space-y-3">
-            <div className="text-sm font-semibold">Colors</div>
-            <div className="grid gap-5">
+          <div className="space-y-4">
+            <div className="grid gap-4">
               <ColorRole key={`primary-${colors.primary}`} label="Primary" value={colors.primary} onChange={setRole("primary")} />
               <ColorRole key={`secondary-${colors.secondary}`} label="Secondary (Accent)" value={colors.secondary} onChange={setRole("secondary")} />
               <ColorRole key={`background-${colors.background}`} label="Background" value={colors.background} onChange={setRole("background")} />
               <ColorRole key={`alt-background-${colors["alt-background"]}`} label="Alternative" value={colors["alt-background"]} onChange={setRole("alt-background")} />
             </div>
           </div>
+          <Button
+          
+          variant="outline"
+          onClick={handleReset}
+          className="text-sm text-gray-500 hover:text-gray-700"
+        >
+          Reset to Defaults
+        </Button>
         </div>
+        
 
-        {/* Footer */}
-        <div className="shrink-0 border-t bg-slate-50 p-3 flex flex-col gap-2">
-
-          <Button variant="outline" onClick={handleReset}>Reset to defauts</Button>
-          {/*<Button variant="ghost" onClick={handleCancel}>Cancel</Button>*/}
-        </div>
-      </div>
-    </aside>
+    </div>
   );
 }
