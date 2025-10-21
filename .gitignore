@@ -9,3 +9,18 @@ src/.DS_Store
 .env
 .env.local
 .env.production
+.env.*
+!.env.example
+
+# Supabase secrets and config
+supabase/.env
+supabase/.env.local
+supabase/.env.production
+
+# Security - prevent secret exposure
+**/secrets/
+**/*secret*
+**/*key*
+**/*token*
+**/*jwt*
+**/*credential*
