@@ -21,7 +21,7 @@ function NavPrimitive({ data }) {
     <div
       data-section="Navbar"              // <-- identify section
                   // <-- same pattern as your other sections
-      className="w-[1440px] px-8 py-2 bg-Colors-background inline-flex flex-col justify-center items-center gap-2 overflow-hidden "
+      className="w-[1440px] px-8 py-4 bg-Colors-background inline-flex flex-col justify-center items-center gap-2 overflow-hidden "
     >
       <div className="w-full max-w-[1280px] inline-flex justify-between items-center">
         {/* Logo */}

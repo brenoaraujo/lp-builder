@@ -92,8 +92,8 @@ export default function EditorForOnboarding({
   }
 
   return (
-    <div className="flex flex-col lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[280px_minmax(0,1fr)] gap-6">
-      <div className="lg:h-full lg:min-h-0">
+    <div className="flex flex-col lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[280px_minmax(0,1fr)] gap-6 ">
+      <div className="self-start border border-slate-200 rounded-lg bg-slate-50">
         <EditorSidebar
           activeBlockId={activeBlockId}
           activeBlock={activeBlock}
@@ -125,10 +125,10 @@ export default function EditorForOnboarding({
           hideAdvancedActions
           staticLayout
           hideCLoseAction
-          onSaveNext={onSaveNext}
+          onSaveNext={undefined}
         />
       </div>
-      <div className="lg:h-full lg:min-h-0">
+      <div className="lg:h-full lg:min-h-0 pb-24">
         <div className="h-96 lg:h-full w-full rounded-lg border border-slate-200 bg-white shadow-lg p-4">
           <div ref={previewRef}>
             <AutoScaler designWidth={1440} targetWidth={targetWidth}>

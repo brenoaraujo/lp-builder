@@ -10,6 +10,7 @@ import { useBuilderOverrides } from "../context/BuilderOverridesContext.jsx";
 import { useImageManager } from "../hooks/useImageManager.js";
 // Removed useInviteRow import - now using props instead
 import EditorForOnboarding from "./EditorForOnboarding.jsx";
+import OnboardingActionBar from "./components/OnboardingActionBar.jsx";
 
 import EditableSection from "../components/EditableSection.jsx";
 import { HeroA, HeroB } from "../sections/Hero.jsx";
@@ -426,7 +427,7 @@ function resolveByVariant(sectionKey, variant = "A") {
 function StepHeader({ currentIndex, isSaving }) {
     const pct = Math.round((currentIndex / (STEP_KEYS.length - 1)) * 100);
     return (
-        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b">
+        <div className="bg-background/80 backdrop-blur border-b">
             <div className="mx-auto max-w-[1100px] py-3 flex items-center gap-2 sm:gap-3 justify-between box-border">
                 <div className="flex items-center gap-1 sm:gap-2 min-w-0">
                     <img src="https://cdn.brandfetch.io/idOQ3T8fjd/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1689300855088" alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
@@ -1127,10 +1128,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     {stepKey === "hero" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                               
                                 <h2 className="text-4xl font-medium">Choose Hero Layout</h2>
                                 <p className="text-base text-slate-500">
                                     Select your preferred hero format
@@ -1138,10 +1136,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="hero"
-                                onPicked={() => {
-                                    // Give React time to update state
-                                    setTimeout(() => advance(1), 0);
-                                }}
+                                onPicked={() => { /* selection only; advance via bar */ }}
                             />
                         </div>
                     )}
@@ -1149,10 +1144,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     {stepKey === "heroEdit" && (
                         <div className="space-y-12 h-full min-h-0">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                               
                                 <h2 className="text-4xl font-medium">Edit Hero Section</h2>
                                 <p className="text-base text-slate-500">
                                     Customize your hero section by enabling desired components and adjusting copy.
@@ -1179,10 +1171,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     {stepKey === "extraPrizes" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                               
                                 <h2 className="text-4xl font-medium">Choose Extra Prizes Layout</h2>
                                 <p className="text-base text-slate-500">
                                     The extra prizes section will highlight early bird and consolation prize details.
@@ -1190,36 +1179,18 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="extraPrizes"
-                                onPicked={() => {
-                                    // Give React time to update state
-                                    setTimeout(() => advance(1), 0);
-                                }}
+                                onPicked={() => { /* selection only; advance via bar */ }}
                             />
 
                             {/* Skip section button */}
-                            <div className="flex ">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        // Hide the extra prizes section and skip to next step
-                                        setVisible("extraPrizes", false);
-                                        setStepIndex((i) => i + 2); // Skip both extraPrizes and extraPrizesEdit
-                                    }}
-                                    className="p-6"
-                                >
-                                    Skip this section
-                                </Button>
-                            </div>
+                            
                         </div>
                     )}
 
                     {stepKey === "extraPrizesEdit" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                                
                                 <h2 className="text-4xl font-medium">Edit Extra Prizes Section</h2>
                                 <p className="text-base text-slate-500">
                                     Customize your extra prizes section by enabling desired components and adjusting copy.
@@ -1239,30 +1210,14 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 }
                             />
 
-                            {/* Skip section button */}
-                            <div className="flex justify-start">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        // Hide the extra prizes section and continue to next step
-                                        setVisible("extraPrizes", false);
-                                        setStepIndex((i) => Math.min(i + 1, STEP_KEYS.length - 1));
-                                    }}
-                                    className="p-6"
-                                >
-                                    Skip Section
-                                </Button>
-                            </div>
+                           
                         </div>
                     )}
 
                     {stepKey === "winners" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                              
                                 <h2 className="text-4xl font-medium">Choose Winners Layout</h2>
                                 <p className="text-base text-slate-500">
                                     Select your preferred winners format.
@@ -1270,10 +1225,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             </div>
                             <VariantCarousel
                                 sectionKey="winners"
-                                onPicked={() => {
-                                    // Give React time to update state
-                                    setTimeout(() => advance(1), 0);
-                                }}
+                                onPicked={() => { /* selection only; advance via bar */ }}
                             />
                         </div>
                     )}
@@ -1281,10 +1233,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     {stepKey === "winnersEdit" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                               
                                 <h2 className="text-4xl font-medium">Edit Winners Section</h2>
                                 <p className="text-base text-slate-500">
                                     Customize your winners section by enabling desired components and adjusting copy.
@@ -1309,10 +1258,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     {stepKey === "extraContentConfirmation" && (
                         <div className="space-y-12 ">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                              
                                 <h2 className="text-4xl font-medium">Would you like to add extra content to your page?</h2>
                                 <p className="text-base text-slate-500">
                                     Extra content sections allow you to further personalize your site, here are some examples of how extra content sections can be used:
@@ -1367,65 +1313,26 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 </div>
                             </div>
 
-                            <div className="flex gap-4">
-                                <Button
-                                    onClick={() => {
-                                        // User wants to add extra content section, create the first one
-                                        const newSectionKey = addExtraContentSection();
-                                        // Store the current section key for the next steps
-                                        setCurrentExtraContentKey(newSectionKey);
-                                        advance(1);
-                                    }}
-                                    className=" p-6"
-                                >
-                                    Yes, add extra content
-
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        // Continue to Footer editing step
-                                        setStepIndex(STEP_KEYS.indexOf("footerEdit"));
-                                    }}
-                                    className=" p-6"
-                                >
-                                    No, skip this step
-                                </Button>
-                            </div>
+                            {/* Actions handled by global onboarding action bar */}
                         </div>
                     )}
 
                     {stepKey === "feature" && currentExtraContentKey && (
                         <div className="space-y-12">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                                
                                 <h2 className="text-4xl font-medium">Choose Extra Content Layout</h2>
                                 <p className="text-base text-slate-500">Select your preferred extra content format.</p>
                             </div>
-                            <VariantCarousel sectionKey={currentExtraContentKey} onPicked={() => advance(1)} />
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    // Continue to Footer editing step
-                                    setStepIndex(STEP_KEYS.indexOf("footerEdit"));
-                                }}
-                                className=" p-6"
-                            >
-                                Skip this section
-                            </Button>
+                            <VariantCarousel sectionKey={currentExtraContentKey} onPicked={() => { /* selection only; advance via bar */ }} />
+                            
                         </div>
                     )}
 
                     {stepKey === "featureEdit" && currentExtraContentKey && (
                         <div className="space-y-12">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                               
                                 <h2 className="text-4xl font-medium">Edit Extra Content Section</h2>
                                 <p className="text-base text-slate-500">
                                     Customize your extra content section by enabling desired components and adjusting copy.
@@ -1450,10 +1357,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     {stepKey === "addMoreSections" && (
                         <div className="space-y-12 ">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                               
 
                             </div>
 
@@ -1465,31 +1369,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                             You can add additional content sections to make your page even more engaging
                                         </p>
                                     </div>
-                                    <div className="flex gap-4 justify-center items-center flex-col">
-
-                                        <Button
-                                            variant="default"
-                                            className=" p-6 flex-row"
-                                            onClick={() => {
-                                                // Create a new extra content section and go to its selection
-                                                const newSectionKey = addExtraContentSection();
-                                                setCurrentExtraContentKey(newSectionKey);
-                                                setStepIndex(STEP_KEYS.indexOf("feature"));
-                                            }}
-                                        >
-                                            Add Extra Content
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => {
-                                                // Continue to Footer editing step
-                                                setStepIndex(STEP_KEYS.indexOf("footerEdit"));
-                                            }}
-                                            className="p-6"
-                                        >
-                                            Continue to Footer
-                                        </Button>
-                                    </div>
+                                   
 
                                 </div>
                             </div>
@@ -1500,10 +1380,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     {stepKey === "footerEdit" && (
                         <div className="space-y-12">
                             <div className="space-y-1">
-                                <Button variant="link" onClick={back} disabled={stepIndex === 0} className="text-slate-500 !p-0">
-                                    <ArrowLeft className="mr-1 h-4 w-4" />
-                                    Back
-                                </Button>
+                               
                                 <h2 className="text-4xl font-medium">Edit Footer</h2>
                                 <p className="text-base text-slate-500">Customize your footer content before finishing.</p>
                             </div>
@@ -1518,9 +1395,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                 raffleType={charityInfo.raffleType}
                                 onSaveNext={finish}
                             />
-                            <div className="flex gap-3">
-                                <Button onClick={finish} className="p-6">Save &amp; Edit Colors</Button>
-                            </div>
+                          
                         </div>
                     )}
 
@@ -1537,6 +1412,61 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                     )}
                 </div>
             </div>
+            {/* Global onboarding action bar (hidden on welcome and charityInfo which has its own form footer) */}
+            {(stepKey !== "welcome" && stepKey !== "charityInfo") && (() => {
+              // compute dynamic label and disabled state
+              let nextLabel = "Next";
+              let nextDisabled = false;
+              if (stepKey === "hero") nextDisabled = !(overridesBySection?.hero?.variant);
+              if (stepKey === "extraPrizes") nextDisabled = !(overridesBySection?.extraPrizes?.variant);
+              if (stepKey === "winners") nextDisabled = !(overridesBySection?.winners?.variant);
+              if (stepKey === "feature") nextDisabled = currentExtraContentKey ? !(overridesBySection?.[currentExtraContentKey]?.variant) : true;
+              if (stepKey === "extraContentConfirmation" || stepKey === "addMoreSections") nextLabel = "Yes, add extra content";
+              if (stepKey === "footerEdit") nextLabel = "Finish";
+
+              const handleSkip = () => {
+                if (stepKey === "extraPrizes") {
+                  setVisible("extraPrizes", false);
+                  setStepIndex(STEP_KEYS.indexOf("extraPrizesEdit"));
+                } else if (stepKey === "feature") {
+                  setStepIndex(STEP_KEYS.indexOf("footerEdit"));
+                } else if (stepKey === "extraContentConfirmation") {
+                  setStepIndex(STEP_KEYS.indexOf("footerEdit"));
+                } else if (stepKey === "addMoreSections") {
+                  setStepIndex(STEP_KEYS.indexOf("footerEdit"));
+                } else {
+                  next();
+                }
+              };
+
+              const handleNext = () => {
+                if (stepKey === "extraContentConfirmation" || stepKey === "addMoreSections") {
+                  const newKey = addExtraContentSection();
+                  setCurrentExtraContentKey(newKey);
+                  setStepIndex(STEP_KEYS.indexOf("feature"));
+                  return;
+                }
+                if (stepKey === "footerEdit") {
+                  finish();
+                  return;
+                }
+                next();
+              };
+
+              const showSkip = stepKey === "extraPrizes" || stepKey === "feature" || stepKey === "extraContentConfirmation" || stepKey === "addMoreSections";
+
+              return (
+                <OnboardingActionBar
+                  showBack={stepIndex > 0}
+                  showSkip={showSkip}
+                  nextDisabled={nextDisabled}
+                  nextLabel={nextLabel}
+                  onBack={back}
+                  onSkip={handleSkip}
+                  onNext={handleNext}
+                />
+              );
+            })()}
         </div>
     );
 }

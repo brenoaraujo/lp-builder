@@ -97,14 +97,14 @@ export function FeatureA({ blockType = "feature" }) {
 
                 {/* Visual (Image Right) */}
                 <div className="flex-1">
-                    <img
+                <img
                         data-portrait="No"
                         data-ratio="73:41"
                         data-image={blockType === "feature" ? "feature-image" : `${blockType}-image`}
                         data-size="1000×560"
-                        data-default-image=""
+                        data-default-image="/images/feature.png"
                         data-label="Feature Image"
-                        className="max-w-full rounded-lg overflow-hidden object-cover bg-Colors-secondary"
+                        className="max-w-[500px] rounded-lg overflow-hidden object-cover bg-Colors-secondary"
                         src="/images/feature.png"
                         alt="Feature"
                     />

@@ -186,7 +186,12 @@ export default function EditorSidebar({
   const [hasImages, setHasImages] = useState(false);
 
 
-  const activeEntry = activeBlock ? SECTIONS_REG[activeBlock.type] : null;
+  // Map dynamic extra content ids (e.g., "extraContent_1") to the canonical
+  // registry entry so labels and variants resolve correctly.
+  const effectiveType = activeBlock?.type?.startsWith('extraContent_')
+    ? 'feature'
+    : activeBlock?.type;
+  const activeEntry = effectiveType ? SECTIONS_REG[effectiveType] : null;
 const getControlChecked = (part) => {
   const v = activeBlock?.controls?.[part.id];
   return typeof v === "boolean" ? v : (part.visible !== false);
@@ -311,8 +316,8 @@ const orderedCopyList = (() => {
                     >
                       <div className="px-3 py-2 text-sm font-semibold">Replace Component</div>
 
-                      {(SECTIONS_REG[activeBlock?.type]?.variants || []).map((Preview, i) => {
-                        const labels = SECTIONS_REG[activeBlock?.type]?.labels || [];
+                      {(SECTIONS_REG[effectiveType]?.variants || []).map((Preview, i) => {
+                        const labels = SECTIONS_REG[effectiveType]?.labels || [];
                         const selected = (activeBlock?.variant ?? 0) === i;
                         return (
                           <div

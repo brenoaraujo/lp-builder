@@ -37,57 +37,7 @@ export function ExtraPrizesA() {
               More chances to win! Enter early for a chance to win one of our amazing extra prizes.
             </div>
           </div>
-          {/* Countdown 
-          <div
-            data-display="yes"
-            data-label="Countdown"
-            data-position="left"
-            data-style="no-box"
-            className="py-3 rounded-md flex flex-col justify-start items-start gap-2"
-          >
-            <div className="justify-center text-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
-              Grand Prize Deadline: Mar 14, 6pm
-            </div>
-            <div className="inline-flex justify-start items-center gap-2">
-              {[
-                { v: "02", l: "days" },
-                { v: "03", l: "hours" },
-                { v: "15", l: "min" },
-                { v: "55", l: "sec" },
-              ].map((t) => (
-                <div key={t.l} className="w-14 inline-flex flex-col justify-center items-center">
-                  <div className="self-stretch h-7 justify-center text-Colors-foreground text-2xl font-bold font-primary leading-snug">
-                    {t.v}
-                  </div>
-                  <div className="self-stretch h-5 justify-center text-Colors-muted-foreground text-xs font-normal font-primary leading-tight">
-                    {t.l}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>*/}
-          {/* Buy Now 
-          <div
-            data-display="yes"
-            data-copy="yes"
-            data-label="Buy Now Button"
-            className="inline-flex justify-start items-start gap-3"
-          >
-            <button
-              type="button"
-              data-show-left-icon="false"
-              data-show-right-icon="false"
-              data-size="default"
-              data-state="Default"
-              data-variant="Default"
-              className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2"
-            >
-              <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
-                BUY NOW
-              </div>
-            </button>
-          </div>*/}
-
+          
         </div>
 
         <div className="w-[1280px] inline-flex justify-center items-start gap-6 flex-wrap content-start">
