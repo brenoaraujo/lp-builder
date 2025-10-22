@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 export default function OnboardingActionBar({
   showBack = false,
@@ -16,7 +17,7 @@ export default function OnboardingActionBar({
         <Button variant="outline" size="lg" className="p-6" onClick={onBack} disabled={!showBack}>Back</Button>
         <div className="ml-auto flex items-center gap-2">
           {showSkip && <Button variant="ghost" size="lg" className="p-6" onClick={onSkip}>No, skip this step</Button>}
-          <Button onClick={onNext} size="lg" className="p-6" disabled={!!nextDisabled}>{nextLabel}</Button>
+          <Button onClick={onNext} size="lg" className="cursor-pointer p-6 bg-[#0099EB] hover:bg-[#0088d3]"  disabled={!!nextDisabled}>{nextLabel} <ArrowRight className="w-4 h-4" /></Button>
         </div>
       </div>
     </div>

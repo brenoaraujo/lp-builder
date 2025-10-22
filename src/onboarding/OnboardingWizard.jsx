@@ -441,9 +441,9 @@ function StepHeader({ currentIndex, isSaving }) {
                 </div>
                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                     <div className="w-24 sm:w-48">
-                        <Progress value={pct} />
+                        <Progress value={pct}  />
                     </div>
-                    <div className="text-xs text-muted-foreground w-8 sm:w-12 text-right">
+                    <div className="text-xs text-muted-foreground w-8 sm:w-12 text-right ">
                         {pct}%
                     </div>
                 </div>
@@ -893,7 +893,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                     </p>
                                 </div>
                                 <div className="flex gap-3 justify-center">
-                                    <Button onClick={next} className="p-6">
+                                    <Button onClick={next} className="p-6" style={{ backgroundColor: "#0099EB" }}>
                                         Start Onboarding
 
                                     </Button>

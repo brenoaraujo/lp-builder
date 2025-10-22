@@ -1432,7 +1432,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-40  backdrop-blur border-b border-slate-200 px-0" style={{ ["--header-h"]: "56px" }}>
+      <header className=" backdrop-blur border-b border-slate-200 px-0" style={{ ["--header-h"]: "56px" }}>
         <div className="mx-auto max-w-[1200px] mx-auto flex items-center justify-between pt-4 pb-4 ">
           <div className="flex items-center gap-3">
             <img src="https://cdn.brandfetch.io/idOQ3T8fjd/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1689300855088" alt="Logo" className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
@@ -1476,7 +1476,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                 {/*} <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
                 <Button variant="outline" onClick={resetThemeInApp} className="text-gray-500">Reset</Button>*/}
                 <Button variant="outline" onClick={share} className="text-gray-500">Share</Button>
-                <Button onClick={() => setApproveOpen(true)}>Finish &amp; handoff</Button>
+                <Button className="bg-[#0099EB] hover:bg-[#0088d3] cursor-pointer" onClick={() => setApproveOpen(true)}>Finish &amp; handoff</Button>
               </>
             ) : (
               <>
@@ -1842,7 +1842,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                 </div>
 
                 <div className="pt-2">
-                  <Button className="w-full" onClick={submitViaEmail}>Submit to Production</Button>
+                  <Button className="w-full bg-[#0099EB] hover:bg-[#0088d3] cursor-pointer" onClick={submitViaEmail}>Submit to Production</Button>
                 </div>
               </>
             ) : (
