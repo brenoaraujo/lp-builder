@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+// removed internal ScrollArea to avoid double scroll; the parent sidebar scrolls
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { X, Plus, ChevronDown, ArrowRight, Pencil, Palette } from "lucide-react";
@@ -278,17 +278,16 @@ const orderedCopyList = (() => {
   return (
     <aside className={
       staticLayout
-        ? "h-full w-full"
+        ? "w-full h-full overflow-hidden flex flex-col"
         : "fixed left-4 top-18 z-40 w-[290px] overflow-hidden rounded-md border bg-white shadow-lg"
     }
     >
-      <div className={staticLayout
-        ? "flex h-full flex-col overflow-hidden overscroll-contain"
-        : "flex h-[calc(100vh-6rem)] flex-col overflow-hidden overscroll-contain"
-      }>
-       
-        <div className="min-h-0 flex-1">
-          <ScrollArea type="hover" className="h-full min-h-0 p-4" >
+  <div className={staticLayout
+    ? "flex h-auto flex-col overflow-visible"
+    : "flex h[calc(100vh-6rem)] flex-col overflow-visible"
+  }>
+
+        <div className="min-h-0 p-4">
             <div className="space-y-2">
               {/* Layout picker */}
               {!hideVariantPicker && (
@@ -591,8 +590,6 @@ const orderedCopyList = (() => {
               )}
 
             </div>
-            <ScrollBar orientation="vertical" />
-          </ScrollArea>
         </div>
         {/* Onboarding-only action */}
         {mode === "onboarding" && typeof onSaveNext === "function" && (

@@ -58,8 +58,13 @@ export default function LeftSidebar({
     };
 
     return (
-        <div className="w-[320px] flex-shrink-0 ">
-            <div className="sticky top-16 rounded-lg border border-slate-200 shadow-lg overflow-hidden ">
+        <div
+            className="w-[320px] flex-shrink-0 min-h-0"
+        >
+            <div
+                className="rounded-lg border border-slate-200 shadow-lg overflow-auto sticky"
+                style={{ top: "calc(var(--header-h, 56px) + 12px)", maxHeight: "calc(100vh - var(--header-h, 56px) - 24px - 130px)" }}
+            >
                 <Accordion type="single" value={activeAccordion} onValueChange={handleAccordionChange} collapsible className="w-full">
                     {/* Theme Colors Accordion */}
                     <AccordionItem value="colors" className="border-b">

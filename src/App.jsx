@@ -1505,7 +1505,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
             </div>
         </div>
         
-         <div className="flex ">
+         <div className="flex min-h-0 ">
            {/* Left Sidebar with Accordions */}
            <LeftSidebar
              activeBlockId={activeBlockId}
@@ -1566,7 +1566,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
            />
 
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex min-h-0 flex-col">
             {/* Floating edit button for sections 
             {!activeBlockId && blocks.length > 0 && (
               <button
