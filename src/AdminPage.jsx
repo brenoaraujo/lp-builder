@@ -235,6 +235,7 @@ export default function AdminPage() {
   // Test Notion sync manually
   const testNotionSync = async () => {
     console.log('🧪 Testing Notion sync manually...');
+    console.log('🔑 Service key available:', !!import.meta.env.VITE_SUPABASE_SERVICE_KEY);
     try {
       const response = await fetch('https://kvtouoigckngalfvzmsp.functions.supabase.co/notion-sync', {
         method: 'POST',
@@ -435,6 +436,9 @@ export default function AdminPage() {
               <SelectItem value="void">Void</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={testNotionSync} className="whitespace-nowrap">
+            🧪 Test Notion Sync
+          </Button>
         </div>
 
         {/* Invites Table */}
@@ -568,6 +572,7 @@ export default function AdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

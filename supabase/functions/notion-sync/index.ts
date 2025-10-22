@@ -159,17 +159,54 @@ async function fetchInviteByToken(token: string) {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
+  }
+
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+  
   try {
     const { token } = await req.json();
-    if (!token) return new Response(JSON.stringify({ error: 'missing token' }), { status: 400 });
+    if (!token) return new Response(JSON.stringify({ error: 'missing token' }), { 
+      status: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      }
+    });
     const invite = await fetchInviteByToken(token);
-    if (!invite) return new Response(JSON.stringify({ error: 'not found' }), { status: 404 });
+    if (!invite) return new Response(JSON.stringify({ error: 'not found' }), { 
+      status: 404,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      }
+    });
     await upsertNotion(invite);
-    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    return new Response(JSON.stringify({ ok: true }), { 
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      }
+    });
   } catch (e) {
     console.error(e);
-    return new Response(JSON.stringify({ error: 'failed' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'failed' }), { 
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      }
+    });
   }
 });
 
