@@ -243,7 +243,7 @@ export default function AdminPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_KEY}`,
         },
-        body: JSON.stringify({ token: 'test-manual-sync' })
+        body: JSON.stringify({ token: '2fbe06397b0223c7badb8df4be25f768d6fdba534e81e1b1a11214889cede1ad' })
       });
       
       console.log('📡 Manual sync response:', response.status, response.statusText);
