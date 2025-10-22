@@ -53,9 +53,16 @@ export default function ThemeAside({ onColorsChange, onFontsChange, sectionOverr
 
   // Debounced save to database
   const saveTimeoutRef = useRef(null);
+  const lastSavedHashRef = useRef(null);
   
   const debouncedSave = useCallback((newColors, newFonts) => {
     if (!inviteToken || !onUpdateInvite) return;
+    
+    // Create hash of the new theme data to check if content actually changed
+    const newHash = JSON.stringify({ colors: newColors, fonts: newFonts });
+    if (lastSavedHashRef.current === newHash) {
+      return; // Skip save if content hasn't changed
+    }
     
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -69,6 +76,7 @@ export default function ThemeAside({ onColorsChange, onFontsChange, sectionOverr
             fonts: newFonts
           }
         });
+        lastSavedHashRef.current = newHash; // Update hash after successful save
       } catch (error) {
         console.error('Failed to save theme:', error);
       }

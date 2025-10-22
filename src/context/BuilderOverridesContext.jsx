@@ -15,9 +15,16 @@ export function BuilderOverridesProvider({ children, inviteToken, inviteRow, onU
 
   // Debounced save to database
   const saveTimeoutRef = useRef(null);
+  const lastSavedHashRef = useRef(null);
   
   const debouncedSave = useCallback((newOverrides) => {
     if (!inviteToken || !onUpdateInvite) return;
+    
+    // Create hash of the new overrides to check if content actually changed
+    const newHash = JSON.stringify(newOverrides);
+    if (lastSavedHashRef.current === newHash) {
+      return; // Skip save if content hasn't changed
+    }
     
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -26,6 +33,7 @@ export function BuilderOverridesProvider({ children, inviteToken, inviteRow, onU
     saveTimeoutRef.current = setTimeout(async () => {
       try {
         await onUpdateInvite({ overrides_json: newOverrides });
+        lastSavedHashRef.current = newHash; // Update hash after successful save
       } catch (error) {
         console.error('Failed to save overrides:', error);
       }

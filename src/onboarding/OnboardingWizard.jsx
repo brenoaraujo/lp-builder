@@ -132,9 +132,16 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
 
     // Debounced save to database
     const saveTimeoutRef = useRef(null);
+    const lastSavedHashRef = useRef(null);
     
     const debouncedSave = useCallback((newColors) => {
         if (!inviteToken || !onUpdateInvite) return;
+        
+        // Create hash of the new colors to check if content actually changed
+        const newHash = JSON.stringify(newColors);
+        if (lastSavedHashRef.current === newHash) {
+            return; // Skip save if content hasn't changed
+        }
         
         if (saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
@@ -148,6 +155,7 @@ export function ReviewStep({ onFinish, onBack, stepIndex, inviteToken, inviteRow
                         fonts: inviteRow?.theme_json?.fonts || {}
                     }
                 });
+                lastSavedHashRef.current = newHash; // Update hash after successful save
             } catch (error) {
                 console.error('Failed to save theme colors:', error);
             }

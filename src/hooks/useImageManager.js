@@ -29,9 +29,16 @@ export function useImageManager(inviteRow, onUpdateInvite) {
 
   // Debounced save to database
   const saveTimeoutRef = useRef(null);
+  const lastSavedHashRef = useRef(null);
   
   const debouncedSave = useCallback(async (newImages) => {
     if (!onUpdateInvite) return;
+    
+    // Create hash of the new images to check if content actually changed
+    const newHash = JSON.stringify(newImages);
+    if (lastSavedHashRef.current === newHash) {
+      return; // Skip save if content hasn't changed
+    }
     
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -51,6 +58,7 @@ export function useImageManager(inviteRow, onUpdateInvite) {
             }
           });
         }
+        lastSavedHashRef.current = newHash; // Update hash after successful save
       } catch (error) {
         console.error('Failed to save images:', error);
       }
