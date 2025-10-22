@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Notion SDK via ESM shim
 // deno run --allow-net --allow-env
@@ -18,6 +19,9 @@ if (!SUPABASE_URL) throw new Error("SUPABASE_URL environment variable is require
 if (!SERVICE_KEY) throw new Error("SUPABASE_SERVICE_ROLE_KEY environment variable is required");
 
 const notion = new NotionClient({ auth: NOTION_TOKEN });
+
+// Create Supabase client
+const supabase = createClient(SUPABASE_URL!, SERVICE_KEY!);
 
 function mapStatus(invite: any): string {
   const s = invite?.status;
@@ -147,15 +151,18 @@ async function upsertNotion(invite: any) {
 }
 
 async function fetchInviteByToken(token: string) {
-  const resp = await fetch(`${SUPABASE_URL}/rest/v1/invites?public_token=eq.${encodeURIComponent(token)}&select=*`, {
-    headers: {
-      apikey: SERVICE_KEY!,
-      Authorization: `Bearer ${SERVICE_KEY}`
-    }
-  });
-  if (!resp.ok) throw new Error(`Fetch invite failed: ${resp.status}`);
-  const rows = await resp.json();
-  return rows?.[0];
+  const { data, error } = await supabase
+    .from('invites')
+    .select('*')
+    .eq('public_token', token)
+    .single();
+  
+  if (error) {
+    console.error('Database error:', error);
+    return null;
+  }
+  
+  return data;
 }
 
 serve(async (req) => {
