@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import { getAdminClient } from '../lib/adminClient.js';
 
 /**
  * Generate a cryptographically secure random token
@@ -15,8 +16,13 @@ function generateToken() {
 export async function createInvite({ charity_name, contact_name, contact_email }) {
   try {
     const public_token = generateToken();
+    console.log('🔑 Creating invite with token:', public_token);
     
-    const { data, error } = await supabase
+    // Use admin client for invite creation to ensure proper permissions
+    const adminClient = getAdminClient();
+    console.log('🔑 Using admin client for invite creation');
+    
+    const { data, error } = await adminClient
       .from('invites')
       .insert({
         public_token,
@@ -29,12 +35,16 @@ export async function createInvite({ charity_name, contact_name, contact_email }
       .single();
 
     if (error) {
+      console.error('❌ Database error:', error);
       throw error;
     }
 
+    console.log('✅ Invite created in database:', data);
+    console.log('⏳ Database trigger should fire now...');
+    
     return { success: true, data };
   } catch (error) {
-    console.error('Error creating invite:', error);
+    console.error('❌ Error creating invite:', error);
     return { success: false, error: error.message };
   }
 }

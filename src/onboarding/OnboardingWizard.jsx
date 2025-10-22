@@ -945,6 +945,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                 value={charityInfo.charityLogo}
                                                 onChange={(url) => setCharityInfo(prev => ({ ...prev, charityLogo: url }))}
                                                 label="Logo"
+                                                size="sm"
                                                 description="Upload your charity logo or enter a URL"
                                             />
 
@@ -967,9 +968,11 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                         </div>
                                         
                                         <div className="space-y-4">
+                                           
                                             <div className="space-y-2">
                                                 <Label htmlFor="raffleType" className="text-muted-foreground">Raffle Type</Label>
                                                 <Select
+                                                    className="w-full"
                                                     value={charityInfo.raffleType || ""}
                                                     onValueChange={async (value) => {
                                                         const updatedInfo = { ...charityInfo, raffleType: value };
@@ -988,7 +991,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                     }}
                                                 >
                                                     <SelectTrigger id="raffleType">
-                                                        <SelectValue placeholder="Select raffle type" />
+                                                        <SelectValue placeholder="Select raffle type" className="w-full" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="50/50">50/50</SelectItem>
@@ -998,7 +1001,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                 </Select>
                                             </div>
 
-                                            <div className="space-y-2">
+                                            <div className="space-y-2 ">
                                                 <Label htmlFor="campaignLaunchDate" className="text-muted-foreground">Launch Date</Label>
                                                 <Input
                                                     id="campaignLaunchDate"
@@ -1007,6 +1010,9 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                     onChange={(e) => setCharityInfo(prev => ({ ...prev, campaignLaunchDate: e.target.value }))}
                                                 />
                                             </div>
+                                            
+
+                                            
                                             <div className="space-y-2">
                                                 <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Ascend Client Services Representative</Label>
                                                 <Input

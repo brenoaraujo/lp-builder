@@ -232,6 +232,34 @@ export default function AdminPage() {
     }
   };
 
+  // Test Notion sync manually
+  const testNotionSync = async () => {
+    console.log('🧪 Testing Notion sync manually...');
+    try {
+      const response = await fetch('https://kvtouoigckngalfvzmsp.functions.supabase.co/notion-sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_KEY}`,
+        },
+        body: JSON.stringify({ token: 'test-manual-sync' })
+      });
+      
+      console.log('📡 Manual sync response:', response.status, response.statusText);
+      const result = await response.text();
+      console.log('📡 Response body:', result);
+      
+      if (response.ok) {
+        toast.success('Manual Notion sync successful!');
+      } else {
+        toast.error('Manual Notion sync failed: ' + result);
+      }
+    } catch (error) {
+      console.error('❌ Manual sync error:', error);
+      toast.error('Manual sync error: ' + error.message);
+    }
+  };
+
   // Create new invite
   const handleCreateInvite = async () => {
     if (!newInvite.charity_name || !newInvite.contact_name || !newInvite.contact_email) {
@@ -239,17 +267,32 @@ export default function AdminPage() {
       return;
     }
 
+    console.log('🔄 Creating invite with data:', newInvite);
+    
     try {
       const result = await createInvite(newInvite);
+      console.log('📋 Create invite result:', result);
+      
       if (result.success) {
+        console.log('✅ Invite created successfully, token:', result.data?.public_token);
         toast.success('Invite created successfully');
         setCreateDialogOpen(false);
         setNewInvite({ charity_name: '', contact_name: '', contact_email: '' });
         loadInvites();
+        
+        // Wait a moment and then check if it synced to Notion
+        setTimeout(async () => {
+          console.log('🔍 Checking if invite synced to Notion...');
+          console.log('📋 Token to check:', result.data?.public_token);
+          console.log('💡 Check your Notion database for this token');
+        }, 3000);
+        
       } else {
+        console.error('❌ Failed to create invite:', result.error);
         toast.error('Failed to create invite: ' + result.error);
       }
     } catch (error) {
+      console.error('❌ Error creating invite:', error);
       toast.error('Error creating invite: ' + error.message);
     }
   };
@@ -311,7 +354,11 @@ export default function AdminPage() {
             <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
             <p className="text-gray-600">Manage landing page invites</p>
           </div>
-          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={testNotionSync}>
+              Test Notion Sync
+            </Button>
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
