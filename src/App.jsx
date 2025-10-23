@@ -105,6 +105,8 @@ const pruneControls = (controls = {}, partsList) => {
 const slugify = (s = "") =>
   String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
+const capitalize = (s = "") => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
 // Normalize copy parts to ensure every item has an id
 const normalizeCopyParts = (list) => {
   const arr = Array.isArray(list) ? list : list && typeof list === "object" ? Object.values(list) : [];
@@ -1179,7 +1181,121 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     customerName: "", projectId: "", notes: "", submitterName: "", submitterEmail: "",
   });
 
+  // URL validation dialog state
+  const [urlValidationOpen, setUrlValidationOpen] = useState(false);
+  const [urlValidationErrors, setUrlValidationErrors] = useState([]);
+  const [urlValidationGroups, setUrlValidationGroups] = useState([]);
+
+  // Accept http(s), mailto, tel
+  const isValidUrlish = (v) => typeof v === 'string' && /^(https?:|mailto:|tel:)/i.test(v);
+
+  function validateActionUrls({ overrides, blocksList, footerCopyValues, footerCopyParts, copyPartsMap }) {
+    const errors = [];
+
+    // 1) Validate against overrides (used in onboarding/editor for some sections)
+    if (overrides) {
+      Object.entries(overrides).forEach(([sectionKey, data]) => {
+        const display = data?.display || {};
+        const copy = data?.copy || {};
+
+        Object.keys(copy).forEach((key) => {
+          if (!key.endsWith('-action')) return;
+          const baseId = key.slice(0, -7);
+          const buttonVisible = display[baseId] !== false; // default visible
+          if (buttonVisible) {
+            const url = copy[key];
+            const displayLabel = copy[baseId] || baseId;
+            const sectionTitle = capitalize(sectionKey);
+            if (!isValidUrlish(url)) {
+              errors.push({ section: sectionKey, sectionTitle, buttonId: baseId, buttonLabel: displayLabel, urlKey: key, value: url || '' });
+            }
+          }
+        });
+      });
+    }
+
+    // 2) Validate against composed blocks (authoritative for builder view)
+    if (Array.isArray(blocksList)) {
+      let featureCount = 0;
+      blocksList.forEach((b) => {
+        const typeKey = b?.type || 'section';
+        const displayCtrls = b?.controls || {}; // visibility toggles
+        const copy = b?.copy || {};
+        const isFeature = String(typeKey).toLowerCase() === 'feature';
+        let sectionTitle = capitalize(typeKey);
+        if (isFeature) {
+          featureCount += 1;
+          sectionTitle = `Extra Content ${featureCount}`;
+        }
+        // Prefer discovered parts so we validate even when a key isn't present in copy yet
+        const parts = (copyPartsMap && copyPartsMap[b.id]) || [];
+        parts.forEach((p) => {
+          const id = p?.id;
+          if (!id || !id.endsWith('-action')) return;
+          const baseId = id.slice(0, -7);
+          const buttonVisible = displayCtrls[baseId] !== false; // default visible
+          if (!buttonVisible) return;
+          const url = copy[id]; // may be undefined/empty
+          const rawLabel = copy[baseId] || '';
+          const displayLabel = rawLabel || (baseId === 'cta-button' ? 'Learn More' : baseId);
+          if (!isValidUrlish(url)) {
+            errors.push({ section: typeKey, sectionTitle, buttonId: baseId, buttonLabel: displayLabel, urlKey: id, value: url || '' });
+          }
+        });
+      });
+    }
+
+    // 3) Validate Footer copy (managed separately)
+    if (Array.isArray(footerCopyParts) && footerCopyValues && typeof footerCopyValues === 'object') {
+      // Enforce URL for every discovered footer action part, even if value key is missing
+      footerCopyParts.forEach((p) => {
+        const id = p?.id;
+        if (!id || !id.endsWith('-action')) return;
+        const baseId = id.slice(0, -7);
+        const url = footerCopyValues[id]; // may be undefined/empty
+        // Map baseId to friendly footer titles if copy missing
+        const fallbackMap = {
+          'footer-link-0': 'Rules of Play',
+          'footer-link-1': 'FAQs',
+          'footer-link-2': 'Contact Us',
+          'footer-link-3': 'Privacy Policy',
+        };
+        // Try to find a discovered copy part label for this baseId
+        const partLabel = (footerCopyParts.find(p => p.id === baseId)?.label) || '';
+        const displayLabel = footerCopyValues[baseId] || partLabel || fallbackMap[baseId] || baseId;
+        if (!isValidUrlish(url)) {
+          errors.push({ section: 'Footer', sectionTitle: 'Footer', buttonId: baseId, buttonLabel: displayLabel, urlKey: id, value: url || '' });
+        }
+      });
+    }
+
+    return errors;
+  }
+
   const submitViaEmail = async () => {
+    // Validate button URLs for visible buttons across overrides, blocks and footer
+    const errs = validateActionUrls({
+      overrides: overridesBySectionRef.current,
+      blocksList: blocks,
+      footerCopyValues: footerCopy,
+      footerCopyParts: copyPartsByBlock['Footer'] || [],
+      copyPartsMap: copyPartsByBlock,
+    });
+    if (errs.length) {
+      setUrlValidationErrors(errs);
+      // build grouped list for nicer UX
+      const groupsMap = new Map();
+      errs.forEach(e => {
+        const title = e.sectionTitle || e.section || 'Section';
+        const label = e.buttonLabel || e.buttonId;
+        if (!groupsMap.has(title)) groupsMap.set(title, new Set());
+        groupsMap.get(title).add(label);
+      });
+      const groups = Array.from(groupsMap.entries()).map(([title, set]) => ({ title, items: Array.from(set) }));
+      setUrlValidationGroups(groups);
+      setUrlValidationOpen(true);
+      return;
+    }
     try {
       const snapshot = {
         blocks, globalTheme,
@@ -1867,6 +1983,37 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                 </div>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* URL Validation Dialog */}
+      <Dialog open={urlValidationOpen} onOpenChange={setUrlValidationOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Missing or invalid URLs</DialogTitle>
+            <DialogDescription>
+              Some buttons don’t have a valid URL. Please add a URL before submitting to production.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 max-h-64 overflow-auto">
+            {urlValidationGroups.map((g, i) => (
+              <div key={i} className="text-sm">
+                <div className="text-xs uppercase text-gray-500 tracking-wide">{g.title}</div>
+                <div className="ml-1 space-y-1">
+                  {g.items.map((label, idx) => (
+                    <div key={idx} className="font-medium">{label === 'cta-button' ? 'Learn More' : label}</div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-2">
+            <Button className="w-full bg-[#0099EB] hover:bg-[#0088d3] cursor-pointer" onClick={() => setUrlValidationOpen(false)}>
+              Got it
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

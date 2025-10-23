@@ -55,7 +55,7 @@ export function FeatureA({ blockType = "feature" }) {
                             data-id="cta-button"
                             role="button"
                             tabIndex={0}
-                            className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
+                            className="h-10 px-4 py-2 bg-Colors-primary text-Colors-primary-foreground  rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
                         >
                             <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
                                 Learn More
@@ -71,7 +71,7 @@ export function FeatureA({ blockType = "feature" }) {
                             data-placeholder="Learn More Url"
                             style={{ display: 'none' }}
                         >
-                            https://example.com
+                            
                         </div>
 
                         {/* Secondary (Ghost) 
@@ -183,7 +183,7 @@ export function FeatureB({ blockType = "feature" }) {
                             data-id="cta-button"
                             role="button"
                             tabIndex={0}
-                            className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
+                            className="h-10 px-4 py-2 bg-Colors-primary text-Colors-primary-foreground  rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
                         >
                             <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
                                 Learn More
@@ -199,7 +199,7 @@ export function FeatureB({ blockType = "feature" }) {
                             data-max-chars="200"
                             style={{ display: 'none' }}
                         >
-                            https://example.com
+                            
                         </div>
 
                         {/* Secondary (Ghost) 
@@ -290,11 +290,11 @@ export function FeatureC({ blockType = "feature" }) {
                             data-id="cta-button"
                             role="button"
                             tabIndex={0}
-                            className="h-10 px-4 py-2 bg-Colors-primary rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
-                        >
-                            <div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
+                            className="h-10 px-4 py-2 bg-Colors-primary text-Colors-primary-foreground  rounded-lg flex justify-center items-center gap-2 outline outline-1 outline-offset-[-1px] outline-transparent focus:outline-2 focus:outline-Colors-primary"
+                        ><div className="justify-center text-Colors-primary-foreground text-sm font-medium font-primary leading-tight">
                                 Learn More
                             </div>
+                            
                         </div>
 
 
@@ -307,7 +307,7 @@ export function FeatureC({ blockType = "feature" }) {
                             data-max-chars="200"
                             style={{ display: 'none' }}
                         >
-                            https://example.com
+                            
                         </div>
 
                         {/* Secondary (Ghost) 
