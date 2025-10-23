@@ -1031,6 +1031,21 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
 
   // Sync Footer controls and copy to BuilderOverridesContext
   const previousFooterRef = useRef(null);
+  // Hydrate Footer local state from DB overrides on first load or when overrides change
+  useEffect(() => {
+    if (!hydrated) return;
+    const src = overridesBySection?.Footer || {};
+    const srcCopy = src.copy || {};
+    const srcDisplay = src.display || {};
+    // Only update local state if DB has values we don't already have
+    if (Object.keys(srcCopy).length) {
+      setFooterCopy((prev) => ({ ...(prev || {}), ...srcCopy }));
+    }
+    if (Object.keys(srcDisplay).length) {
+      setFooterControls((prev) => ({ ...(prev || {}), ...srcDisplay }));
+    }
+  }, [hydrated, overridesBySection?.Footer?.copy, overridesBySection?.Footer?.display]);
+
   useEffect(() => {
     if (!hydrated || isInitialLoad.current) return; // Don't sync during initial load
 

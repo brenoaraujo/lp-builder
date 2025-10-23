@@ -131,7 +131,8 @@ export default function AdminPage() {
   const getDisplayStatus = (invite) => {
     const s = invite?.status;
     if (s === 'void') return 'Void';
-    if (s === 'submitted' || s === 'handed_off') return 'Submitted';
+    if (s === 'handed_off') return 'Handed Off';
+    if (s === 'submitted') return 'Submitted';
     if (s === 'in_progress') return 'In Progress';
     // invited or unknown → check if onboarding started
     return hasStartedOnboarding(invite) ? 'Onboarding' : 'Invited';
