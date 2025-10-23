@@ -37,7 +37,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 //--Icons --
-import { ArrowRight, ArrowLeft, Search, Building2, Globe, User, HandHeart, Users, Rocket } from "lucide-react";
+import { ArrowRight, ArrowLeft, Search, Building2, Globe, User, HandHeart, Users, Rocket, LayoutDashboard } from "lucide-react";
 
 /* =========================================================================
    Small utilities (colors + fonts)
@@ -1378,6 +1378,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                             <div className="flex flex-col items-center justify-center">
                                 <div className="max-w-[720px] rounded-lg border border-gray-200 bg-white shadow-md p-12 text-center items-center justify-center">
                                     <div className="space-y-1 pb-10">
+                                        <LayoutDashboard className="w-10 h-10 mx-auto mb-4" />
                                         <h2 className="text-3xl font-medium">Add more sections?</h2>
                                         <p className="text-base text-slate-500">
                                             You can add additional content sections to make your page even more engaging
@@ -1439,18 +1440,26 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
               if (stepKey === "footerEdit") nextLabel = "Finish";
 
               const handleSkip = () => {
-                if (stepKey === "extraPrizes") {
-                  setVisible("extraPrizes", false);
-                  setStepIndex(STEP_KEYS.indexOf("extraPrizesEdit"));
-                } else if (stepKey === "feature") {
-                  setStepIndex(STEP_KEYS.indexOf("footerEdit"));
-                } else if (stepKey === "extraContentConfirmation") {
-                  setStepIndex(STEP_KEYS.indexOf("footerEdit"));
-                } else if (stepKey === "addMoreSections") {
-                  setStepIndex(STEP_KEYS.indexOf("footerEdit"));
-                } else {
-                  next();
+                const cfg = STEP_CONFIG[stepKey];
+                // Generic: for any section-choice (except hero), hide the section and jump past its edit step
+                if (cfg && cfg.type === 'section-choice' && cfg.sectionKey && cfg.sectionKey !== 'hero') {
+                  const section = cfg.sectionKey;
+                  setVisible(section, false);
+                  const editStepKey = `${section}Edit`;
+                  const editIdx = STEP_KEYS.indexOf(editStepKey);
+                  const targetIdx = editIdx >= 0 ? Math.min(editIdx + 1, STEP_KEYS.length - 1) : Math.min(stepIndex + 1, STEP_KEYS.length - 1);
+                  setStepIndex(targetIdx);
+                  saveProgress(targetIdx);
+                  return;
                 }
+                // Special cases outside of section-choice flow
+                if (stepKey === "feature" || stepKey === "extraContentConfirmation" || stepKey === "addMoreSections") {
+                  const targetIdx = STEP_KEYS.indexOf("footerEdit");
+                  setStepIndex(targetIdx);
+                  saveProgress(targetIdx);
+                  return;
+                }
+                next();
               };
 
               const handleNext = () => {
@@ -1467,7 +1476,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                 next();
               };
 
-              const showSkip = stepKey === "extraPrizes" || stepKey === "feature" || stepKey === "extraContentConfirmation" || stepKey === "addMoreSections";
+              const showSkip = ((STEP_CONFIG[stepKey]?.type === 'section-choice') && STEP_CONFIG[stepKey]?.sectionKey !== 'hero') || stepKey === "feature" || stepKey === "extraContentConfirmation" || stepKey === "addMoreSections";
 
               return (
                 <OnboardingActionBar

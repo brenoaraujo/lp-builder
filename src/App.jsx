@@ -1851,11 +1851,11 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                 <div className="text-green-600 text-4xl">✓</div>
                 <div className="text-lg font-medium text-gray-900">Successfully Submitted!</div>
                 <div className="text-sm text-gray-600">
-                  Your design has been approved and is ready for production. The approval link has been generated and contains all the necessary data.
+                  Your design has been submitted to production. The approval link has been generated and contains all the necessary data.
                 </div>
                 <div className="pt-4">
                   <Button
-                    className="w-full"
+                    className="w-full bg-[#0099EB] hover:bg-[#0088d3] cursor-pointer"
                     onClick={() => {
                       setApprovalSuccess(false);
                       setApproveOpen(false);

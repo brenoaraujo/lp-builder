@@ -26,9 +26,6 @@ async function adminListInvites() {
       throw error;
     }
 
-    console.log('📋 Loaded invites:', data?.length || 0, 'total');
-    console.log('📋 Deleted invites:', data?.filter(invite => invite.is_deleted)?.length || 0);
-    console.log('📋 Active invites:', data?.filter(invite => !invite.is_deleted)?.length || 0);
 
     return { success: true, data };
   } catch (error) {
@@ -184,6 +181,15 @@ export default function AdminPage() {
       const result = await adminSoftDeleteInvite(inviteToDelete.public_token);
       if (result.success) {
         toast.success('Invite deleted successfully');
+        // Manual sync to Notion as backup (fire-and-forget to avoid UI delay)
+        fetch('https://kvtouoigckngalfvzmsp.functions.supabase.co/notion-sync', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_KEY}`,
+          },
+          body: JSON.stringify({ token: inviteToDelete.public_token, is_deleted: true })
+        }).catch(() => {});
         loadInvites();
       } else {
         toast.error('Failed to delete invite: ' + result.error);
@@ -220,7 +226,6 @@ export default function AdminPage() {
           filteredData = filteredData.filter(invite => invite.status === statusFilter);
         }
         
-        console.log('📋 Final filtered invites:', filteredData.length);
         setInvites(filteredData);
       } else {
         toast.error('Failed to load invites: ' + result.error);
@@ -232,34 +237,6 @@ export default function AdminPage() {
     }
   };
 
-  // Test Notion sync manually
-  const testNotionSync = async () => {
-    console.log('🧪 Testing Notion sync manually...');
-    console.log('🔑 Service key available:', !!import.meta.env.VITE_SUPABASE_SERVICE_KEY);
-    try {
-      const response = await fetch('https://kvtouoigckngalfvzmsp.functions.supabase.co/notion-sync', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_KEY}`,
-        },
-        body: JSON.stringify({ token: '2fbe06397b0223c7badb8df4be25f768d6fdba534e81e1b1a11214889cede1ad' })
-      });
-      
-      console.log('📡 Manual sync response:', response.status, response.statusText);
-      const result = await response.text();
-      console.log('📡 Response body:', result);
-      
-      if (response.ok) {
-        toast.success('Manual Notion sync successful!');
-      } else {
-        toast.error('Manual Notion sync failed: ' + result);
-      }
-    } catch (error) {
-      console.error('❌ Manual sync error:', error);
-      toast.error('Manual sync error: ' + error.message);
-    }
-  };
 
   // Create new invite
   const handleCreateInvite = async () => {
@@ -268,32 +245,18 @@ export default function AdminPage() {
       return;
     }
 
-    console.log('🔄 Creating invite with data:', newInvite);
-    
     try {
       const result = await createInvite(newInvite);
-      console.log('📋 Create invite result:', result);
       
       if (result.success) {
-        console.log('✅ Invite created successfully, token:', result.data?.public_token);
         toast.success('Invite created successfully');
         setCreateDialogOpen(false);
         setNewInvite({ charity_name: '', contact_name: '', contact_email: '' });
         loadInvites();
-        
-        // Wait a moment and then check if it synced to Notion
-        setTimeout(async () => {
-          console.log('🔍 Checking if invite synced to Notion...');
-          console.log('📋 Token to check:', result.data?.public_token);
-          console.log('💡 Check your Notion database for this token');
-        }, 3000);
-        
       } else {
-        console.error('❌ Failed to create invite:', result.error);
         toast.error('Failed to create invite: ' + result.error);
       }
     } catch (error) {
-      console.error('❌ Error creating invite:', error);
       toast.error('Error creating invite: ' + error.message);
     }
   };
@@ -348,20 +311,17 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto ">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <div>
+          <div className='flex flex-col'>
             <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
             <p className="text-gray-600">Manage landing page invites</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={testNotionSync}>
-              Test Notion Sync
-            </Button>
             <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-[#0099EB] hover:bg-[#0088d3] cursor-pointer">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Invite
               </Button>
@@ -400,7 +360,7 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={handleCreateInvite} className="flex-1">
+                  <Button onClick={handleCreateInvite} className="flex-1 bg-[#0099EB] hover:bg-[#0088d3] cursor-pointer">
                     Create Invite
                   </Button>
                  
@@ -409,7 +369,7 @@ export default function AdminPage() {
             </DialogContent>
           </Dialog>
         </div>
-
+        </div>
         {/* Filters */}
         <div className="flex gap-4 mb-6">
           <div className="flex-1">
@@ -436,9 +396,6 @@ export default function AdminPage() {
               <SelectItem value="void">Void</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={testNotionSync} className="whitespace-nowrap">
-            🧪 Test Notion Sync
-          </Button>
         </div>
 
         {/* Invites Table */}
@@ -537,7 +494,7 @@ export default function AdminPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+      
       
       {/* Details Modal */}
       <AdminInviteDetails 

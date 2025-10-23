@@ -150,6 +150,22 @@ async function upsertNotion(invite: any) {
   }
 }
 
+// Archive a Notion page by Public Token (soft delete in Notion)
+async function archiveNotionByToken(token: string) {
+  const query = await notion.databases.query({
+    database_id: NOTION_DB_ID!,
+    filter: { property: 'Public Token', rich_text: { equals: token } }
+  });
+
+  if (query.results.length) {
+    const pageId = (query.results[0] as any).id;
+    await notion.pages.update({ page_id: pageId, archived: true });
+    return pageId;
+  }
+
+  return null;
+}
+
 async function fetchInviteByToken(token: string) {
   const { data, error } = await supabase
     .from('invites')
@@ -181,7 +197,7 @@ serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
   
   try {
-    const { token } = await req.json();
+    const { token, is_deleted: isDeletedHint } = await req.json();
     if (!token) return new Response(JSON.stringify({ error: 'missing token' }), { 
       status: 400,
       headers: {
@@ -189,15 +205,25 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       }
     });
-    const invite = await fetchInviteByToken(token);
-    if (!invite) return new Response(JSON.stringify({ error: 'not found' }), { 
-      status: 404,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
+    // If trigger provided an explicit deletion hint, honor it immediately
+    if (isDeletedHint === true) {
+      await archiveNotionByToken(token);
+    } else {
+      const invite = await fetchInviteByToken(token);
+      if (!invite) return new Response(JSON.stringify({ error: 'not found' }), { 
+        status: 404,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        }
+      });
+      // If the invite is soft-deleted, archive the page in Notion
+      if (invite.is_deleted) {
+        await archiveNotionByToken(invite.public_token);
+      } else {
+        await upsertNotion(invite);
       }
-    });
-    await upsertNotion(invite);
+    }
     return new Response(JSON.stringify({ ok: true }), { 
       status: 200,
       headers: {

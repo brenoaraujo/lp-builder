@@ -16,11 +16,8 @@ function generateToken() {
 export async function createInvite({ charity_name, contact_name, contact_email }) {
   try {
     const public_token = generateToken();
-    console.log('🔑 Creating invite with token:', public_token);
-    
     // Use admin client for invite creation to ensure proper permissions
     const adminClient = getAdminClient();
-    console.log('🔑 Using admin client for invite creation');
     
     const { data, error } = await adminClient
       .from('invites')
@@ -35,16 +32,21 @@ export async function createInvite({ charity_name, contact_name, contact_email }
       .single();
 
     if (error) {
-      console.error('❌ Database error:', error);
       throw error;
     }
 
-    console.log('✅ Invite created in database:', data);
-    console.log('⏳ Database trigger should fire now...');
-    
-    return { success: true, data };
+    // Manual sync to Notion as backup (fire-and-forget to avoid UI delay)
+    fetch('https://kvtouoigckngalfvzmsp.functions.supabase.co/notion-sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_KEY}`,
+      },
+      body: JSON.stringify({ token: public_token })
+    }).catch(() => { /* non-blocking */ });
+      
+      return { success: true, data };
   } catch (error) {
-    console.error('❌ Error creating invite:', error);
     return { success: false, error: error.message };
   }
 }
