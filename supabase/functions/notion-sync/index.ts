@@ -36,6 +36,25 @@ function safeEntries(obj: any): [string, any][] {
   return obj && typeof obj === "object" ? Object.entries(obj) : [];
 }
 
+// Normalize URLs so Notion can fetch them externally
+function normalizeExternalUrl(input: any): string | null {
+  if (!input || typeof input !== 'string') return null;
+  const url = input.trim();
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('data:')) return null; // Notion external images must be http(s)
+  // Prefix site-relative paths
+  if (url.startsWith('/')) {
+    if (!PUBLIC_SITE_URL) return null;
+    return `${PUBLIC_SITE_URL}${url}`;
+  }
+  // Best-effort: pass-through anything that looks like a full domain without protocol
+  // e.g. example.com/img.png -> https://example.com/img.png
+  if (/^[\w.-]+\.[a-z]{2,}\/\S+/i.test(url)) {
+    return `https://${url}`;
+  }
+  return null;
+}
+
 function sectionBlocks(invite: any): any[] {
   const overrides = (invite?.overrides_json && Object.keys(invite.overrides_json).length)
     ? invite.overrides_json
@@ -89,14 +108,20 @@ function sectionBlocks(invite: any): any[] {
         || (sectionKey === 'hero' && normalized.startsWith('hero-image'))
         || (sectionKey === 'feature' && normalized.startsWith('feature-image'))
         || (sectionKey === 'extraPrizes' && normalized.includes('extra-prize'));
-      if (match) blocks.push({ image: { type: 'external', external: { url: imageUrl } } });
+      if (match) {
+        const externalUrl = normalizeExternalUrl(imageUrl);
+        if (externalUrl) blocks.push({ image: { type: 'external', external: { url: externalUrl } } });
+      }
     });
   });
 
   const ci = invite?.onboarding_json?.charityInfo || {};
   blocks.push({ heading_2: { rich_text: [{ type: 'text', text: { content: 'Footer' } }] } });
   blocks.push({ paragraph: { rich_text: [{ type: 'text', text: { content: `Charity Name: ${ci.charityName || 'Not provided'}` } }] } });
-  if (ci.charityLogo) blocks.push({ image: { type: 'external', external: { url: ci.charityLogo } } });
+  if (ci.charityLogo) {
+    const logoUrl = normalizeExternalUrl(ci.charityLogo);
+    if (logoUrl) blocks.push({ image: { type: 'external', external: { url: logoUrl } } });
+  }
 
   if (invite?.theme_json?.colors || invite?.theme_json?.fonts) {
     blocks.push({ heading_2: { rich_text: [{ type: 'text', text: { content: 'Global Theme' } }] } });

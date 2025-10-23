@@ -874,6 +874,18 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                 images_json: images,
                 status: 'submitted'
             });
+
+            // Manual Notion sync to reflect the new status immediately
+            try {
+                await fetch('https://kvtouoigckngalfvzmsp.functions.supabase.co/notion-sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_KEY}`,
+                    },
+                    body: JSON.stringify({ token: inviteToken })
+                });
+            } catch (_) { }
             
             // Navigate to app with theme panel open
             window.location.hash = `#/app?invite=${inviteToken}&theme=open`;
