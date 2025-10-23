@@ -1283,11 +1283,23 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     });
     if (errs.length) {
       setUrlValidationErrors(errs);
-      // build grouped list for nicer UX
+      // build grouped list for nicer UX (dedupe, prefer friendly footer labels)
       const groupsMap = new Map();
       errs.forEach(e => {
         const title = e.sectionTitle || e.section || 'Section';
-        const label = e.buttonLabel || e.buttonId;
+        let label = e.buttonLabel || e.buttonId;
+        // Normalize footer internal ids to friendly labels
+        if (title === 'Footer') {
+          const footerMap = {
+            'footer-link-0': 'Rules of Play',
+            'footer-link-1': 'FAQs',
+            'footer-link-2': 'Contact Us',
+            'footer-link-3': 'Privacy Policy',
+            'footer-link-4': 'Contact Us',
+            'footer-link-5': 'Privacy Policy',
+          };
+          label = footerMap[e.buttonId] || label;
+        }
         if (!groupsMap.has(title)) groupsMap.set(title, new Set());
         groupsMap.get(title).add(label);
       });
@@ -1309,6 +1321,29 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
 
       // Show success confirmation
       setApprovalSuccess(true);
+
+      // Update invite status to handed_off
+      try {
+        if (typeof updateInvite === 'function') {
+          await updateInvite({ status: 'handed_off' });
+        }
+      } catch (e) {
+        console.warn('Failed to set status to handed_off:', e);
+      }
+
+      // Manual Notion sync backup to ensure status is reflected immediately
+      try {
+        if (inviteToken) {
+          await fetch('https://kvtouoigckngalfvzmsp.functions.supabase.co/notion-sync', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_KEY}`,
+            },
+            body: JSON.stringify({ token: inviteToken })
+          });
+        }
+      } catch (_) {}
     } catch (err) {
       console.error(err);
       setToastMsg("Failed to generate approval link.");
