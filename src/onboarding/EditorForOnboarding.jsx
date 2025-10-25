@@ -131,7 +131,7 @@ export default function EditorForOnboarding({
       <div className="lg:h-full lg:min-h-0 pb-24">
         <div className="h-96 lg:h-full w-full rounded-lg border border-slate-200 bg-white shadow-lg p-4">
           <div ref={previewRef}>
-            <AutoScaler designWidth={1440} targetWidth={targetWidth}>
+            <AutoScaler designWidth={1440} targetWidth={targetWidth} maxHeight={9999}>
               <div data-scope={sectionKey}>
                 <EditableSection
                   discoverKey={`onb:${sectionKey}:${virtualBlock.variant}`}

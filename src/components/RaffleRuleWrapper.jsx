@@ -46,10 +46,8 @@ const RaffleRuleWrapper = ({
     const shouldHide = effectiveRaffleType && hideFor.includes(effectiveRaffleType);
     
     if (shouldHide) {
-        if (forceRender) {
-            return <div style={{ display: 'none' }}>{children}</div>;
-        }
-        return null;
+        // Always render but hide it, so EditorSidebar can discover the toggle
+        return <div style={{ display: 'none' }}>{children}</div>;
     }
     
     return children;

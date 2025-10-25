@@ -404,7 +404,7 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
 
                         {charityInfo.charityLogo && (
                           <TableRow>
-
+                            <TableHead className="w-[160px]">Logo</TableHead>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <img
@@ -416,6 +416,29 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => downloadImage(charityInfo.charityLogo, 'charity-logo')}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Download
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+
+                        {charityInfo.charityFavicon && (
+                          <TableRow>
+                            <TableHead className="w-[160px]">Favicon</TableHead>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={charityInfo.charityFavicon}
+                                  alt="Favicon"
+                                  className="w-8 h-8 object-contain border rounded"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => downloadImage(charityInfo.charityFavicon, 'charity-favicon')}
                                 >
                                   <Download className="w-3 h-3 mr-1" />
                                   Download

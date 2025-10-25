@@ -5,7 +5,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 // removed internal ScrollArea to avoid double scroll; the parent sidebar scrolls
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { X, Plus, ChevronDown, ArrowRight, Pencil, Palette } from "lucide-react";
+import { X, Plus, ChevronDown, ArrowRight, Pencil, Palette, Info } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -17,6 +17,7 @@ import EditableSection from "@/components/EditableSection.jsx";
 import SectionActionsMenu from "./SectionActionsMenu.jsx";
 import ImageManager from "./ImageManager.jsx";
 import { buildThemeVars, readTokenDefaults, setCSSVars, setCSSVarsImportant, readThemeMode, resolvePalette } from "../theme-utils.js";
+import { supabase } from "@/lib/supabase.js";
 
 /* Section Color Overrides Component - Enhanced for partial overrides */
 function SectionColorOverrides({ activeBlock, onColorChange, onReset, onClearKey, globalColors = {} }) {
@@ -425,25 +426,156 @@ const orderedCopyList = (() => {
                     const max = p.maxChars || 120;
                     const isActionUrl = p.id.includes('-action');
                     const hasPlaceholder = p.placeholder;
+                    // Footer-specific mapping and helpers
+                    const isFooter = activeBlock?.type === 'Footer';
+                    const baseId = isActionUrl ? p.id.replace('-action', '') : p.id;
+                    // Build a quick map of base id -> label from non-action items
+                    const baseLabelMap = (() => {
+                      const map = new Map();
+                      visibleCopyList.forEach(ci => {
+                        if (!String(ci.id).includes('-action')) map.set(ci.id, ci.label || ci.id);
+                      });
+                      return map;
+                    })();
+                    const baseLabel = baseLabelMap.get(baseId);
+
+                    // Helpers for document upload
+                    const inviteToken = (() => {
+                      try {
+                        const hash = window.location.hash || '';
+                        const q = hash.includes('?') ? hash.split('?')[1] : '';
+                        const params = new URLSearchParams(q);
+                        return params.get('invite');
+                      } catch { return null; }
+                    })();
+
+                    const slug = (s = '') => String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+                    const uploadDocument = async (file) => {
+                      if (!file) return null;
+                      const bucket = 'charity-logos';
+                      const name = `${slug(baseLabel || baseId)}-${Date.now()}.${file.name.split('.').pop() || 'bin'}`;
+                      const path = inviteToken ? `documents/${inviteToken}/${name}` : `documents/misc/${name}`;
+                      const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type });
+                      if (error) throw error;
+                      const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+                      return { url: data.publicUrl, name };
+                    };
                     
                     return (
                       
                       <div key={p.id} className={`space-y-1 ${isActionUrl ? ' mb-8 mt-[-10px]' : ' mb-8'} px-1`}>
                         {!isActionUrl && (
                           <div className="flex items-center justify-between">
-                            <label className="block text-xs font-medium text-gray-600">{p.label}</label>
+                            <label className="block text-xs font-medium text-gray-600 flex items-center gap-1">
+                              {p.label}
+                              {isFooter && p.label === 'About Us' && (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <button type="button" className="text-gray-400 hover:text-gray-600" aria-label="About Us info">
+                                      <Info className="h-3.5 w-3.5" />
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent side="right" align="start" sideOffset={6} className="p-2 text-xs max-w-[220px]">
+                                    Will direct to the charity website
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+                            </label>
                             <div className="text-right text-[11px] text-gray-400">{current?.length ?? 0}/{max}</div>
                           </div>
                         )}
-                        <input
-                          type="text"
-                          value={current ?? ""}
-                          maxLength={max}
-                          onChange={(e) => !approvedMode && onCopyChangeFromSidebar(p.id, e.target.value)}
-                          className="w-full rounded-md border p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder={hasPlaceholder ? p.placeholder : `Up to ${max} characters`}
-                          readOnly={approvedMode}
-                        />
+
+                        {/* Footer: About Us tooltip on base input */}
+                        {!isActionUrl && isFooter && (p.label === 'About Us') ? (
+                          <input
+                            type="text"
+                            value={current ?? ''}
+                            maxLength={max}
+                            onChange={(e) => !approvedMode && onCopyChangeFromSidebar(p.id, e.target.value)}
+                            className="w-full rounded-md border p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder={hasPlaceholder ? p.placeholder : `Up to ${max} characters`}
+                            readOnly={approvedMode}
+                          />
+                        ) : null}
+
+                        {/* Footer: Document upload for Rules of Play & FAQs */}
+                        {isActionUrl && isFooter && (baseLabel === 'Rules of Play' || baseLabel === 'FAQs') ? (
+                          <div className="flex items-center gap-2">
+                            {current ? (
+                              // Document uploaded - show filename + X button
+                              <div className="flex items-center gap-2 w-full">
+                                <span className="text-xs text-gray-500 truncate max-w-[140px]" title={current}>{current.split('/').pop()}</span>
+                                <button
+                                  type="button"
+                                  className="h-7 w-7 flex items-center justify-center rounded border text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                  aria-label="Remove file"
+                                  onClick={() => !approvedMode && onCopyChangeFromSidebar(p.id, '')}
+                                  title="Remove file"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              // No document - show file input
+                              <input
+                                type="file"
+                                accept=".pdf,.doc,.docx"
+                                onChange={async (e) => {
+                                  if (approvedMode) return;
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  try {
+                                    const res = await uploadDocument(file);
+                                    if (res?.url) {
+                                      onCopyChangeFromSidebar(p.id, res.url);
+                                    }
+                                  } catch (err) {
+                                    console.error('Upload failed', err);
+                                  }
+                                }}
+                                className="text-xs block text-sm text-gray-900 file:mr-2 file:py-1.5 file:px-2 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                              />
+                            )}
+                          </div>
+                        ) : null}
+
+                        {/* Footer: Email for Contact Us */}
+                        {isActionUrl && isFooter && baseLabel === 'Contact Us' ? (
+                          <input
+                            type="email"
+                            value={(current || '').replace(/^mailto:/i, '')}
+                            onChange={(e) => !approvedMode && onCopyChangeFromSidebar(p.id, e.target.value)}
+                            onBlur={(e) => {
+                              if (approvedMode) return;
+                              const val = (e.target.value || '').trim();
+                              if (!val) return;
+                              const emailRe = /(^[^\s@]+@[^\s@]+\.[^\s@]+$)/i;
+                              if (emailRe.test(val)) {
+                                onCopyChangeFromSidebar(p.id, `mailto:${val}`);
+                              }
+                            }}
+                            className="w-full rounded-md border p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Customer Service Email"
+                            readOnly={approvedMode}
+                          />
+                        ) : null}
+
+                        {/* Default text/URL input */}
+                        {!(isFooter && (
+                          (!isActionUrl && p.label === 'About Us') ||
+                          (isActionUrl && (baseLabel === 'Rules of Play' || baseLabel === 'FAQs' || baseLabel === 'Contact Us'))
+                        )) && (
+                          <input
+                            type="text"
+                            value={current ?? ""}
+                            maxLength={max}
+                            onChange={(e) => !approvedMode && onCopyChangeFromSidebar(p.id, e.target.value)}
+                            className="w-full rounded-md border p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder={hasPlaceholder ? p.placeholder : `Up to ${max} characters`}
+                            readOnly={approvedMode}
+                          />
+                        )}
                       </div>
                       
                     );

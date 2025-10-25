@@ -1201,15 +1201,18 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   const [urlValidationErrors, setUrlValidationErrors] = useState([]);
   const [urlValidationGroups, setUrlValidationGroups] = useState([]);
 
-  // Accept http(s), mailto, tel
+  // Accept http(s), mailto, tel, and plain email for Contact Us (handled below)
   const isValidUrlish = (v) => typeof v === 'string' && /^(https?:|mailto:|tel:)/i.test(v);
 
-  function validateActionUrls({ overrides, blocksList, footerCopyValues, footerCopyParts, copyPartsMap }) {
+  function validateActionUrls({ overrides, blocksList, footerCopyValues, footerCopyParts, copyPartsMap, footerControls }) {
     const errors = [];
 
     // 1) Validate against overrides (used in onboarding/editor for some sections)
     if (overrides) {
       Object.entries(overrides).forEach(([sectionKey, data]) => {
+        // Skip Footer (and Navbar) here — Footer has its own dedicated
+        // validation logic below to derive friendly labels and requirements.
+        if (sectionKey === 'Footer' || sectionKey === 'Navbar') return;
         const display = data?.display || {};
         const copy = data?.copy || {};
 
@@ -1262,26 +1265,76 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
 
     // 3) Validate Footer copy (managed separately)
     if (Array.isArray(footerCopyParts) && footerCopyValues && typeof footerCopyValues === 'object') {
-      // Enforce URL for every discovered footer action part, even if value key is missing
+      // Only validate footer links that should have action URLs (matching Footer.jsx itemsWithActionUrls)
+      // Use baseId pattern matching instead of label matching for more reliable filtering
+      const validFooterActionBaseIds = ['footer-link-1', 'footer-link-3', 'footer-link-4', 'footer-link-5'];
+      
       footerCopyParts.forEach((p) => {
         const id = p?.id;
         if (!id || !id.endsWith('-action')) return;
         const baseId = id.slice(0, -7);
+        
+        // Check if this footer link should have an action URL based on baseId
+        if (!validFooterActionBaseIds.includes(baseId)) {
+          return; // Skip validation for links that shouldn't have action URLs
+        }
+        
+        // Check if footer link is visible (respect display toggles)
+        const buttonVisible = footerControls && footerControls[baseId] !== false; // default visible
+        if (!buttonVisible) {
+          return; // Skip validation for hidden footer links
+        }
+        
         const url = footerCopyValues[id]; // may be undefined/empty
         // Map baseId to friendly footer titles if copy missing
         const fallbackMap = {
-          'footer-link-0': 'Rules of Play',
-          'footer-link-1': 'FAQs',
-          'footer-link-2': 'Contact Us',
-          'footer-link-3': 'Privacy Policy',
+          'footer-link-0': 'About Us',
+          'footer-link-1': 'Rules of Play', 
+          'footer-link-2': 'Winners',
+          'footer-link-3': 'FAQs',
+          'footer-link-4': 'Contact Us',
+          'footer-link-5': 'Privacy Policy',
         };
         // Try to find a discovered copy part label for this baseId
         const partLabel = (footerCopyParts.find(p => p.id === baseId)?.label) || '';
-        const displayLabel = footerCopyValues[baseId] || partLabel || fallbackMap[baseId] || baseId;
-        if (!isValidUrlish(url)) {
-          errors.push({ section: 'Footer', sectionTitle: 'Footer', buttonId: baseId, buttonLabel: displayLabel, urlKey: id, value: url || '' });
+        const displayLabel = footerCopyValues[baseId] || fallbackMap[baseId] || baseId;
+        const friendlyLabel = partLabel || displayLabel;
+        
+        // Different validation for different footer link types based on discovered labels
+        let isValid = false;
+        const linkLabel = friendlyLabel.toLowerCase();
+        
+        if (linkLabel.includes('contact')) {
+          // Contact Us - accept email or mailto
+          const emailOk = (typeof url === 'string') && (/^mailto:/i.test(url) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(url));
+          isValid = emailOk;
+        } else if (linkLabel.includes('rules') || linkLabel.includes('faq')) {
+          // Rules of Play & FAQs - accept document URLs (Supabase Storage)
+          const documentOk = (typeof url === 'string') && url.startsWith('https://') && url.includes('supabase') && url.includes('charity-logos');
+          isValid = documentOk;
+        } else {
+          // Other footer links - accept standard URLs
+          isValid = isValidUrlish(url);
+        }
+        
+        if (!isValid) {
+          errors.push({ section: 'Footer', sectionTitle: 'Footer', buttonId: baseId, buttonLabel: displayLabel, friendlyLabel, urlKey: id, value: url || '' });
         }
       });
+
+      // 3b) Validate Lottery Licence presence (non-empty)
+      const licenceId = 'Lottery Licence';
+      const hasLicencePart = footerCopyParts.some((p) => {
+        const id = p?.id || '';
+        const label = (p?.label || '').toLowerCase();
+        return id === licenceId || label.includes('lottery licence') || label.includes('lottery license');
+      });
+      if (hasLicencePart) {
+        const licenceValue = typeof footerCopyValues[licenceId] === 'string' ? footerCopyValues[licenceId].trim() : '';
+        if (!licenceValue) {
+          errors.push({ section: 'Footer', sectionTitle: 'Footer', buttonId: 'lottery-licence', buttonLabel: 'Lottery Licence', friendlyLabel: 'Lottery Licence', urlKey: licenceId, value: '' });
+        }
+      }
     }
 
     return errors;
@@ -1295,30 +1348,46 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       footerCopyValues: footerCopy,
       footerCopyParts: copyPartsByBlock['Footer'] || [],
       copyPartsMap: copyPartsByBlock,
+      footerControls: footerControls,
     });
     if (errs.length) {
       setUrlValidationErrors(errs);
-      // build grouped list for nicer UX (dedupe, prefer friendly footer labels)
-      const groupsMap = new Map();
+      // Build grouped list with contextual hints per item
+      const groupsMap = new Map(); // title -> Map<label, hint>
       errs.forEach(e => {
         const title = e.sectionTitle || e.section || 'Section';
-        let label = e.buttonLabel || e.buttonId;
-        // Normalize footer internal ids to friendly labels
+        let label = e.friendlyLabel || e.buttonLabel || e.buttonId;
+        // Use friendlyLabel directly - it's already correct from validation
         if (title === 'Footer') {
-          const footerMap = {
-            'footer-link-0': 'Rules of Play',
-            'footer-link-1': 'FAQs',
-            'footer-link-2': 'Contact Us',
-            'footer-link-3': 'Privacy Policy',
-            'footer-link-4': 'Contact Us',
-            'footer-link-5': 'Privacy Policy',
-          };
-          label = footerMap[e.buttonId] || label;
+          label = e.friendlyLabel || e.buttonLabel || e.buttonId;
         }
-        if (!groupsMap.has(title)) groupsMap.set(title, new Set());
-        groupsMap.get(title).add(label);
+        // Determine hint
+        let hint = 'Add URL';
+        if (title === 'Footer') {
+          if (label === 'Lottery Licence') hint = 'Enter Licence';
+          else if (label === 'Rules of Play' || label === 'FAQs') hint = 'Upload document';
+          else if (label === 'Contact Us') hint = 'Enter email';
+          else hint = 'Add URL';
+        } else if (label === 'cta-button' || label === 'Learn More') {
+          hint = 'Add URL';
+        }
+        if (!groupsMap.has(title)) groupsMap.set(title, new Map());
+        const inner = groupsMap.get(title);
+        if (!inner.has(label)) inner.set(label, hint);
       });
-      const groups = Array.from(groupsMap.entries()).map(([title, set]) => ({ title, items: Array.from(set) }));
+      const groups = Array.from(groupsMap.entries()).map(([title, inner]) => ({
+        title,
+        items: Array.from(inner.entries()).map(([label, hint]) => ({ label, hint }))
+      }));
+      // Reorder Footer group to show Lottery Licence first
+      groups.forEach((g) => {
+        if (g.title === 'Footer') {
+          const licence = g.items.find((it) => it.label === 'Lottery Licence');
+          if (licence) {
+            g.items = [licence, ...g.items.filter((it) => it.label !== 'Lottery Licence')];
+          }
+        }
+      });
       setUrlValidationGroups(groups);
       setUrlValidationOpen(true);
       return;
@@ -2041,9 +2110,9 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       <Dialog open={urlValidationOpen} onOpenChange={setUrlValidationOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Missing or invalid URLs</DialogTitle>
+            <DialogTitle>Missing or invalid data</DialogTitle>
             <DialogDescription>
-              Some buttons don’t have a valid URL. Please add a URL before submitting to production.
+              Some buttons don’t have a valid information. Please add it before submitting to production.
             </DialogDescription>
           </DialogHeader>
 
@@ -2052,8 +2121,11 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
               <div key={i} className="text-sm">
                 <div className="text-xs uppercase text-gray-500 tracking-wide">{g.title}</div>
                 <div className="ml-1 space-y-1">
-                  {g.items.map((label, idx) => (
-                    <div key={idx} className="font-medium">{label === 'cta-button' ? 'Learn More' : label}</div>
+                  {g.items.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between">
+                      <div className="font-medium">{(item.label === 'cta-button' ? 'Learn More' : item.label)}</div>
+                      <div className="text-xs text-gray-500">{item.hint}</div>
+                    </div>
                   ))}
                 </div>
               </div>

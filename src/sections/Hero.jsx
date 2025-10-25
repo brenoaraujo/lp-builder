@@ -33,16 +33,18 @@ export function HeroA({ preview = false, raffleType = null }) {
               >
                 Be the change and enter for a chance to win!
               </h1>
-              <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]} raffleType={raffleType} forceRender={!!raffleType}>
               <div className="flex flex-col" data-display="true" data-label="Jackpot">
-                <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4" data-copy data-label="Jackpot Headline">
-                  Winner's Estimated Take Home Prize
-                </span>
-                <span className="text-Colors-foreground text-7xl font-bold font-numbers text-left">
-                  $1,346,000
-                </span>
-              </div>
+              <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]} raffleType={raffleType} forceRender={!!raffleType}>
+                
+                  <span className="text-Colors-muted-foreground font-primary text-base text-left mb-4" data-copy data-label="Jackpot Headline">
+                    Winner's Estimated Take Home Prize
+                  </span>
+                  <span className="text-Colors-foreground text-7xl font-bold font-numbers text-left">
+                    $1,346,000
+                  </span>
+                
               </RaffleRuleWrapper>
+              </div>
             </div>
 
             {/* Countdown (toggleable) */}
@@ -98,7 +100,7 @@ export function HeroA({ preview = false, raffleType = null }) {
 
         {/* Price points (toggleable group) */}
         <div
-          
+
           data-label="Price Points"
           data-id="price-points"
           className="w-full max-w-[1280px] rounded-lg flex flex-col items-center gap-8"
@@ -188,61 +190,67 @@ export function HeroB({ preview = false, raffleType = null }) {
   const backgroundImage = `var(--hero-background-image, url(${imagePath}))`;
 
   return (
-    <section data-section="hero" className="p-6 h-full" data-image="hero-image" data-size="1920×1080" data-default-image="/images/img-hero-full-light.png" style={{ backgroundColor: 'var(--colors-background)', backgroundImage, backgroundSize: "contain", backgroundPosition: "top center",  backgroundRepeat: "no-repeat" }}>
-      <div className="w-[1440px] py-24  inline-flex flex-col justify-start items-center gap-4 overflow-hidden mt-120 ">
-        <div className="w-full h-full max-w-[1280px] inline-flex justify-start items-center gap-6" >
-          <div className="w-full inline-flex flex-col justify-start items-center ">
-            <div className="self-stretch flex flex-col justify-start items-center gap-2">
+    <section data-section="hero" className=" w-full" >
+      {/* Hero Header */}
+      <div className="w-[1440px]" data-image="hero-image" data-size="1920×1080" data-default-image="/images/img-hero-full-light.png" style={{ backgroundColor: 'var(--colors-background)', backgroundImage, backgroundSize: "cover", backgroundPosition: "center center", backgroundRepeat: "no-repeat" }}>
+        <div className="w-[1440px] pt-24 mt-170 inline-flex flex-col justify-start items-center gap-4 overflow-hidden " >
+          <div className="absolute bottom-115 left-0 w-full h-3/10 z-0" style={{ backgroundImage: 'linear-gradient(to top, var(--colors-background) 50%, transparent)' }}></div>
+          <div className="w-full h-full max-w-[1280px] inline-flex justify-start items-center gap-6 relative z-10" >
+            <div className="w-full inline-flex flex-col justify-start items-center ">
               <div className="self-stretch flex flex-col justify-start items-center gap-2">
-                <div
-                  data-copy="true"
-                  data-copy-id="hero-headline"
-                  data-label="Headline"
-                  data-maxchars="60"
-                  className="self-stretch text-center justify-center text-Colors-foreground text-4xl font-bold font-headline leading-[48px]"
-                >
-                  Be the change and enter for a chance to win!
-                </div>
-              </div>
-            </div>
-            <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]} raffleType={raffleType} forceRender={!!raffleType}>
-            {!preview && (
-              <div className="flex flex-col justify-center items-center" data-display="false" data-label="Jackpot">
-                <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal" data-copy data-label="Jackpot Headline">
-                  Winner's Estimated Take Home Prize
-                </div>
-                <div className="justify-start text-Colors-foreground text-7xl font-bold font-numbers ">
-                  $1,346,000
-                </div>
-              </div>
-            )}
-          </RaffleRuleWrapper>
-            {/* Countdown */}
-            <div
-              data-position="left"
-              data-style="no-box"
-              data-display="true"
-              data-label="Countdown"
-              className="py-3  rounded-md flex flex-col justify-center items-center gap-2"
-            >
-              <div className="justify-center text-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
-                Grand Prize Deadline: Mar 14, 6pm
-              </div>
-              <div className="inline-flex justify-start items-center gap-2">
-                {COUNTDOWN.map(({ v, l }, i) => (
-                  <div key={i} className="w-14 inline-flex flex-col justify-center items-center">
-                    <div className="self-stretch h-7 text-center justify-center text-Colors-foreground text-2xl font-bold font-primary leading-snug">
-                      {v}
-                    </div>
-                    <div className="self-stretch h-5 text-center justify-center text-Colors-muted-foreground text-xs font-normal font-primary leading-tight">
-                      {l}
-                    </div>
+                <div className="self-stretch flex flex-col justify-start items-center gap-2">
+                  <div
+                    data-copy="true"
+                    data-copy-id="hero-headline"
+                    data-label="Headline"
+                    data-maxchars="60"
+                    className="self-stretch text-center justify-center text-Colors-foreground text-4xl font-bold font-headline leading-[48px] mb-6"
+                  >
+                    Be the change and enter for a chance to win!
                   </div>
-                ))}
+                </div>
               </div>
-            </div>
+              <div className="flex flex-col justify-center items-center" data-display="false" data-label="Jackpot">
+                <RaffleRuleWrapper hideFor={["Sweepstakes", "Prize Raffle"]} raffleType={raffleType} forceRender={!!raffleType}>
+                  {!preview && (
+                    <>
+                      <div className="justify-start text-Colors-muted-foreground text-base font-normal font-primary leading-normal" data-copy data-label="Jackpot Headline">
+                        Winner's Estimated Take Home Prize
+                      </div>
+                      <div className="justify-start text-Colors-foreground text-7xl font-bold font-numbers ">
+                        $1,346,000
+                      </div>
+                    </>
+                  )}
+                </RaffleRuleWrapper>
+              </div>
 
-            {/* CTA 
+              {/* Countdown */}
+              <div
+                data-position="left"
+                data-style="no-box"
+                data-display="true"
+                data-label="Countdown"
+                className="py-3  rounded-md flex flex-col justify-center items-center gap-2"
+              >
+                <div className="justify-center text-Colors-muted-foreground text-sm font-normal font-primary leading-tight">
+                  Grand Prize Deadline: Mar 14, 6pm
+                </div>
+                <div className="inline-flex justify-start items-center gap-2">
+                  {COUNTDOWN.map(({ v, l }, i) => (
+                    <div key={i} className="w-14 inline-flex flex-col justify-center items-center">
+                      <div className="self-stretch h-7 text-center justify-center text-Colors-foreground text-2xl font-bold font-primary leading-snug">
+                        {v}
+                      </div>
+                      <div className="self-stretch h-5 text-center justify-center text-Colors-muted-foreground text-xs font-normal font-primary leading-tight">
+                        {l}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA 
             <div
               data-show-left-icon="false"
               data-display="true"
@@ -258,12 +266,34 @@ export function HeroB({ preview = false, raffleType = null }) {
                 Buy Tickets
               </div>
             </div>*/}
+            </div>
           </div>
         </div>
 
+      </div>
+      {/* Price Points */}
+      <div className="w-[1440px] pb-24 pt-10 inline-flex flex-col justify-start items-center gap-4 overflow-hidden  relative z-10  ">
+        <div
+
+          data-label="Price Points"
+          data-id="price-points"
+          className="pb-6"
+        >
+          <h2
+            data-display="true"
+            className="text-Colors-foreground text-2xl font-bold text-center font-headline"
+            data-copy="true"
+            data-copy-id="pp-headline"
+            data-label="Price Points Headline"
+            data-max-chars="130"
+          >
+            Buy your tickets today!
+          </h2>
+
+        </div>
         {/* Price Points */}
         <div
-          
+
           data-label="Price Points"
           data-id="price-points"
           data-item-1="true"
@@ -277,16 +307,6 @@ export function HeroB({ preview = false, raffleType = null }) {
           data-type="horizontal"
           className="w-full max-w-[1280px] rounded-lg flex flex-col justify-start items-center gap-8"
         >
-          <div
-            data-copy="true"
-            data-copy-id="pp-headline"
-            data-label="Price Points Headline"
-            data-max-chars="130"
-            data-display="true"
-            className="self-stretch text-center justify-start text-Colors-foreground text-2xl font-bold font-primary"
-          >
-            Buy your tickets today!
-          </div>
 
           <div className="self-stretch inline-flex justify-start items-center gap-4">
             {/* Card 1 – highlighted */}
@@ -299,11 +319,11 @@ export function HeroB({ preview = false, raffleType = null }) {
               data-ticket-label="true"
               className="flex-1 h-64 p-5 relative bg-Colors-secondary rounded-lg outline outline-1 outline-offset-[-1px] outline-PP-Colors-border inline-flex flex-col justify-center items-center gap-8"
             >
-              
-                <div className="px-2.5 py-0.5 absolute -top-2 bg-Colors-alt-foreground rounded-lg text-Colors-alt-background text-md font-medium font-primary">
-                  Best Value
-                </div>
-              
+
+              <div className="px-2.5 py-0.5 absolute -top-2 bg-Colors-alt-foreground rounded-lg text-Colors-alt-background text-md font-medium font-primary">
+                Best Value
+              </div>
+
 
               <div className="self-stretch flex flex-col justify-start items-center">
                 <div className="self-stretch text-center justify-start text-Colors-secondary-foreground text-3xl font-bold font-primary">
@@ -382,6 +402,8 @@ export function HeroB({ preview = false, raffleType = null }) {
           </div>
         </div>
       </div>
+
     </section>
+
   );
 }

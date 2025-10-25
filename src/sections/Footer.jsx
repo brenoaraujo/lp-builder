@@ -14,7 +14,7 @@ function FooterPrimitive({ data }) {
     brandName = "Brand Name",
     charityName = "",
     charityLogo = "",
-    brandLicense = "RAF#1439950",
+    brandLicense = "",
     links = [
       "About Us",
       "Rules of Play",

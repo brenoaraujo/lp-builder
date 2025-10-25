@@ -19,7 +19,8 @@ import { WinnersA, WinnersB } from "../sections/Winners.jsx";
 import { FeatureA, FeatureB, FeatureC } from "../sections/Feature.jsx";
 
 import AutoScaler from "../components/AutoScaler.jsx";
-import LogoUpload from "../components/LogoUpload.jsx";
+// Switched to compact image uploads for logo and favicon
+import ImageUpload from "../components/ImageUpload.jsx";
 import ImageManager from "../components/ImageManager.jsx";
 
 // [KEEP] theme helpers
@@ -953,13 +954,29 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                     onChange={(e) => handleCharityNameChange(e.target.value)}
                                                 />
                                             </div>
-                                            <LogoUpload
-                                                value={charityInfo.charityLogo}
-                                                onChange={(url) => setCharityInfo(prev => ({ ...prev, charityLogo: url }))}
-                                                label="Logo"
-                                                size="sm"
-                                                description="Upload your charity logo or enter a URL"
-                                            />
+                                            <div className="grid grid-cols-2 gap-4 items-start">
+                                                <div className="space-y-1">
+                                                    <label className="text-sm font-medium text-muted-foreground">Logo</label>
+                                                    <div className="text-[11px] text-muted-foreground">Simple uploader</div>
+                                                    <ImageUpload
+                                                        imageId="charity-logo"
+                                                        currentImageUrl={charityInfo.charityLogo}
+                                                        onImageChange={(_, url) => setCharityInfo(prev => ({ ...prev, charityLogo: url }))}
+                                                        compact
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <label className="text-sm font-medium text-muted-foreground">Favicon</label>
+                                                    <div className="text-[11px] text-muted-foreground">32x32 recommended</div>
+                                                    <ImageUpload
+                                                        imageId="charity-favicon"
+                                                        currentImageUrl={charityInfo.charityFavicon}
+                                                        onImageChange={(_, url) => setCharityInfo(prev => ({ ...prev, charityFavicon: url }))}
+                                                        compact
+                                                    />
+                                                </div>
+                                            </div>
 
                                             <div className="space-y-2">
                                                 <Label htmlFor="charitySite" className="text-muted-foreground">Website</Label>
