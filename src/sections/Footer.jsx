@@ -50,28 +50,28 @@ function FooterPrimitive({ data }) {
               We accept
             </div>
             {/* Payment icons */}
-            <div className="w-8 h-6 flex items-center justify-center">
+            <div className="w-8 h-6 flex items-center justify-center" data-display="true" data-label="Visa" data-id="pay-visa" data-payment="true">
               <img src="/icons/visa.svg" alt="Visa" className="h-full w-auto" />
             </div>
-            <div className="w-8 h-6 flex items-center justify-center">
+            <div className="w-8 h-6 flex items-center justify-center" data-display="true" data-label="Visa Debit" data-id="pay-visa-debit" data-payment="true">
               <img src="/icons/visa-debit.svg" alt="Visa Debit" className="h-full w-auto" />
             </div>
-            <div className="w-8 h-6 flex items-center justify-center">
+            <div className="w-8 h-6 flex items-center justify-center" data-display="true" data-label="Mastercard" data-id="pay-mastercard" data-payment="true">
               <img src="/icons/master.svg" alt="Mastercard" className="h-full w-auto" />
             </div>
-            <div className="w-8 h-6 flex items-center justify-center">
+            <div className="w-8 h-6 flex items-center justify-center" data-display="true" data-label="Mastercard Debit" data-id="pay-mastercard-debit" data-payment="true">
               <img src="/icons/master-debit.svg" alt="Mastercard Debit" className="h-full w-auto" />
             </div>
-            <div className="w-8 h-6 flex items-center justify-center">
+            <div className="w-8 h-6 flex items-center justify-center" data-display="true" data-label="Apple Pay" data-id="pay-apple-pay" data-payment="true">
               <img src="/icons/apple-pay.svg" alt="Apple Pay" className="h-full w-auto" />
             </div>
-            <div className="w-8 h-6 flex items-center justify-center">
+            <div className="w-8 h-6 flex items-center justify-center" data-display="true" data-label="American Express" data-id="pay-amex" data-payment="true">
               <img src="/icons/amex.svg" alt="American Express" className="h-full w-auto" />
             </div>
-            <div className="w-8 h-6 flex items-center justify-center">
+            <div className="w-8 h-6 flex items-center justify-center" data-display="true" data-label="Discover" data-id="pay-discover" data-payment="true">
               <img src="/icons/discover.svg" alt="Discover" className="h-full w-auto" />
             </div>      
-            <div className="w-8 h-6 flex items-center justify-center">
+            <div className="w-8 h-6 flex items-center justify-center" data-display="true" data-label="Maestro" data-id="pay-maestro" data-payment="true">
               <img src="/icons/maestro.svg" alt="Maestro" className="h-full w-auto" />
             </div>
           </div>
@@ -127,7 +127,7 @@ function FooterPrimitive({ data }) {
                 {charityName || brandName}
               </div>
               <div className="justify-start text-Colors-foreground text-sm font-normal leading-tight"  >
-                Lottery Licence : <span className="font-bold" data-copy="yes" data-label="Lottery Licence">{brandLicense}</span>
+                Lottery Licence : <span className="font-bold" data-copy="yes" data-display="yes" data-label="Lottery Licence">{brandLicense}</span>
               </div>
             </div>
             <div className="w-72 flex flex-col justify-start items-start gap-3" >

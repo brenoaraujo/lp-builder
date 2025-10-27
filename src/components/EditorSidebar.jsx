@@ -236,6 +236,41 @@ const isCopyVisible = (copyItem) => {
 // Filtered copy list used by the "Copy" panel
 const visibleCopyList = Array.isArray(copyList) ? copyList.filter((p) => isCopyVisible(p)) : [];
 
+// Split discovered parts into payment and regular parts
+const paymentParts = partList.filter(p => String(p.id).startsWith('pay-'));
+const regularParts = partList.filter(p => !String(p.id).startsWith('pay-'));
+
+// Helper mapping for payment icons
+const mapPaymentToIcon = (p) => {
+  const id = String(p.id || '').toLowerCase();
+  const label = String(p.label || '').toLowerCase();
+  const key = id || label;
+  const iconFor = {
+    'pay-visa': '/icons/visa.svg',
+    'pay-visa-debit': '/icons/visa-debit.svg',
+    'pay-master': '/icons/master.svg',
+    'pay-mastercard': '/icons/master.svg',
+    'pay-mastercard-debit': '/icons/master-debit.svg',
+    'pay-amex': '/icons/amex.svg',
+    'pay-american-express': '/icons/amex.svg',
+    'pay-discover': '/icons/discover.svg',
+    'pay-maestro': '/icons/maestro.svg',
+    'pay-apple-pay': '/icons/apple-pay.svg',
+  };
+  // fallback by label contains
+  const src = iconFor[key] ||
+    (label.includes('visa debit') ? '/icons/visa-debit.svg' :
+     label.includes('visa') ? '/icons/visa.svg' :
+     label.includes('mastercard debit') ? '/icons/master-debit.svg' :
+     label.includes('master') ? '/icons/master.svg' :
+     label.includes('american') || label.includes('amex') ? '/icons/amex.svg' :
+     label.includes('discover') ? '/icons/discover.svg' :
+     label.includes('maestro') ? '/icons/maestro.svg' :
+     label.includes('apple') ? '/icons/apple-pay.svg' : '/icons/visa.svg');
+  const title = p.label || 'Payment';
+  return { src, title };
+};
+
 // Order copy list to pair copy inputs with their action URLs
 const orderedCopyList = (() => {
   const regular = [];
@@ -375,11 +410,39 @@ const orderedCopyList = (() => {
               {/* Display toggles */}
               {!hideVariantPicker && (<Separator className="my-3" />)}
 
-              <div className="mb-4">
+              {/* Payment Icons Group */}
+              {paymentParts.length > 0 && (
+                <div className="my-6">
+                  <div className="text-xs font-semibold text-gray-500 mb-2">Accepted Payments</div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {paymentParts.map(p => {
+                      const checked = getControlChecked(p);
+                      const { src, title } = mapPaymentToIcon(p);
+                      return (
+                        <button 
+                          key={p.id} 
+                          type="button" 
+                          title={title}
+                          onClick={() => !approvedMode && onTogglePartFromSidebar(p.id, !checked)}
+                          className={[
+                            'h-9 flex items-center justify-center rounded border bg-white hover:bg-gray-50',
+                            checked ? 'opacity-100' : 'opacity-40'
+                          ].join(' ')}
+                        >
+                          <img src={src} alt={title} className="h-5 w-auto"/>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              <Separator className="my-3" />
+
+              <div className="my-6">
                 <div className="text-xs font-semibold text-gray-500 mb-2">Display Sections</div>
                 <div className="space-y-2">
-                  {partList.length > 0 ? (
-                    partList.map((p) => {
+                  {regularParts.length > 0 ? (
+                    regularParts.map((p) => {
                       const checked = getControlChecked(p);               // ✅ uses default when undefined
                       if (!checked && p.hideSwitchWhenHidden) return null;
 

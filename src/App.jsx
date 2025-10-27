@@ -1252,7 +1252,10 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
           if (!id || !id.endsWith('-action')) return;
           const baseId = id.slice(0, -7);
           const buttonVisible = displayCtrls[baseId] !== false; // default visible
-          if (!buttonVisible) return;
+          if (!buttonVisible) {
+            console.log(`Skipping validation for hidden element: ${baseId}`);
+            return;
+          }
           const url = copy[id]; // may be undefined/empty
           const rawLabel = copy[baseId] || '';
           const displayLabel = rawLabel || (baseId === 'cta-button' ? 'Learn More' : baseId);
@@ -1322,7 +1325,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         }
       });
 
-      // 3b) Validate Lottery Licence presence (non-empty)
+      // 3b) Validate Lottery Licence presence (non-empty) - only if visible
       const licenceId = 'Lottery Licence';
       const hasLicencePart = footerCopyParts.some((p) => {
         const id = p?.id || '';
@@ -1330,9 +1333,13 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         return id === licenceId || label.includes('lottery licence') || label.includes('lottery license');
       });
       if (hasLicencePart) {
-        const licenceValue = typeof footerCopyValues[licenceId] === 'string' ? footerCopyValues[licenceId].trim() : '';
-        if (!licenceValue) {
-          errors.push({ section: 'Footer', sectionTitle: 'Footer', buttonId: 'lottery-licence', buttonLabel: 'Lottery Licence', friendlyLabel: 'Lottery Licence', urlKey: licenceId, value: '' });
+        // Check if Lottery Licence is visible (respect display toggles)
+        const licenceVisible = footerControls && footerControls[licenceId] !== false; // default visible
+        if (licenceVisible) {
+          const licenceValue = typeof footerCopyValues[licenceId] === 'string' ? footerCopyValues[licenceId].trim() : '';
+          if (!licenceValue) {
+            errors.push({ section: 'Footer', sectionTitle: 'Footer', buttonId: 'lottery-licence', buttonLabel: 'Lottery Licence', friendlyLabel: 'Lottery Licence', urlKey: licenceId, value: '' });
+          }
         }
       }
     }
