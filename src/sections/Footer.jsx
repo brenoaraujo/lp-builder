@@ -126,8 +126,8 @@ function FooterPrimitive({ data }) {
               <div className="justify-start text-Colors-foreground text-xl font-bold leading-relaxed font-headline"  >
                 {charityName || brandName}
               </div>
-              <div className="justify-start text-Colors-foreground text-sm font-normal leading-tight"  >
-                Lottery Licence : <span className="font-bold" data-copy="yes" data-display="yes" data-label="Lottery Licence">{brandLicense}</span>
+              <div className="justify-start text-Colors-foreground text-sm font-normal leading-tight" data-display="yes" data-label="Lottery Licence"  >
+                Lottery Licence : <span className="font-bold" data-copy="yes" data-label="Lottery Licence"  >{brandLicense}</span>
               </div>
             </div>
             <div className="w-72 flex flex-col justify-start items-start gap-3" >
