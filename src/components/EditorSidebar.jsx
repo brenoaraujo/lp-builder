@@ -412,6 +412,7 @@ const orderedCopyList = (() => {
 
               {/* Payment Icons Group */}
               {paymentParts.length > 0 && (
+                <>
                 <div className="my-6">
                   <div className="text-xs font-semibold text-gray-500 mb-2">Accepted Payments</div>
                   <div className="grid grid-cols-4 gap-2">
@@ -435,8 +436,10 @@ const orderedCopyList = (() => {
                     })}
                   </div>
                 </div>
+                <Separator className="my-3" />
+                </>
               )}
-              <Separator className="my-3" />
+              
 
               <div className="my-6">
                 <div className="text-xs font-semibold text-gray-500 mb-2">Display Sections</div>
@@ -619,7 +622,7 @@ const orderedCopyList = (() => {
                               }
                             }}
                             className="w-full rounded-md border p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Customer Service Email"
+                            placeholder={p.placeholder || `Up to ${max} characters`}
                             readOnly={approvedMode}
                           />
                         ) : null}

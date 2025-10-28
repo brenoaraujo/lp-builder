@@ -1347,7 +1347,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     return errors;
   }
 
-  const submitViaEmail = async () => {
+  const handleFinishAndHandoff = () => {
     // Validate button URLs for visible buttons across overrides, blocks and footer
     const errs = validateActionUrls({
       overrides: overridesBySectionRef.current,
@@ -1357,7 +1357,9 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       copyPartsMap: copyPartsByBlock,
       footerControls: footerControls,
     });
+    
     if (errs.length) {
+      // Show validation modal
       setUrlValidationErrors(errs);
       // Build grouped list with contextual hints per item
       const groupsMap = new Map(); // title -> Map<label, hint>
@@ -1397,8 +1399,13 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       });
       setUrlValidationGroups(groups);
       setUrlValidationOpen(true);
-      return;
+    } else {
+      // All fields valid - open Submit to Production modal
+      setApproveOpen(true);
     }
+  };
+
+  const submitViaEmail = async () => {
     try {
       const snapshot = {
         blocks, globalTheme,
@@ -1718,7 +1725,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
                 {/*} <ThemePopover globalTheme={globalTheme} setGlobalTheme={setGlobalTheme} />
                 <Button variant="outline" onClick={resetThemeInApp} className="text-gray-500">Reset</Button>*/}
                 <Button variant="outline" onClick={share} className="text-gray-500">Share</Button>
-                <Button className="bg-[#0099EB] hover:bg-[#0088d3] cursor-pointer" onClick={() => setApproveOpen(true)}>Finish &amp; handoff</Button>
+                <Button className="bg-[#0099EB] hover:bg-[#0088d3] cursor-pointer" onClick={handleFinishAndHandoff}>Finish &amp; handoff</Button>
               </>
             ) : (
               <>

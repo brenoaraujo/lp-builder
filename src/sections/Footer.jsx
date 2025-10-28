@@ -195,7 +195,12 @@ function FooterPrimitive({ data }) {
                   <div
                     key={`metadata-${i}`}
                     data-copy="true"
-                    data-placeholder={`${t} Url`}
+                    data-placeholder={
+                      t === "Contact Us" ? "customer-service-email@domain.com" :
+                      t === "Privacy Policy" ? "http://domain.com/privacy-policy" :
+                      `${t} Url`
+                    }
+                    
                     data-id={`footer-link-${i}-action`}
                     data-control-id={`footer-link-${i}`}
                     data-max-chars="200"
@@ -238,5 +243,4 @@ export function FooterB({ data }) {
     </div>
   );
 }
-
 
