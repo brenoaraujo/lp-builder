@@ -19,10 +19,10 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 function mapStatus(invite) {
   const s = invite?.status;
   if (s === "void") return "Void";
-  if (s === "submitted" || s === "handed_off") return "Submitted";
+  if (s === "handed_off") return "Handed Off";
   if (s === "in_progress") return "In Progress";
   const started = !!(invite?.onboarding_json && Object.keys(invite.onboarding_json).length);
-  return started ? "Onboarding" : "Invited";
+  return started ? "In Progress" : "Invited";
 }
 
 function safeEntries(obj) {

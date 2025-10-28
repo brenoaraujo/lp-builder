@@ -22,7 +22,7 @@ const badgeVariants = cva(
         submitted:
           "border-transparent bg-green-100 text-green-800 hover:bg-green-200",
         handed_off:
-          "border-transparent bg-purple-100 text-purple-800 hover:bg-purple-200",
+          "border-transparent bg-green-100 text-green-800 hover:bg-green-200",
         void:
           "border-transparent bg-gray-100 text-gray-800 hover:bg-gray-200",
       },

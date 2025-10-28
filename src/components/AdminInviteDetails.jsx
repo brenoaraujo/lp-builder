@@ -77,7 +77,6 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
     switch (status) {
       case 'invited': return 'invited';
       case 'in_progress': return 'in_progress';
-      case 'submitted': return 'submitted';
       case 'handed_off': return 'handed_off';
       case 'void': return 'void';
       default: return 'default';
@@ -257,7 +256,7 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                     {key.replace(/([A-Z])/g, ' $1').trim()}
                   </TableHead>
                   <TableCell>
-                    <Badge variant={value ? "submitted" : "void"} className="text-xs">
+                    <Badge variant={value ? "in_progress" : "void"} className="text-xs">
                       {value ? 'Visible' : 'Hidden'}
                     </Badge>
                   </TableCell>

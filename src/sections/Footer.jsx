@@ -196,8 +196,8 @@ function FooterPrimitive({ data }) {
                     key={`metadata-${i}`}
                     data-copy="true"
                     data-placeholder={
-                      t === "Contact Us" ? "customer-service-email@domain.com" :
-                      t === "Privacy Policy" ? "http://domain.com/privacy-policy" :
+                      t === "Contact Us" ? "Customer Service Email" :
+                      t === "Privacy Policy" ? "Privacy Policy URL" :
                       `${t} Url`
                     }
                     

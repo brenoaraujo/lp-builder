@@ -2279,15 +2279,15 @@ export function AppRouterShell() {
         return null;
       }
     } else if (route.startsWith("/app")) {
-      // Show builder if status is 'submitted' or 'handed_off'
-      if (inviteRow.status === 'submitted' || inviteRow.status === 'handed_off') {
+      // Show builder if status is 'in_progress' or 'handed_off'
+      if (inviteRow.status === 'in_progress' || inviteRow.status === 'handed_off') {
         return (
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <MainBuilder inviteToken={inviteToken} inviteRow={inviteRow} />
           </ThemeProvider>
         );
       } else {
-        // Redirect to onboarding if not yet submitted
+        // Redirect to onboarding if not yet in progress
         window.location.hash = `#/onboarding?invite=${inviteToken}`;
         return null;
       }

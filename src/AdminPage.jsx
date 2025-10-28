@@ -130,23 +130,20 @@ export default function AdminPage() {
 
   const getDisplayStatus = (invite) => {
     const s = invite?.status;
-    if (s === 'void') return 'Void';
     if (s === 'handed_off') return 'Handed Off';
-    if (s === 'submitted') return 'Submitted';
     if (s === 'in_progress') return 'In Progress';
-    // invited or unknown → check if onboarding started
-    return hasStartedOnboarding(invite) ? 'Onboarding' : 'Invited';
+    // invited or unknown → if onboarding started but status not updated yet, show In Progress
+    return hasStartedOnboarding(invite) ? 'In Progress' : 'Invited';
   };
 
-  const getStatusVariant = (status) => {
-    switch (status) {
-      case 'invited': return 'invited';
-      case 'in_progress': return 'in_progress';
-      case 'submitted': return 'submitted';
-      case 'handed_off': return 'handed_off';
-      case 'void': return 'void';
-      default: return 'default';
-    }
+  const getStatusVariant = (invite) => {
+    const s = invite?.status;
+    if (s === 'handed_off') return 'handed_off';
+    if (s === 'in_progress') return 'in_progress';
+    // If onboarding started but status not updated yet, still show In Progress color
+    if (hasStartedOnboarding(invite)) return 'in_progress';
+    if (s === 'invited') return 'invited';
+    return 'default';
   };
 
   // Action handlers
@@ -392,7 +389,6 @@ export default function AdminPage() {
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="invited">Invited</SelectItem>
               <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="submitted">Submitted</SelectItem>
               <SelectItem value="handed_off">Handed Off</SelectItem>
               <SelectItem value="void">Void</SelectItem>
             </SelectContent>
@@ -441,7 +437,7 @@ export default function AdminPage() {
                       </TableCell>
                       <TableCell>{getRaffleType(invite)}</TableCell>
                       <TableCell>
-                        <Badge variant={getStatusVariant(invite.status)}>
+                        <Badge variant={getStatusVariant(invite)}>
                           {getDisplayStatus(invite)}
                         </Badge>
                       </TableCell>

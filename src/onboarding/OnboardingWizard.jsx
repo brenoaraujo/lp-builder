@@ -873,7 +873,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                 overrides_json: overridesBySection,
                 // IMPORTANT: Copy images from onboarding to main app
                 images_json: images,
-                status: 'submitted'
+                status: 'in_progress'
             });
 
             // Manual Notion sync to reflect the new status immediately
