@@ -334,53 +334,20 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
           <ScrollArea className="h-[calc(100vh-120px)]">
             <div className="py-6">
               <Accordion type="multiple" defaultValue={[]} className="space-y-2">
-                {/* Invite Section */}
-                <AccordionItem value="invite">
-                  <AccordionTrigger>Invite</AccordionTrigger>
+                {/* Campaign Status */}
+                <AccordionItem value="status">
+                  <AccordionTrigger>Campaign Status</AccordionTrigger>
                   <AccordionContent>
                     <Table>
                       <TableBody>
-                        <TableRow
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => copyToClipboard(charityInfo.submitterName || invite.contact_name, 'Contact Name')}
-                        >
-                          <TableHead className="w-[160px]">Contact Name</TableHead>
+                        <TableRow>
+                          <TableHead className="w-[160px]">Status</TableHead>
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span>{charityInfo.submitterName || invite.contact_name}</span>
-                              <Copy className="w-3 h-3 text-muted-foreground" />
-                            </div>
+                            <Badge variant={getStatusVariant(invite.status)}>
+                              {invite.status}
+                            </Badge>
                           </TableCell>
                         </TableRow>
-                        <TableRow
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => copyToClipboard(invite.contact_email, 'Contact Email')}
-                        >
-                          <TableHead>Contact Email</TableHead>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <span>{invite.contact_email}</span>
-                              <Copy className="w-3 h-3 text-muted-foreground" />
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        {/*<TableRow>
-                      <TableHead>Invite Token</TableHead>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <code className="text-sm bg-muted px-2 py-1 rounded flex-1">
-                            {invite.public_token}
-                          </code>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => copyToClipboard(invite.public_token, 'Token')}
-                          >
-                            <Copy className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>*/}
                         <TableRow>
                           <TableHead>Created</TableHead>
                           <TableCell>{formatDate(invite.created_at)}</TableCell>
@@ -394,16 +361,39 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* Charity Section */}
+                {/* Charity Information */}
                 <AccordionItem value="charity">
-                  <AccordionTrigger>Logo</AccordionTrigger>
+                  <AccordionTrigger>Charity Information</AccordionTrigger>
                   <AccordionContent>
                     <Table>
                       <TableBody>
-
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => copyToClipboard(charityInfo.charityName || invite.charity_name, 'Charity Name')}
+                        >
+                          <TableHead className="w-[160px]">Charity Name</TableHead>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span>{charityInfo.charityName || invite.charity_name || 'Not specified'}</span>
+                              <Copy className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => copyToClipboard(charityInfo.charitySite, 'Website')}
+                        >
+                          <TableHead>Website</TableHead>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span>{charityInfo.charitySite || 'Not specified'}</span>
+                              {charityInfo.charitySite && <Copy className="w-3 h-3 text-muted-foreground" />}
+                            </div>
+                          </TableCell>
+                        </TableRow>
                         {charityInfo.charityLogo && (
                           <TableRow>
-                            <TableHead className="w-[160px]">Logo</TableHead>
+                            <TableHead>Logo</TableHead>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <img
@@ -423,10 +413,9 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                             </TableCell>
                           </TableRow>
                         )}
-
                         {charityInfo.charityFavicon && (
                           <TableRow>
-                            <TableHead className="w-[160px]">Favicon</TableHead>
+                            <TableHead>Favicon</TableHead>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <img
@@ -451,22 +440,14 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* Campaign Section */}
+                {/* Campaign Details */}
                 <AccordionItem value="campaign">
-                  <AccordionTrigger>Campaign</AccordionTrigger>
+                  <AccordionTrigger>Campaign Details</AccordionTrigger>
                   <AccordionContent>
                     <Table>
                       <TableBody>
                         <TableRow>
-                          <TableHead className="w-[160px]">Status</TableHead>
-                          <TableCell>
-                            <Badge variant={getStatusVariant(invite.status)}>
-                              {invite.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableHead>Raffle Type</TableHead>
+                          <TableHead className="w-[160px]">Raffle Type</TableHead>
                           <TableCell>{charityInfo.raffleType || 'Not specified'}</TableCell>
                         </TableRow>
                         <TableRow>
@@ -478,23 +459,47 @@ export default function AdminInviteDetails({ invite, open, onClose }) {
                   </AccordionContent>
                 </AccordionItem>
 
-                {/* Submitter & Ascend Representative Section */}
+                {/* Contact Information */}
                 <AccordionItem value="contacts">
-                  <AccordionTrigger>Contacts</AccordionTrigger>
+                  <AccordionTrigger>Contact Information</AccordionTrigger>
                   <AccordionContent>
                     <Table>
                       <TableBody>
-                        <TableRow>
-                          <TableHead className="w-[200px]">Submitter Name</TableHead>
-                          <TableCell>{charityInfo.submitterName || 'Not specified'}</TableCell>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => copyToClipboard(charityInfo.submitterName || invite.contact_name, 'Submitter Name')}
+                        >
+                          <TableHead className="w-[160px]">Submitter Name</TableHead>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span>{charityInfo.submitterName || invite.contact_name || 'Not specified'}</span>
+                              <Copy className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          </TableCell>
                         </TableRow>
-                        <TableRow>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => copyToClipboard(charityInfo.submitterEmail || invite.contact_email, 'Submitter Email')}
+                        >
                           <TableHead>Submitter Email</TableHead>
-                          <TableCell>{charityInfo.submitterEmail || 'Not specified'}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span>{charityInfo.submitterEmail || invite.contact_email || 'Not specified'}</span>
+                              <Copy className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          </TableCell>
                         </TableRow>
-                        <TableRow>
-                          <TableHead>Ascend Client Services Representative</TableHead>
-                          <TableCell>{charityInfo.ascendRepresentative || 'Not specified'}</TableCell>
+                        <TableRow
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => copyToClipboard(charityInfo.ascendRepresentative, 'Ascend Representative')}
+                        >
+                          <TableHead>Ascend Representative</TableHead>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <span>{charityInfo.ascendRepresentative || 'Not specified'}</span>
+                              {charityInfo.ascendRepresentative && <Copy className="w-3 h-3 text-muted-foreground" />}
+                            </div>
+                          </TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
