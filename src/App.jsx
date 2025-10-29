@@ -1204,7 +1204,35 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
   // Accept http(s), mailto, tel, and plain email for Contact Us (handled below)
   const isValidUrlish = (v) => typeof v === 'string' && /^(https?:|mailto:|tel:)/i.test(v);
 
-  function validateActionUrls({ overrides, blocksList, footerCopyValues, footerCopyParts, copyPartsMap, footerControls }) {
+  // Discover images in a section (mirrors ImageManager logic)
+  function discoverSectionImages(sectionId, controls = {}) {
+    const sectionElement = document.querySelector(`[data-section="${sectionId}"]`);
+    if (!sectionElement) return [];
+
+    // Find all images (same as ImageManager)
+    const childImages = sectionElement.querySelectorAll('[data-image]');
+    const sectionHasImage = sectionElement.hasAttribute('data-image');
+    const imageElements = sectionHasImage ? [sectionElement, ...childImages] : childImages;
+
+    return Array.from(imageElements).map(el => {
+      const id = el.getAttribute('data-image');
+      const label = el.getAttribute('data-label') || id;
+      const controlEl = el.closest('[data-display]');
+      const controlId = controlEl?.getAttribute('data-id') || controlEl?.getAttribute('data-label');
+      
+      // Check visibility (same logic as ImageManager)
+      let isVisible = true;
+      if (controlEl && controlId) {
+        const displayAttr = (controlEl.getAttribute('data-display') || '').toLowerCase();
+        const defaultVisible = displayAttr === 'yes' || displayAttr === 'true' || displayAttr === '1';
+        isVisible = controls.hasOwnProperty(controlId) ? !!controls[controlId] : defaultVisible;
+      }
+      
+      return { id, label, isVisible };
+    }).filter(img => img.isVisible);
+  }
+
+  function validateActionUrls({ overrides, blocksList, footerCopyValues, footerCopyParts, copyPartsMap, footerControls, images }) {
     const errors = [];
 
     // 1) Validate against overrides (used in onboarding/editor for some sections)
@@ -1344,6 +1372,59 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       }
     }
 
+    // 4) Validate images for all sections
+    if (images && typeof images === 'object') {
+      // Validate Navbar images
+      const navbarImages = discoverSectionImages('Navbar', navbarControls || {});
+      const navbarMissingCount = navbarImages.filter(img => !images[img.id]).length;
+      if (navbarMissingCount > 0) {
+        errors.push({ 
+          section: 'Navbar', 
+          sectionTitle: 'Navbar', 
+          type: 'image', 
+          missingCount: navbarMissingCount 
+        });
+      }
+
+      // Validate Footer images
+      const footerImages = discoverSectionImages('Footer', footerControls || {});
+      const footerMissingCount = footerImages.filter(img => !images[img.id]).length;
+      if (footerMissingCount > 0) {
+        errors.push({ 
+          section: 'Footer', 
+          sectionTitle: 'Footer', 
+          type: 'image', 
+          missingCount: footerMissingCount 
+        });
+      }
+
+      // Validate block images
+      if (Array.isArray(blocksList)) {
+        let featureCount = 0;
+        blocksList.forEach((b) => {
+          const typeKey = b?.type || 'section';
+          const displayCtrls = b?.controls || {};
+          const isFeature = String(typeKey).toLowerCase() === 'feature';
+          let sectionTitle = capitalize(typeKey);
+          if (isFeature) {
+            featureCount += 1;
+            sectionTitle = `Extra Content ${featureCount}`;
+          }
+
+          const sectionImages = discoverSectionImages(typeKey, displayCtrls);
+          const missingCount = sectionImages.filter(img => !images[img.id]).length;
+          if (missingCount > 0) {
+            errors.push({ 
+              section: typeKey, 
+              sectionTitle, 
+              type: 'image', 
+              missingCount 
+            });
+          }
+        });
+      }
+    }
+
     return errors;
   }
 
@@ -1356,6 +1437,7 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       footerCopyParts: copyPartsByBlock['Footer'] || [],
       copyPartsMap: copyPartsByBlock,
       footerControls: footerControls,
+      images: images,
     });
     
     if (errs.length) {
@@ -1365,21 +1447,32 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
       const groupsMap = new Map(); // title -> Map<label, hint>
       errs.forEach(e => {
         const title = e.sectionTitle || e.section || 'Section';
-        let label = e.friendlyLabel || e.buttonLabel || e.buttonId;
-        // Use friendlyLabel directly - it's already correct from validation
-        if (title === 'Footer') {
+        let label, hint;
+        
+        // Handle image validation errors
+        if (e.type === 'image') {
+          const count = e.missingCount || 0;
+          label = count === 1 ? '1 image missing' : `${count} images missing`;
+          hint = 'Upload image(s)';
+        } else {
+          // Handle URL validation errors (existing logic)
           label = e.friendlyLabel || e.buttonLabel || e.buttonId;
-        }
-        // Determine hint
-        let hint = 'Add URL';
-        if (title === 'Footer') {
-          if (label === 'Lottery Licence') hint = 'Enter Licence';
-          else if (label === 'Rules of Play' || label === 'FAQs') hint = 'Upload document';
-          else if (label === 'Contact Us') hint = 'Enter email';
-          else hint = 'Add URL';
-        } else if (label === 'cta-button' || label === 'Learn More') {
+          // Use friendlyLabel directly - it's already correct from validation
+          if (title === 'Footer') {
+            label = e.friendlyLabel || e.buttonLabel || e.buttonId;
+          }
+          // Determine hint
           hint = 'Add URL';
+          if (title === 'Footer') {
+            if (label === 'Lottery Licence') hint = 'Enter Licence';
+            else if (label === 'Rules of Play' || label === 'FAQs') hint = 'Upload document';
+            else if (label === 'Contact Us') hint = 'Enter email';
+            else hint = 'Add URL';
+          } else if (label === 'cta-button' || label === 'Learn More') {
+            hint = 'Add URL';
+          }
         }
+        
         if (!groupsMap.has(title)) groupsMap.set(title, new Map());
         const inner = groupsMap.get(title);
         if (!inner.has(label)) inner.set(label, hint);
@@ -1388,6 +1481,50 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
         title,
         items: Array.from(inner.entries()).map(([label, hint]) => ({ label, hint }))
       }));
+      
+      // Define fixed order for validation display
+      const sectionOrder = [
+        'Navbar',
+        'Hero', 
+        'Extra Prizes',
+        'Winners',
+        'Extra Content',
+        'How You Help'
+      ];
+      
+      // Sort groups by the defined order
+      groups.sort((a, b) => {
+        const aIndex = sectionOrder.indexOf(a.title);
+        const bIndex = sectionOrder.indexOf(b.title);
+        
+        // Handle Extra Content sections (Extra Content 1, Extra Content 2, etc.)
+        if (a.title.startsWith('Extra Content') && b.title.startsWith('Extra Content')) {
+          const aNum = parseInt(a.title.replace('Extra Content ', '')) || 0;
+          const bNum = parseInt(b.title.replace('Extra Content ', '')) || 0;
+          return aNum - bNum;
+        }
+        
+        // Handle Footer (always last)
+        if (a.title === 'Footer') return 1;
+        if (b.title === 'Footer') return -1;
+        
+        // Handle Extra Content vs other sections
+        if (a.title.startsWith('Extra Content')) {
+          const extraContentIndex = sectionOrder.indexOf('Extra Content');
+          return extraContentIndex - bIndex;
+        }
+        if (b.title.startsWith('Extra Content')) {
+          const extraContentIndex = sectionOrder.indexOf('Extra Content');
+          return aIndex - extraContentIndex;
+        }
+        
+        // Default ordering
+        if (aIndex === -1 && bIndex === -1) return a.title.localeCompare(b.title);
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+      
       // Reorder Footer group to show Lottery Licence first
       groups.forEach((g) => {
         if (g.title === 'Footer') {

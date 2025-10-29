@@ -335,6 +335,7 @@ export function FeatureC({ blockType = "feature" }) {
                                 data-ratio="73:41"
                                 data-image={blockType === "feature" ? "feature-image" : `${blockType}-image`}
                                 data-size="1000×560"
+                                data-display="yes"
                                 data-default-image="/images/feature.png"
                                 data-label="Feature Image"
                                 className="max-w-[800px] rounded-lg overflow-hidden object-cover bg-Colors-secondary"

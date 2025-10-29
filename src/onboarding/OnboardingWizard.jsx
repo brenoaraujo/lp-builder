@@ -488,7 +488,23 @@ const STEP_CONFIG = {
     },
     charityInfo: {
         type: 'form',
-        completionCheck: (charityInfo) => !!(charityInfo?.charityName && charityInfo?.raffleType),
+        completionCheck: (charityInfo) => !!(
+            charityInfo?.charityName && 
+            charityInfo?.charityName.trim() &&
+            charityInfo?.charityLogo && 
+            charityInfo?.charityLogo.trim() &&
+            charityInfo?.charityFavicon && 
+            charityInfo?.charityFavicon.trim() &&
+            charityInfo?.charitySite && 
+            charityInfo?.charitySite.trim() &&
+            isValidUrl(charityInfo.charitySite) &&
+            charityInfo?.raffleType && 
+            charityInfo?.raffleType.trim() &&
+            charityInfo?.ascendRepresentative && 
+            charityInfo?.ascendRepresentative.trim() &&
+            charityInfo?.campaignLaunchDate && 
+            charityInfo?.campaignLaunchDate.trim()
+        ),
         prerequisites: []
     },
     hero: {
@@ -580,6 +596,26 @@ const normalizeCopyParts = (list) =>
             return id ? { ...p, id } : null;
         })
         .filter(Boolean);
+
+// URL validation helper
+const isValidUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    
+    // Basic length check - URLs should be at least 4 characters (e.g., "a.co")
+    if (url.trim().length < 4) return false;
+    
+    // Add protocol if missing
+    const urlWithProtocol = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+    
+    try {
+        const urlObj = new URL(urlWithProtocol);
+        return (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') && 
+               urlObj.hostname.length >= 3 && // Hostname should be at least 3 characters
+               urlObj.hostname.includes('.'); // Should contain a dot (domain extension)
+    } catch (error) {
+        return false;
+    }
+};
 
 /* =========================================================================
    Main: OnboardingWizard
@@ -946,7 +982,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                         
                                         <div className="space-y-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="charityName" className="text-muted-foreground">Name</Label>
+                                                <Label htmlFor="charityName" className="text-muted-foreground">Name <span className="text-red-500">*</span></Label>
                                                 <Input
                                                     id="charityName"
                                                     placeholder="Enter charity name"
@@ -954,9 +990,22 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                     onChange={(e) => handleCharityNameChange(e.target.value)}
                                                 />
                                             </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="charitySite" className="text-muted-foreground">Website <span className="text-red-500">*</span></Label>
+                                                <Input
+                                                    id="charitySite"
+                                                    placeholder="https://yourcharity.org"
+                                                    value={charityInfo.charitySite}
+                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, charitySite: e.target.value }))}
+                                                    aria-invalid={charityInfo.charitySite && !isValidUrl(charityInfo.charitySite)}
+                                                />
+                                                {charityInfo.charitySite && !isValidUrl(charityInfo.charitySite) && (
+                                                    <p className="text-sm text-red-500">Please enter a valid website URL (e.g., https://yourcharity.org)</p>
+                                                )}
+                                            </div>
                                             <div className="grid grid-cols-2 gap-4 items-start">
                                                 <div className="space-y-1">
-                                                    <label className="text-sm font-medium text-muted-foreground">Logo</label>
+                                                    <label className="text-sm font-medium text-muted-foreground">Logo <span className="text-red-500">*</span></label>
                                                     <div className="text-[11px] text-muted-foreground">Simple uploader</div>
                                                     <ImageUpload
                                                         imageId="charity-logo"
@@ -967,7 +1016,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                 </div>
 
                                                 <div className="space-y-1">
-                                                    <label className="text-sm font-medium text-muted-foreground">Favicon</label>
+                                                    <label className="text-sm font-medium text-muted-foreground">Favicon <span className="text-red-500">*</span></label>
                                                     <div className="text-[11px] text-muted-foreground">32x32 recommended</div>
                                                     <ImageUpload
                                                         imageId="charity-favicon"
@@ -978,15 +1027,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-2">
-                                                <Label htmlFor="charitySite" className="text-muted-foreground">Website</Label>
-                                                <Input
-                                                    id="charitySite"
-                                                    placeholder="https://yourcharity.org"
-                                                    value={charityInfo.charitySite}
-                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, charitySite: e.target.value }))}
-                                                />
-                                            </div>
+                                            
                                         </div>
                                     </div>
 
@@ -999,7 +1040,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                         <div className="space-y-4">
                                            
                                             <div className="space-y-2">
-                                                <Label htmlFor="raffleType" className="text-muted-foreground">Raffle Type</Label>
+                                                <Label htmlFor="raffleType" className="text-muted-foreground">Raffle Type <span className="text-red-500">*</span></Label>
                                                 <Select
                                                     className="w-full"
                                                     value={charityInfo.raffleType || ""}
@@ -1031,7 +1072,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                             </div>
 
                                             <div className="space-y-2 ">
-                                                <Label htmlFor="campaignLaunchDate" className="text-muted-foreground">Launch Date</Label>
+                                                <Label htmlFor="campaignLaunchDate" className="text-muted-foreground">Launch Date <span className="text-red-500">*</span></Label>
                                                 <Input
                                                     id="campaignLaunchDate"
                                                     type="date"
@@ -1043,7 +1084,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
 
                                             
                                             <div className="space-y-2">
-                                                <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Ascend Client Services Representative</Label>
+                                                <Label htmlFor="ascendRepresentative" className="text-muted-foreground">Ascend Client Services Representative <span className="text-red-500">*</span></Label>
                                                 <Input
                                                     id="ascendRepresentative"
                                                     placeholder="Enter full name"
@@ -1055,14 +1096,35 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                     </div>
 
                                  
-                                    <div className="flex gap-3">
-                                        <Button
-                                            onClick={next}
-                                            disabled={!charityInfo.charityName || !charityInfo.raffleType}
-                                        >
-                                            Continue
-                                            <ArrowRight className="ml-2 h-4 w-4" />
-                                        </Button>
+                                    <div className="space-y-3">
+                                        <div className="text-sm text-muted-foreground">
+                                            <span className="text-red-500">*</span> Required fields
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <Button
+                                                onClick={next}
+                                                disabled={!(
+                                                    charityInfo.charityName && 
+                                                    charityInfo.charityName.trim() &&
+                                                    charityInfo.charityLogo && 
+                                                    charityInfo.charityLogo.trim() &&
+                                                    charityInfo.charityFavicon && 
+                                                    charityInfo.charityFavicon.trim() &&
+                                                    charityInfo.charitySite && 
+                                                    charityInfo.charitySite.trim() &&
+                                                    isValidUrl(charityInfo.charitySite) &&
+                                                    charityInfo.raffleType && 
+                                                    charityInfo.raffleType.trim() &&
+                                                    charityInfo.ascendRepresentative && 
+                                                    charityInfo.ascendRepresentative.trim() &&
+                                                    charityInfo.campaignLaunchDate && 
+                                                    charityInfo.campaignLaunchDate.trim()
+                                                )}
+                                            >
+                                                Continue
+                                                <ArrowRight className="ml-2 h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                                 {/* Charity preview*/}
