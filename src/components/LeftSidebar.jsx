@@ -131,6 +131,7 @@ export default function LeftSidebar({
                                     globalColors={globalColors}
                                     staticLayout={true}
                                     inviteRow={inviteRow}
+                                    onUpdateInvite={onUpdateInvite}
                                 />
                             )}
                         </AccordionContent>

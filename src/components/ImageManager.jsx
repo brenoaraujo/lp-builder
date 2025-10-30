@@ -80,17 +80,8 @@ export default function ImageManager({
       });
 
       // Add charity logo for Navbar section if requested
-      if (includeCharityLogo && charityLogo) {
-        const charityLogoImage = {
-          id: 'charity-logo',
-          label: 'Charity Logo',
-          element: null, // No DOM element for this special image
-          controlEl: null,
-          controlId: null,
-          defaultVisible: () => true
-        };
-        foundImages.push(charityLogoImage);
-      }
+      // Note: We don't add it as a separate image - we'll sync it with navbar-logo instead
+      // This keeps the UI clean with only one upload field
 
       setDiscoveredImages(foundImages);
     };
@@ -246,7 +237,7 @@ export default function ImageManager({
             </label>
             <ImageUpload
               imageId={id}
-              currentImageUrl={images[id] || (id === 'charity-logo' ? charityLogo : '')}
+              currentImageUrl={images[id] || (id === 'navbar-logo' && includeCharityLogo ? charityLogo : '')}
               onImageChange={onImageChange}
               compact={compact}
               placeholder={`Upload ${label.toLowerCase()}`}

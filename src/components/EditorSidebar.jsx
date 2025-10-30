@@ -164,6 +164,7 @@ export default function EditorSidebar({
   onSaveNext,
   globalColors = {},
   inviteRow = null,
+  onUpdateInvite = null,
 }) {
 
   // Close on Escape (but don't trigger while typing in inputs/textareas)
@@ -661,7 +662,26 @@ const orderedCopyList = (() => {
                     <ImageManager
                       sectionId={activeBlock?.type}
                       images={images}
-                      onImageChange={onImageChange}
+                      onImageChange={(imageId, imageUrl) => {
+                        // Call the original handler
+                        onImageChange(imageId, imageUrl);
+                        
+                        // Special case: sync navbar-logo with charity logo in onboarding_json
+                        if (imageId === 'navbar-logo' && activeBlock?.type === 'Navbar') {
+                          // Update charity logo in onboarding_json to match navbar logo
+                          if (typeof onUpdateInvite === 'function') {
+                            onUpdateInvite({
+                              onboarding_json: {
+                                ...inviteRow?.onboarding_json,
+                                charityInfo: {
+                                  ...(inviteRow?.onboarding_json?.charityInfo || {}),
+                                  charityLogo: imageUrl
+                                }
+                              }
+                            });
+                          }
+                        }
+                      }}
                       compact={true}
                       mode={mode === "builder" ? "external" : "wrapper"}
                       previewRef={previewRef}

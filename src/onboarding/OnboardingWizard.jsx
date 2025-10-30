@@ -990,19 +990,7 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                     onChange={(e) => handleCharityNameChange(e.target.value)}
                                                 />
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="charitySite" className="text-muted-foreground">Website <span className="text-red-500">*</span></Label>
-                                                <Input
-                                                    id="charitySite"
-                                                    placeholder="https://yourcharity.org"
-                                                    value={charityInfo.charitySite}
-                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, charitySite: e.target.value }))}
-                                                    aria-invalid={charityInfo.charitySite && !isValidUrl(charityInfo.charitySite)}
-                                                />
-                                                {charityInfo.charitySite && !isValidUrl(charityInfo.charitySite) && (
-                                                    <p className="text-sm text-red-500">Please enter a valid website URL (e.g., https://yourcharity.org)</p>
-                                                )}
-                                            </div>
+                                          
                                             <div className="grid grid-cols-2 gap-4 items-start">
                                                 <div className="space-y-1">
                                                     <label className="text-sm font-medium text-muted-foreground">Logo <span className="text-red-500">*</span></label>
@@ -1026,7 +1014,19 @@ export default function OnboardingWizard({ inviteToken, inviteRow, onUpdateInvit
                                                     />
                                                 </div>
                                             </div>
-
+                                            <div className="space-y-2">
+                                                <Label htmlFor="charitySite" className="text-muted-foreground">Website <span className="text-red-500">*</span></Label>
+                                                <Input
+                                                    id="charitySite"
+                                                    placeholder="https://yourcharity.org"
+                                                    value={charityInfo.charitySite}
+                                                    onChange={(e) => setCharityInfo(prev => ({ ...prev, charitySite: e.target.value }))}
+                                                    aria-invalid={charityInfo.charitySite && !isValidUrl(charityInfo.charitySite)}
+                                                />
+                                                {charityInfo.charitySite && !isValidUrl(charityInfo.charitySite) && (
+                                                    <p className="text-sm text-red-500">Please enter a valid website URL (e.g., https://yourcharity.org)</p>
+                                                )}
+                                            </div>
                                             
                                         </div>
                                     </div>
