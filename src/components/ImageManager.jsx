@@ -22,6 +22,8 @@ export default function ImageManager({
   children,
   controls = {},
   onHasImagesChange,
+  includeCharityLogo = false,
+  charityLogo = "",
 }) {
   const [discoveredImages, setDiscoveredImages] = useState([]);
   const sectionRef = useRef(null);
@@ -76,6 +78,19 @@ export default function ImageManager({
         };
         return { id, label, element: el, controlEl, controlId, defaultVisible };
       });
+
+      // Add charity logo for Navbar section if requested
+      if (includeCharityLogo && charityLogo) {
+        const charityLogoImage = {
+          id: 'charity-logo',
+          label: 'Charity Logo',
+          element: null, // No DOM element for this special image
+          controlEl: null,
+          controlId: null,
+          defaultVisible: () => true
+        };
+        foundImages.push(charityLogoImage);
+      }
 
       setDiscoveredImages(foundImages);
     };
@@ -223,7 +238,7 @@ export default function ImageManager({
   return (
     <div ref={sectionRef} className={className}>
       {visibleImages.map(({ id, label, element }) => {
-        const size = element.getAttribute('data-size');
+        const size = element?.getAttribute('data-size');
         return (
           <div key={id} className="mb-4">
             <label className="block text-xs font-medium text-gray-600 mb-2">
@@ -231,7 +246,7 @@ export default function ImageManager({
             </label>
             <ImageUpload
               imageId={id}
-              currentImageUrl={images[id]}
+              currentImageUrl={images[id] || (id === 'charity-logo' ? charityLogo : '')}
               onImageChange={onImageChange}
               compact={compact}
               placeholder={`Upload ${label.toLowerCase()}`}

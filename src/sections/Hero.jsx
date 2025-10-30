@@ -190,7 +190,7 @@ export function HeroB({ preview = false, raffleType = null }) {
   const backgroundImage = `var(--hero-background-image, url(${imagePath}))`;
 
   return (
-    <section data-section="hero" className=" w-full" >
+    <section data-section="hero" className=" w-full bg-Colors-background" >
       {/* Hero Header */}
       <div className="w-[1440px]" data-image="hero-image" data-size="1920×1080" data-default-image="/images/img-hero-full-light.png" style={{ backgroundColor: 'var(--colors-background)', backgroundImage, backgroundSize: "cover", backgroundPosition: "center center", backgroundRepeat: "no-repeat" }}>
         <div className="w-[1440px] pt-24 mt-170 inline-flex flex-col justify-start items-center gap-4 overflow-hidden " >

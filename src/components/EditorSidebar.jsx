@@ -163,6 +163,7 @@ export default function EditorSidebar({
   hideCloseAction = false,
   onSaveNext,
   globalColors = {},
+  inviteRow = null,
 }) {
 
   // Close on Escape (but don't trigger while typing in inputs/textareas)
@@ -666,6 +667,14 @@ const orderedCopyList = (() => {
                       previewRef={previewRef}
                       controls={activeBlock?.controls || {}}
                       onHasImagesChange={setHasImages}
+                      includeCharityLogo={activeBlock?.type === 'Navbar'}
+                      charityLogo={activeBlock?.type === 'Navbar' ? (() => {
+                        // Get charity logo from inviteRow for Navbar
+                        if (typeof inviteRow?.onboarding_json?.charityInfo?.charityLogo === 'string') {
+                          return inviteRow.onboarding_json.charityInfo.charityLogo;
+                        }
+                        return "";
+                      })() : ""}
                     />
                   </div>
                 </>

@@ -1376,7 +1376,14 @@ function MainBuilderContent({ inviteToken, inviteRow, row, updateInvite }) {
     if (images && typeof images === 'object') {
       // Validate Navbar images
       const navbarImages = discoverSectionImages('Navbar', navbarControls || {});
-      const navbarMissingCount = navbarImages.filter(img => !images[img.id]).length;
+      const navbarMissingCount = navbarImages.filter(img => {
+        // Special case for navbar-logo: consider charity logo from step 0 as valid
+        if (img.id === 'navbar-logo') {
+          const charityLogo = inviteRow?.onboarding_json?.charityInfo?.charityLogo;
+          return !images[img.id] && !charityLogo;
+        }
+        return !images[img.id];
+      }).length;
       if (navbarMissingCount > 0) {
         errors.push({ 
           section: 'Navbar', 

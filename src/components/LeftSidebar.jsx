@@ -130,6 +130,7 @@ export default function LeftSidebar({
                                     mode="builder"
                                     globalColors={globalColors}
                                     staticLayout={true}
+                                    inviteRow={inviteRow}
                                 />
                             )}
                         </AccordionContent>
